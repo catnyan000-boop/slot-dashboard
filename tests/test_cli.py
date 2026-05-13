@@ -2,7 +2,7 @@ from argparse import Namespace
 from datetime import date
 from pathlib import Path
 
-from src.cli import cmd_parse_minrepo, cmd_validate_unit_data
+from src.cli import cmd_parse_minrepo, cmd_unit_coverage, cmd_validate_unit_data
 from src.collectors.base_collector import CollectorError
 from src.collectors.minrepo_collector import MinrepoCollector
 from src.db.database import Database, utc_now_iso
@@ -102,3 +102,63 @@ def test_validate_unit_data_warns_when_diff_missing_rate_is_high(
     captured = capsys.readouterr()
     assert result == 0
     assert "WARNING:" in captured.out
+
+
+def test_unit_coverage_supports_all_stores(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    database.upsert_unit_results(
+        [
+            UnitResultRecord(
+                source="minrepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 10),
+                unit_number="1",
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=100.0,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com",
+                created_at=utc_now_iso(),
+            ),
+            UnitResultRecord(
+                source="minrepo",
+                store_id="kyoraku_tokai",
+                report_date=date(2026, 5, 10),
+                unit_number="1",
+                machine_name_raw="機種B",
+                machine_name_normalized="機種B",
+                machine_category="smart_slot_at",
+                diff=None,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com",
+                created_at=utc_now_iso(),
+            ),
+        ]
+    )
+
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+
+    result = cmd_unit_coverage(Namespace(store=None, all=True, days=7))
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "store_id: cosmo_obu" in captured.out
+    assert "store_id: kyoraku_tokai" in captured.out
+    assert "display_name: コスモジャパン大府" in captured.out
+    assert "display_name: KYORAKU東海" in captured.out

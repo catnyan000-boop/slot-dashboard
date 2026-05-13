@@ -170,3 +170,58 @@ def test_report_marks_unit_quality_data_shortage_when_unit_samples_are_zero(
     text = report_path.read_text(encoding="utf-8")
     assert "unit_diff_missing_rate: データ不足" in text
     assert "有効分析範囲: データ不足" in text
+
+
+def test_report_shows_unit_quality_coverage_window(tmp_path: Path) -> None:
+    database = Database(tmp_path / "slot.db")
+    source_root = Path(__file__).resolve().parents[1]
+    database.initialize(source_root / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(source_root / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    database.upsert_unit_results(
+        [
+            UnitResultRecord(
+                source="minrepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 8),
+                unit_number="1",
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=100.0,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/detail?kishu=all",
+                created_at=utc_now_iso(),
+            ),
+            UnitResultRecord(
+                source="minrepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 13),
+                unit_number="2",
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=50.0,
+                games=900.0,
+                payout_rate=99.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/detail?kishu=all",
+                created_at=utc_now_iso(),
+            ),
+        ]
+    )
+
+    report_path = generate_tomorrow_report(
+        database=database,
+        store_normalizer=store_normalizer,
+        target_date=date(2026, 5, 15),
+        lookback_days=7,
+        output_dir=tmp_path / "reports",
+    )
+    text = report_path.read_text(encoding="utf-8")
+    assert "集計対象期間: 2026-05-08 〜 2026-05-13" in text

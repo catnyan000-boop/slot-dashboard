@@ -72,6 +72,21 @@ def _quality_section_lines(row: dict[str, object]) -> list[str]:
     return lines
 
 
+def _coverage_window_text(target_date: date, lookback_days: int) -> str:
+    start_date = target_date - timedelta(days=lookback_days)
+    end_date = target_date - timedelta(days=1)
+    return f"{start_date.isoformat()} 〜 {end_date.isoformat()}"
+
+
+def _resolved_coverage_window_text(unit_df, target_date: date, lookback_days: int) -> str:
+    if unit_df.empty or "report_date" not in unit_df.columns:
+        return _coverage_window_text(target_date, lookback_days)
+    report_dates = unit_df["report_date"].dropna()
+    if report_dates.empty:
+        return _coverage_window_text(target_date, lookback_days)
+    return f"{str(report_dates.min())} 〜 {str(report_dates.max())}"
+
+
 def _query_lookback_frames(database, target_date: date, lookback_days: int) -> tuple:
     start_date = target_date - timedelta(days=lookback_days)
     end_date = target_date
@@ -109,6 +124,7 @@ def run_analysis(
     stores = store_normalizer.list_stores()
     daily_df, machine_df, unit_df = _query_lookback_frames(database, target_date, lookback_days)
     scored_stores = score_stores(daily_df, stores, target_date)
+    coverage_window = _resolved_coverage_window_text(unit_df, target_date, lookback_days)
 
     run_id = database.create_analysis_run(
         target_date=target_date.isoformat(),
@@ -190,7 +206,7 @@ def run_analysis(
 
     database.save_store_scores(score_records)
     database.save_target_recommendations(recommendation_records)
-    return {"run_id": run_id, "rows": report_rows}
+    return {"run_id": run_id, "rows": report_rows, "coverage_window": coverage_window}
 
 
 def generate_tomorrow_report(
@@ -202,6 +218,7 @@ def generate_tomorrow_report(
 ) -> Path:
     analysis = run_analysis(database, store_normalizer, target_date, lookback_days)
     rows = analysis["rows"]
+    coverage_window = analysis["coverage_window"]
 
     ranking_lines = []
     basis_lines = []
@@ -318,6 +335,8 @@ def generate_tomorrow_report(
             *[f"- {row['display_name']}: {row['sample_size']}日" for row in rows],
             "",
             "## 10. Unit Data Quality",
+            f"集計対象期間: {coverage_window}",
+            "",
             *quality_lines,
             "## 11. 注意点",
             *note_lines,

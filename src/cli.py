@@ -341,12 +341,8 @@ def cmd_validate_unit_data(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_unit_coverage(args: argparse.Namespace) -> int:
-    database = _database()
-    database.initialize(SCHEMA_PATH)
-    normalizer = _store_normalizer()
-    store = _resolve_target_stores(args, normalizer)[0]
-    cutoff = _date_cutoff(args.days).isoformat()
+def _query_unit_quality(database: Database, store_id: str, days: int) -> dict[str, object]:
+    cutoff = _date_cutoff(days).isoformat()
     unit_df = database.query_dataframe(
         """
         SELECT *
@@ -354,16 +350,20 @@ def cmd_unit_coverage(args: argparse.Namespace) -> int:
         WHERE store_id = ?
           AND report_date >= ?
         """,
-        [store.store_id, cutoff],
+        [store_id, cutoff],
     )
-    quality = summarize_unit_data_quality(unit_df, store.store_id)
+    return summarize_unit_data_quality(unit_df, store_id)
 
+
+def _print_unit_coverage(store, quality: dict[str, object], days: int) -> None:
     print(f"store_id: {store.store_id}")
-    print(f"lookback_days: {args.days}")
+    print(f"display_name: {store.display_name}")
+    print(f"lookback_days: {days}")
     print(f"unit_diff_missing_rate: {quality['diff_missing_rate']}")
     print(f"unit_results_total: {quality['total_rows']}")
     print(f"diff_null_count: {quality['diff_null_count']}")
     print(f"diff_zero_count: {quality['diff_zero_count']}")
+    print(f"effective_analyses: {', '.join(quality['effective_analyses'])}")
     print("date_missing_rate:")
     for row in quality["date_missing"]:
         print(
@@ -396,6 +396,18 @@ def cmd_unit_coverage(args: argparse.Namespace) -> int:
         )
     if not quality["excluded_machines"]:
         print("- none")
+
+
+def cmd_unit_coverage(args: argparse.Namespace) -> int:
+    database = _database()
+    database.initialize(SCHEMA_PATH)
+    normalizer = _store_normalizer()
+    stores = _resolve_target_stores(args, normalizer)
+    for index, store in enumerate(stores):
+        quality = _query_unit_quality(database, store.store_id, args.days)
+        _print_unit_coverage(store, quality, args.days)
+        if index < len(stores) - 1:
+            print("")
     return 0
 
 
