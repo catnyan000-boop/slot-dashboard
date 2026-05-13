@@ -1,0 +1,256 @@
+const FILTERS = {
+  all: () => true,
+  ready: (store) => store.filter_key === "ready",
+  caution: (store) => store.filter_key === "caution" || store.filter_key === "reference",
+  unreliable: (store) => store.filter_key === "unreliable",
+  shortage: (store) => store.filter_key === "shortage",
+};
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function badgeClass(status) {
+  if (status === "データ不足") return "empty";
+  if (status === "台番分析は信頼不可") return "danger";
+  if (status === "台番分析は注意付き" || status === "台番分析は参考程度") return "warn";
+  return "ok";
+}
+
+function renderBadge(text, extraClass = "") {
+  return `<span class="badge ${extraClass}">${escapeHtml(text)}</span>`;
+}
+
+function renderList(items, emptyLabel = "なし") {
+  if (!items || items.length === 0) {
+    return `<li>${escapeHtml(emptyLabel)}</li>`;
+  }
+  return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function cardTemplate(store) {
+  const fetchBadge = renderBadge(
+    `取得:${store.fetch_status}`,
+    badgeClass(store.fetch_status === "成功" ? "台番分析可能" : "台番分析は信頼不可"),
+  );
+  const parseBadge = renderBadge(
+    `parse:${store.parse_status}`,
+    badgeClass(store.parse_status === "成功" ? "台番分析可能" : "データ不足"),
+  );
+  const statusBadge = renderBadge(
+    store.pattern_analysis_status,
+    badgeClass(store.pattern_analysis_status),
+  );
+  return `
+    <article class="store-card" data-severity="${escapeHtml(store.severity_key)}">
+      <div class="store-header">
+        <div>
+          <h3 class="store-title">${escapeHtml(store.display_name)}</h3>
+          <p class="store-subtitle">${escapeHtml(store.store_id)}</p>
+        </div>
+        <div class="badge-group">
+          ${fetchBadge}
+          ${parseBadge}
+          ${statusBadge}
+        </div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">unit_diff_missing_rate</div>
+          <div class="metric-value">${escapeHtml(store.unit_diff_missing_rate_text)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">unit_results_total</div>
+          <div class="metric-value">${escapeHtml(store.unit_results_total_text)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">diff_null_count</div>
+          <div class="metric-value">${escapeHtml(store.diff_null_count_text)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">有効分析範囲</div>
+          <div class="metric-value">${escapeHtml(store.effective_analyses_text)}</div>
+        </div>
+      </div>
+      <div>
+        <strong>分析ステータス</strong>
+        <ul class="store-list">
+          <li>台番: ${escapeHtml(store.pattern_analysis_status)}</li>
+          <li>末尾: ${escapeHtml(store.tail_analysis_status)}</li>
+          <li>並び: ${escapeHtml(store.cluster_analysis_status)}</li>
+        </ul>
+      </div>
+      <div>
+        <strong>注意点</strong>
+        <ul class="note-list">${renderList(store.notes, "追加注意なし")}</ul>
+      </div>
+    </article>
+  `;
+}
+
+function tableRowTemplate(store) {
+  return `
+    <tr data-severity="${escapeHtml(store.severity_key)}">
+      <td>${escapeHtml(store.display_name)}</td>
+      <td>${escapeHtml(store.fetch_status)}</td>
+      <td>${escapeHtml(store.parse_status)}</td>
+      <td>${escapeHtml(store.unit_diff_missing_rate_text)}</td>
+      <td>${escapeHtml(store.unit_results_total_text)}</td>
+      <td>${escapeHtml(store.diff_null_count_text)}</td>
+      <td>${escapeHtml(store.pattern_analysis_status)}</td>
+      <td>${escapeHtml(store.tail_analysis_status)}</td>
+      <td>${escapeHtml(store.cluster_analysis_status)}</td>
+      <td>${escapeHtml(store.effective_analyses_text)}</td>
+    </tr>
+  `;
+}
+
+function mountDashboard(payload) {
+  const root = document.getElementById("app");
+  const filters = payload.filters || [];
+  const stores = payload.stores || [];
+  let activeFilter = "all";
+
+  function filteredStores() {
+    const predicate = FILTERS[activeFilter] || FILTERS.all;
+    return stores.filter(predicate);
+  }
+
+  function render() {
+    const visibleStores = filteredStores();
+    root.innerHTML = `
+      <main class="page">
+        <section class="hero">
+          <p class="eyebrow">Slot Analyzer Dashboard</p>
+          <h1>9店舗の unit coverage を一覧できる静的ダッシュボード</h1>
+          <p>${escapeHtml(payload.description || "")}</p>
+          <div class="meta-grid">
+            <div class="stat">
+              <div class="stat-label">最終更新日時</div>
+              <div class="stat-value">${escapeHtml(payload.generated_at || "-")}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">集計対象期間</div>
+              <div class="stat-value">${escapeHtml(payload.coverage_window || "-")}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">表示店舗数</div>
+              <div class="stat-value">${visibleStores.length} / ${stores.length}</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="filters panel">
+          <h2>フィルタ</h2>
+          <div class="filter-row">
+            ${filters
+              .map(
+                (filter) => `
+                  <button
+                    class="filter-button ${filter.key === activeFilter ? "active" : ""}"
+                    data-filter="${escapeHtml(filter.key)}"
+                    type="button"
+                  >
+                    ${escapeHtml(filter.label)}
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
+        </section>
+
+        <section class="summary-grid">
+          <div class="panel">
+            <h2>データ不足店舗</h2>
+            <div class="list-grid">
+              <ol class="plain-list">${renderList(payload.data_shortage_stores, "なし")}</ol>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>明日の狙い候補</h2>
+            <div class="list-grid">
+              <ol class="plain-list">${renderList(payload.tomorrow_candidates, "候補なし")}</ol>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>見送り推奨店舗</h2>
+            <div class="list-grid">
+              <ol class="plain-list">${renderList(payload.skip_recommendations, "該当なし")}</ol>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>注意点</h2>
+            <div class="list-grid">
+              <ul class="plain-list">${renderList(payload.notes, "追加注意なし")}</ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="card-grid">
+          ${visibleStores.map(cardTemplate).join("")}
+        </section>
+
+        <section class="table-wrap">
+          <h2>9店舗比較テーブル</h2>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>店舗</th>
+                  <th>取得</th>
+                  <th>parse</th>
+                  <th>欠損率</th>
+                  <th>unit件数</th>
+                  <th>diff NULL</th>
+                  <th>台番</th>
+                  <th>末尾</th>
+                  <th>並び</th>
+                  <th>有効分析範囲</th>
+                </tr>
+              </thead>
+              <tbody>${visibleStores.map(tableRowTemplate).join("")}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <p class="footer">raw HTML や SQLite DB は公開せず、summary JSON のみを出力しています。</p>
+      </main>
+    `;
+
+    root.querySelectorAll("[data-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeFilter = button.getAttribute("data-filter") || "all";
+        render();
+      });
+    });
+  }
+
+  render();
+}
+
+async function loadPayload() {
+  if (window.__SITE_DATA__) {
+    return window.__SITE_DATA__;
+  }
+  const response = await fetch("./data/latest.json");
+  return response.json();
+}
+
+loadPayload()
+  .then((payload) => mountDashboard(payload))
+  .catch((error) => {
+    const root = document.getElementById("app");
+    root.innerHTML = [
+      `<main class="page">`,
+      `<section class="panel">`,
+      `<h2>表示エラー</h2>`,
+      `<p>${escapeHtml(error.message)}</p>`,
+      `</section>`,
+      `</main>`,
+    ].join("");
+  });

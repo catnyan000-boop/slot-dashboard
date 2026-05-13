@@ -17,6 +17,7 @@ from src.collectors.unit_detail_filler import (
 from src.db.database import Database
 from src.normalizers.store_normalizer import StoreNormalizer
 from src.parsers.minrepo_parser import MinrepoParser
+from src.reports.site_builder import build_static_site, load_validation_statuses
 from src.reports.tomorrow_report import generate_tomorrow_report, run_analysis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +27,7 @@ DB_PATH = DATA_DIR / "slot.db"
 SCHEMA_PATH = PROJECT_ROOT / "sql" / "schema.sql"
 STORES_PATH = PROJECT_ROOT / "stores.yaml"
 REPORTS_DIR = PROJECT_ROOT / "reports"
+PUBLIC_DIR = PROJECT_ROOT / "public"
 
 
 def _database() -> Database:
@@ -176,6 +178,25 @@ def cmd_report_tomorrow(args: argparse.Namespace) -> int:
         output_dir=REPORTS_DIR,
     )
     print(report_path)
+    return 0
+
+
+def cmd_build_site(args: argparse.Namespace) -> int:
+    database = _database()
+    database.initialize(SCHEMA_PATH)
+    database.seed_stores(_store_normalizer().catalog)
+    target_date = date.fromisoformat(args.date) if args.date else date.today() + timedelta(days=1)
+    status_overrides = load_validation_statuses(REPORTS_DIR / "unit_coverage_9stores_7days.md")
+    outputs = build_static_site(
+        database=database,
+        store_normalizer=_store_normalizer(),
+        target_date=target_date,
+        lookback_days=args.days,
+        output_dir=PUBLIC_DIR,
+        status_overrides=status_overrides,
+    )
+    for label, path in outputs.items():
+        print(f"{label}: {path}")
     return 0
 
 
@@ -509,6 +530,11 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--date")
     report.add_argument("--days", type=int, default=180)
     report.set_defaults(func=cmd_report_tomorrow)
+
+    build_site = subparsers.add_parser("build-site", help="Build static dashboard site")
+    build_site.add_argument("--date")
+    build_site.add_argument("--days", type=int, default=7)
+    build_site.set_defaults(func=cmd_build_site)
 
     db_stats = subparsers.add_parser("db-stats", help="Show DB row counts")
     db_stats.set_defaults(func=cmd_db_stats)
