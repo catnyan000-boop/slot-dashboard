@@ -1,0 +1,77 @@
+stores:
+  - store_id: cosmo_obu
+    display_name: コスモジャパン大府
+    canonical_name: コスモジャパン大府店
+    aliases:
+      - コスモジャパン大府
+      - コスモジャパン大府店
+    event_days: ["1"]
+
+  - store_id: kyoraku_tokai
+    display_name: KYORAKU東海
+    canonical_name: KYORAKU東海店
+    aliases:
+      - KYORAKU東海
+      - KYORAKU東海店
+      - ＫＹＯＲＡＫＵ東海店
+    event_days: ["9", "15"]
+
+  - store_id: keiz_odaka
+    display_name: KEIZ大高
+    canonical_name: KEIZ大高店
+    aliases:
+      - KEIZ大高
+      - KEIZ大高店
+      - ＫＥＩＺ大高店
+    event_days: ["0"]
+
+  - store_id: kyoraku_toyoake
+    display_name: KYORAKU豊明
+    canonical_name: 京楽会館豊明店
+    aliases:
+      - KYORAKU豊明
+      - KYORAKU豊明店
+      - 京楽会館豊明店
+    event_days: ["9", "14"]
+
+  - store_id: winglet
+    display_name: ウイングレット
+    canonical_name: ウイングレット
+    aliases:
+      - ウイングレット
+    event_days: ["3", "4"]
+
+  - store_id: ogiya_anjo
+    display_name: オーギヤ安城
+    canonical_name: オーギヤ安城店
+    aliases:
+      - オーギヤ安城
+      - オーギヤ安城店
+    event_days: ["0", "4"]
+
+  - store_id: keiz_galerie_apita
+    display_name: KEIZギャラリエアピタ
+    canonical_name: KEIZギャラリエアピタ知立店
+    aliases:
+      - KEIZギャラリエアピタ
+      - KEIZギャラリエアピタ知立店
+      - ＫＥＩＺギャラリエアピタ知立店
+    event_days: ["0"]
+
+  - store_id: marushin_777
+    display_name: マルシン777
+    canonical_name: マルシン777
+    aliases:
+      - マルシン777
+      - マルシン７７７
+    event_days: ["0", "7"]
+
+  - store_id: apan_kobo
+    display_name: APANCLUB弘法通り
+    canonical_name: APANCLUB弘法通り店
+    aliases:
+      - APANCLUB弘法通り
+      - APANCLUB弘法通り店
+      - ＡＰＡＮＣＬＵＢ弘法通り店
+    event_days: ["8"]
+
