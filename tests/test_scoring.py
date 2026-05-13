@@ -128,7 +128,45 @@ def test_report_marks_number_analysis_unreliable_when_unit_diff_missing_is_high(
         output_dir=tmp_path / "reports",
     )
     text = report_path.read_text(encoding="utf-8")
-    assert "台番別差枚データ不足" in text
+    assert "unit_diff_missing_rate: 0.8" in text
+    assert "diff_null_count: 8" in text
+    assert "台番分析ステータス: 台番分析は信頼不可" in text
     assert "末尾分析は信頼不可" in text
     assert "並び分析は信頼不可" in text
-    assert "店舗別・機種別分析のみ有効" in text
+    assert "現時点では店舗別・機種別・カテゴリ別分析のみ有効" in text
+
+
+def test_report_marks_unit_quality_data_shortage_when_unit_samples_are_zero(
+    tmp_path: Path,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    source_root = Path(__file__).resolve().parents[1]
+    database.initialize(source_root / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(source_root / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    database.upsert_daily_store_result(
+        DailyStoreResultRecord(
+            source="minrepo",
+            store_id="cosmo_obu",
+            report_date=date(2026, 5, 14),
+            total_diff=1000,
+            avg_diff=100,
+            avg_game=3000,
+            win_rate=0.5,
+            total_units=10,
+            source_url="https://example.com/detail",
+            created_at=utc_now_iso(),
+        )
+    )
+
+    report_path = generate_tomorrow_report(
+        database=database,
+        store_normalizer=store_normalizer,
+        target_date=date(2026, 5, 15),
+        lookback_days=7,
+        output_dir=tmp_path / "reports",
+    )
+    text = report_path.read_text(encoding="utf-8")
+    assert "unit_diff_missing_rate: データ不足" in text
+    assert "有効分析範囲: データ不足" in text

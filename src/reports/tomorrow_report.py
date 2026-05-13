@@ -13,6 +13,65 @@ from src.normalizers.store_normalizer import StoreNormalizer
 from src.reports.daily_report import confidence_to_letter
 
 
+def _quality_value_text(value: object) -> str:
+    if value is None:
+        return "データ不足"
+    return str(value)
+
+
+def _quality_section_lines(row: dict[str, object]) -> list[str]:
+    quality = row["unit_quality"]
+    display_name = row["display_name"]
+    total_rows = int(quality["total_rows"])
+
+    lines = [f"### {display_name}"]
+    if total_rows == 0:
+        lines.extend(
+            [
+                "- unit_diff_missing_rate: データ不足",
+                "- unit_results_total: 0",
+                "- diff_null_count: 0",
+                "- 台番分析ステータス: データ不足",
+                "- 末尾分析ステータス: データ不足",
+                "- 並び分析ステータス: データ不足",
+                "- 有効分析範囲: データ不足",
+                "- データ不足",
+            ]
+        )
+        return lines
+
+    lines.extend(
+        [
+            f"- unit_diff_missing_rate: {quality['diff_missing_rate']}",
+            f"- unit_results_total: {quality['total_rows']}",
+            f"- diff_null_count: {quality['diff_null_count']}",
+            f"- 台番分析ステータス: {quality['pattern_analysis_status']}",
+            f"- 末尾分析ステータス: {quality['tail_analysis_status']}",
+            f"- 並び分析ステータス: {quality['cluster_analysis_status']}",
+            f"- 有効分析範囲: {', '.join(quality['effective_analyses'])}",
+        ]
+    )
+
+    if quality["excluded_machines"]:
+        lines.append("- 除外対象機種:")
+        for machine in quality["excluded_machines"]:
+            lines.append(f"  - {machine['machine_name']}: {machine['reason']}")
+    else:
+        lines.append("- 除外対象機種: なし")
+
+    if float(quality["diff_missing_rate"]) >= 0.5:
+        lines.extend(
+            [
+                "- 台番分析は信頼不可",
+                "- 末尾分析は信頼不可",
+                "- 並び分析は信頼不可",
+                "- 現時点では店舗別・機種別・カテゴリ別分析のみ有効",
+            ]
+        )
+
+    return lines
+
+
 def _query_lookback_frames(database, target_date: date, lookback_days: int) -> tuple:
     start_date = target_date - timedelta(days=lookback_days)
     end_date = target_date
@@ -153,6 +212,7 @@ def generate_tomorrow_report(
     skip_lines = []
     confidence_lines = []
     note_lines = []
+    quality_lines = []
 
     for row in rows[:5]:
         ranking_text = (
@@ -197,8 +257,8 @@ def generate_tomorrow_report(
             )
         else:
             top_patterns = (
-                "台番別差枚データ不足 / 末尾分析は信頼不可 / "
-                "並び分析は信頼不可 / 現時点では店舗別・機種別分析のみ有効"
+                "台番分析は信頼不可 / 末尾分析は信頼不可 / "
+                "並び分析は信頼不可 / 現時点では店舗別・機種別・カテゴリ別分析のみ有効"
             )
         pattern_lines.append(f"- {row['display_name']}: {top_patterns}")
 
@@ -221,8 +281,10 @@ def generate_tomorrow_report(
             f"平均差枚 {row['reason'].get('avg_diff', 0)} / "
             f"平均G数 {row['reason'].get('avg_game', 0)} / "
             f"{row['unit_quality']['pattern_analysis_status']} / "
-            f"unit_diff_missing_rate={row['unit_quality']['diff_missing_rate']}"
+            f"unit_diff_missing_rate={_quality_value_text(row['unit_quality']['diff_missing_rate'])}"
         )
+        quality_lines.extend(_quality_section_lines(row))
+        quality_lines.append("")
 
     markdown = "\n".join(
         [
@@ -255,7 +317,9 @@ def generate_tomorrow_report(
             "## 9. サンプル数",
             *[f"- {row['display_name']}: {row['sample_size']}日" for row in rows],
             "",
-            "## 10. 注意点",
+            "## 10. Unit Data Quality",
+            *quality_lines,
+            "## 11. 注意点",
             *note_lines,
             "",
             "高設定を断定せず、公開データ上の再現性と傾向を優先して評価しています。",
