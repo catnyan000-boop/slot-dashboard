@@ -136,7 +136,7 @@ def summarize_unit_data_quality(
 
     tail_analysis_status = pattern_analysis_status
     cluster_analysis_status = pattern_analysis_status
-    if unit_analysis_rows == 0:
+    if pattern_analysis_ready and unit_analysis_rows == 0:
         tail_analysis_status = "データ不足"
         cluster_analysis_status = "データ不足"
 

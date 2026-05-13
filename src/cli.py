@@ -341,6 +341,64 @@ def cmd_validate_unit_data(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_unit_coverage(args: argparse.Namespace) -> int:
+    database = _database()
+    database.initialize(SCHEMA_PATH)
+    normalizer = _store_normalizer()
+    store = _resolve_target_stores(args, normalizer)[0]
+    cutoff = _date_cutoff(args.days).isoformat()
+    unit_df = database.query_dataframe(
+        """
+        SELECT *
+        FROM unit_results
+        WHERE store_id = ?
+          AND report_date >= ?
+        """,
+        [store.store_id, cutoff],
+    )
+    quality = summarize_unit_data_quality(unit_df, store.store_id)
+
+    print(f"store_id: {store.store_id}")
+    print(f"lookback_days: {args.days}")
+    print(f"unit_diff_missing_rate: {quality['diff_missing_rate']}")
+    print(f"unit_results_total: {quality['total_rows']}")
+    print(f"diff_null_count: {quality['diff_null_count']}")
+    print(f"diff_zero_count: {quality['diff_zero_count']}")
+    print("date_missing_rate:")
+    for row in quality["date_missing"]:
+        print(
+            f"- {row['report_date']}: "
+            f"{row['diff_null']}/{row['total']} "
+            f"({row['missing_rate']:.3f}) status={row['status']}"
+        )
+    print("machine_missing_rate:")
+    for row in quality["machine_missing"]:
+        print(
+            f"- {row['machine_name_normalized']}: "
+            f"{row['diff_null']}/{row['total']} "
+            f"({row['missing_rate']:.3f}) status={row['status']}"
+        )
+    print("category_missing_rate:")
+    for row in quality["category_missing"]:
+        print(
+            f"- {row['machine_category']}: "
+            f"{row['diff_null']}/{row['total']} "
+            f"({row['missing_rate']:.3f}) status={row['status']}"
+        )
+    print(f"pattern_analysis_status: {quality['pattern_analysis_status']}")
+    print(f"tail_analysis_status: {quality['tail_analysis_status']}")
+    print(f"cluster_analysis_status: {quality['cluster_analysis_status']}")
+    print("excluded_machines:")
+    for row in quality["excluded_machines"]:
+        print(
+            f"- {row['machine_name']}: "
+            f"{row['reason']} status={row['status']} missing_rate={row['missing_rate']}"
+        )
+    if not quality["excluded_machines"]:
+        print("- none")
+    return 0
+
+
 def cmd_list_missing_units(args: argparse.Namespace) -> int:
     from src.collectors.minrepo_collector import MinrepoCollector
 
@@ -469,6 +527,15 @@ def build_parser() -> argparse.ArgumentParser:
     validate_units.add_argument("--all", action="store_true")
     validate_units.add_argument("--days", type=int, default=7)
     validate_units.set_defaults(func=cmd_validate_unit_data)
+
+    unit_coverage = subparsers.add_parser(
+        "unit-coverage",
+        help="Summarize unit_results diff missingness for pattern-analysis readiness",
+    )
+    unit_coverage.add_argument("--store")
+    unit_coverage.add_argument("--all", action="store_true")
+    unit_coverage.add_argument("--days", type=int, default=7)
+    unit_coverage.set_defaults(func=cmd_unit_coverage)
 
     list_missing = subparsers.add_parser(
         "list-missing-units",
