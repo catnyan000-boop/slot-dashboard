@@ -76,6 +76,24 @@ a {
   max-width: 70ch;
 }
 
+.hero-alert {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  background: linear-gradient(180deg, rgba(255, 226, 223, 0.92), rgba(255, 239, 236, 0.92));
+}
+
+.hero-alert strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.hero-alert p {
+  margin-top: 8px;
+  color: #7a271a;
+}
+
 .meta-grid,
 .summary-grid,
 .filter-row,
@@ -167,6 +185,55 @@ a {
   margin-top: 28px;
 }
 
+.summary-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.summary-card {
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(215, 199, 180, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.summary-card strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.summary-card .big-number {
+  margin-top: 8px;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.summary-card .summary-note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.summary-card.ready .big-number {
+  color: var(--accent);
+}
+
+.summary-card.caution .big-number {
+  color: var(--warn);
+}
+
+.summary-card.unreliable .big-number {
+  color: var(--danger);
+}
+
+.summary-card.shortage .big-number {
+  color: var(--empty);
+}
+
 .list-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
@@ -177,9 +244,50 @@ a {
   color: var(--muted);
 }
 
+.plain-list strong {
+  color: var(--ink);
+}
+
 .card-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   margin-top: 22px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.section-title-row h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.section-kicker {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.empty-zone {
+  margin-top: 28px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(91, 33, 182, 0.18);
+  background: linear-gradient(180deg, rgba(239, 228, 255, 0.92), rgba(248, 242, 255, 0.95));
+  box-shadow: var(--shadow);
+}
+
+.empty-zone h2 {
+  margin: 0;
+}
+
+.empty-zone p {
+  margin: 8px 0 0;
+  color: #5f3b9b;
 }
 
 .store-card {
@@ -256,6 +364,15 @@ a {
 .badge.empty {
   color: var(--empty);
   background: var(--empty-soft);
+}
+
+.warning-strip {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(180, 35, 24, 0.22);
+  background: rgba(255, 226, 223, 0.72);
+  color: #8e1c17;
+  font-weight: 700;
 }
 
 .metric-grid {
@@ -364,6 +481,16 @@ tbody tr[data-severity="shortage"] {
   .store-header {
     flex-direction: column;
   }
+
+  .summary-hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .summary-hero-grid {
+    grid-template-columns: 1fr;
+  }
 }
 """
 
@@ -401,6 +528,16 @@ function renderList(items, emptyLabel = "なし") {
     return `<li>${escapeHtml(emptyLabel)}</li>`;
   }
   return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function renderSummaryCard(label, value, note, kind) {
+  return `
+    <div class="summary-card ${escapeHtml(kind)}">
+      <strong>${escapeHtml(label)}</strong>
+      <div class="big-number">${escapeHtml(value)}</div>
+      <div class="summary-note">${escapeHtml(note)}</div>
+    </div>
+  `;
 }
 
 function cardTemplate(store) {
@@ -459,6 +596,11 @@ function cardTemplate(store) {
         <strong>注意点</strong>
         <ul class="note-list">${renderList(store.notes, "追加注意なし")}</ul>
       </div>
+      ${
+        store.severity_key === "critical"
+          ? `<div class="warning-strip">現時点では店舗別・機種別・カテゴリ別分析のみ有効</div>`
+          : ""
+      }
     </article>
   `;
 }
@@ -493,12 +635,22 @@ function mountDashboard(payload) {
 
   function render() {
     const visibleStores = filteredStores();
+    const visibleShortageStores = visibleStores.filter(
+      (store) => store.severity_key === "shortage",
+    );
+    const visibleActiveStores = visibleStores.filter(
+      (store) => store.severity_key !== "shortage",
+    );
     root.innerHTML = `
       <main class="page">
         <section class="hero">
           <p class="eyebrow">Slot Analyzer Dashboard</p>
           <h1>9店舗の unit coverage を一覧できる静的ダッシュボード</h1>
           <p>${escapeHtml(payload.description || "")}</p>
+          <div class="hero-alert">
+            <strong>現時点では店舗別・機種別・カテゴリ別分析のみ有効</strong>
+            <p>欠損率が高い店舗では、台番・末尾・並び分析を有効に見せないよう固定しています。</p>
+          </div>
           <div class="meta-grid">
             <div class="stat">
               <div class="stat-label">最終更新日時</div>
@@ -512,6 +664,32 @@ function mountDashboard(payload) {
               <div class="stat-label">表示店舗数</div>
               <div class="stat-value">${visibleStores.length} / ${stores.length}</div>
             </div>
+          </div>
+          <div class="summary-hero-grid">
+            ${renderSummaryCard(
+              "台番分析可能店舗数",
+              payload.summary_counts.ready,
+              "いまは 0 店舗でも一目で確認",
+              "ready",
+            )}
+            ${renderSummaryCard(
+              "注意付き店舗数",
+              payload.summary_counts.caution,
+              "注意付き・参考程度",
+              "caution",
+            )}
+            ${renderSummaryCard(
+              "信頼不可店舗数",
+              payload.summary_counts.unreliable,
+              "欠損率50%以上は赤系で強調",
+              "unreliable",
+            )}
+            ${renderSummaryCard(
+              "データ不足店舗数",
+              payload.summary_counts.shortage,
+              "別枠で確認が必要",
+              "shortage",
+            )}
           </div>
         </section>
 
@@ -561,8 +739,33 @@ function mountDashboard(payload) {
           </div>
         </section>
 
-        <section class="card-grid">
-          ${visibleStores.map(cardTemplate).join("")}
+        ${
+          visibleShortageStores.length
+            ? `
+              <section class="empty-zone">
+                <h2>データ不足店舗</h2>
+                <p>
+                  この店舗群は unit_results サンプルが不足しているため、
+                  台番・末尾・並び分析の対象外です。
+                </p>
+                <div class="card-grid">
+                  ${visibleShortageStores.map(cardTemplate).join("")}
+                </div>
+              </section>
+            `
+            : ""
+        }
+
+        <section>
+          <div class="section-title-row">
+            <div>
+              <h2>店舗カード</h2>
+              <p class="section-kicker">信頼不可は赤系、データ不足は別枠で表示しています。</p>
+            </div>
+          </div>
+          <div class="card-grid">
+            ${visibleActiveStores.map(cardTemplate).join("")}
+          </div>
         </section>
 
         <section class="table-wrap">
@@ -604,11 +807,18 @@ function mountDashboard(payload) {
 }
 
 async function loadPayload() {
-  if (window.__SITE_DATA__) {
-    return window.__SITE_DATA__;
+  try {
+    const response = await fetch("./data/latest.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`latest.json load failed: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    if (window.__SITE_DATA__) {
+      return window.__SITE_DATA__;
+    }
+    throw error;
   }
-  const response = await fetch("./data/latest.json");
-  return response.json();
 }
 
 loadPayload()
@@ -798,6 +1008,11 @@ def _build_summary_payload(
         "差枚 '-' は 0 として扱わず、NULL と 0 を区別しています。",
         "欠損率が高い店舗では台番・末尾・並び分析を有効表示していません。",
     ]
+    summary_counts = {"ready": 0, "caution": 0, "unreliable": 0, "shortage": 0}
+    for store in stores_payload:
+        key = str(store["filter_key"])
+        if key in summary_counts:
+            summary_counts[key] += 1
 
     return {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -820,12 +1035,12 @@ def _build_summary_payload(
         "tomorrow_candidates": tomorrow_candidates,
         "skip_recommendations": skip_recommendations,
         "notes": notes,
+        "summary_counts": summary_counts,
     }
 
 
 def _index_html(payload: dict[str, object]) -> str:
-    json_blob = json.dumps(payload, ensure_ascii=False)
-    return f"""\
+    return """\
 <!doctype html>
 <html lang="ja">
   <head>
@@ -836,7 +1051,6 @@ def _index_html(payload: dict[str, object]) -> str:
   </head>
   <body>
     <div id="app"></div>
-    <script>window.__SITE_DATA__ = {json_blob};</script>
     <script src="./assets/app.js"></script>
   </body>
 </html>

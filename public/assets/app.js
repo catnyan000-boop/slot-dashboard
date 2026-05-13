@@ -33,6 +33,16 @@ function renderList(items, emptyLabel = "なし") {
   return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
+function renderSummaryCard(label, value, note, kind) {
+  return `
+    <div class="summary-card ${escapeHtml(kind)}">
+      <strong>${escapeHtml(label)}</strong>
+      <div class="big-number">${escapeHtml(value)}</div>
+      <div class="summary-note">${escapeHtml(note)}</div>
+    </div>
+  `;
+}
+
 function cardTemplate(store) {
   const fetchBadge = renderBadge(
     `取得:${store.fetch_status}`,
@@ -89,6 +99,11 @@ function cardTemplate(store) {
         <strong>注意点</strong>
         <ul class="note-list">${renderList(store.notes, "追加注意なし")}</ul>
       </div>
+      ${
+        store.severity_key === "critical"
+          ? `<div class="warning-strip">現時点では店舗別・機種別・カテゴリ別分析のみ有効</div>`
+          : ""
+      }
     </article>
   `;
 }
@@ -123,12 +138,22 @@ function mountDashboard(payload) {
 
   function render() {
     const visibleStores = filteredStores();
+    const visibleShortageStores = visibleStores.filter(
+      (store) => store.severity_key === "shortage",
+    );
+    const visibleActiveStores = visibleStores.filter(
+      (store) => store.severity_key !== "shortage",
+    );
     root.innerHTML = `
       <main class="page">
         <section class="hero">
           <p class="eyebrow">Slot Analyzer Dashboard</p>
           <h1>9店舗の unit coverage を一覧できる静的ダッシュボード</h1>
           <p>${escapeHtml(payload.description || "")}</p>
+          <div class="hero-alert">
+            <strong>現時点では店舗別・機種別・カテゴリ別分析のみ有効</strong>
+            <p>欠損率が高い店舗では、台番・末尾・並び分析を有効に見せないよう固定しています。</p>
+          </div>
           <div class="meta-grid">
             <div class="stat">
               <div class="stat-label">最終更新日時</div>
@@ -142,6 +167,32 @@ function mountDashboard(payload) {
               <div class="stat-label">表示店舗数</div>
               <div class="stat-value">${visibleStores.length} / ${stores.length}</div>
             </div>
+          </div>
+          <div class="summary-hero-grid">
+            ${renderSummaryCard(
+              "台番分析可能店舗数",
+              payload.summary_counts.ready,
+              "いまは 0 店舗でも一目で確認",
+              "ready",
+            )}
+            ${renderSummaryCard(
+              "注意付き店舗数",
+              payload.summary_counts.caution,
+              "注意付き・参考程度",
+              "caution",
+            )}
+            ${renderSummaryCard(
+              "信頼不可店舗数",
+              payload.summary_counts.unreliable,
+              "欠損率50%以上は赤系で強調",
+              "unreliable",
+            )}
+            ${renderSummaryCard(
+              "データ不足店舗数",
+              payload.summary_counts.shortage,
+              "別枠で確認が必要",
+              "shortage",
+            )}
           </div>
         </section>
 
@@ -191,8 +242,33 @@ function mountDashboard(payload) {
           </div>
         </section>
 
-        <section class="card-grid">
-          ${visibleStores.map(cardTemplate).join("")}
+        ${
+          visibleShortageStores.length
+            ? `
+              <section class="empty-zone">
+                <h2>データ不足店舗</h2>
+                <p>
+                  この店舗群は unit_results サンプルが不足しているため、
+                  台番・末尾・並び分析の対象外です。
+                </p>
+                <div class="card-grid">
+                  ${visibleShortageStores.map(cardTemplate).join("")}
+                </div>
+              </section>
+            `
+            : ""
+        }
+
+        <section>
+          <div class="section-title-row">
+            <div>
+              <h2>店舗カード</h2>
+              <p class="section-kicker">信頼不可は赤系、データ不足は別枠で表示しています。</p>
+            </div>
+          </div>
+          <div class="card-grid">
+            ${visibleActiveStores.map(cardTemplate).join("")}
+          </div>
         </section>
 
         <section class="table-wrap">
@@ -234,11 +310,18 @@ function mountDashboard(payload) {
 }
 
 async function loadPayload() {
-  if (window.__SITE_DATA__) {
-    return window.__SITE_DATA__;
+  try {
+    const response = await fetch("./data/latest.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`latest.json load failed: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    if (window.__SITE_DATA__) {
+      return window.__SITE_DATA__;
+    }
+    throw error;
   }
-  const response = await fetch("./data/latest.json");
-  return response.json();
 }
 
 loadPayload()

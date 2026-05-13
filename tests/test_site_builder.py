@@ -163,11 +163,18 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
 
     assert "Slot Analyzer Dashboard" in index_text
     assert "./assets/app.js" in index_text
+    assert "window.__SITE_DATA__" not in index_text
     assert "data/raw" not in latest_text
     assert ".db" not in latest_text
     assert "raw_path" not in latest_text
     assert "db_path" not in latest_text
     assert payload["coverage_window"] == "2026-05-08 〜 2026-05-13"
+    assert payload["summary_counts"] == {
+        "ready": 0,
+        "caution": 0,
+        "unreliable": 1,
+        "shortage": 8,
+    }
 
     stores = {store["store_id"]: store for store in payload["stores"]}
     assert stores["cosmo_obu"]["unit_diff_missing_rate"] == 0.5455

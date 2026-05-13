@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-14T02:25:50+09:00",
+  "generated_at": "2026-05-14T02:43:02+09:00",
   "target_date": "2026-05-15",
   "lookback_days": 7,
   "coverage_window": "2026-05-08 〜 2026-05-13",
@@ -380,5 +380,11 @@
     "machine_results から unit_results を推定で補完していません。",
     "差枚 '-' は 0 として扱わず、NULL と 0 を区別しています。",
     "欠損率が高い店舗では台番・末尾・並び分析を有効表示していません。"
-  ]
+  ],
+  "summary_counts": {
+    "ready": 0,
+    "caution": 0,
+    "unreliable": 7,
+    "shortage": 2
+  }
 }
