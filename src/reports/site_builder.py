@@ -653,6 +653,10 @@ function mountDashboard(payload) {
           </div>
           <div class="meta-grid">
             <div class="stat">
+              <div class="stat-label">source</div>
+              <div class="stat-value">${escapeHtml(payload.source || "-")}</div>
+            </div>
+            <div class="stat">
               <div class="stat-label">最終更新日時</div>
               <div class="stat-value">${escapeHtml(payload.generated_at || "-")}</div>
             </div>
@@ -944,6 +948,17 @@ def load_validation_statuses(report_path: Path) -> dict[str, dict[str, str]]:
     current_store: str | None = None
     for raw_line in report_path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
+        if line.startswith("| `") and line.count("|") >= 10:
+            columns = [column.strip() for column in line.strip("|").split("|")]
+            if not columns or columns[0] == "店舗ID" or columns[0].startswith("---"):
+                continue
+            store_id = columns[0].strip("`")
+            if store_id:
+                statuses[store_id] = {
+                    "fetch_status": columns[1],
+                    "parse_status": columns[2],
+                }
+            continue
         if line.startswith("## "):
             current_store = line.removeprefix("## ").strip()
             statuses[current_store] = {}
@@ -963,9 +978,16 @@ def _build_summary_payload(
     store_normalizer,
     target_date: date,
     lookback_days: int,
+    source: str | None = None,
     status_overrides: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, object]:
-    analysis = run_analysis(database, store_normalizer, target_date, lookback_days)
+    analysis = run_analysis(
+        database,
+        store_normalizer,
+        target_date,
+        lookback_days,
+        source=source,
+    )
     rows_by_store = {row["store_id"]: row for row in analysis["rows"]}
     stores_payload: list[dict[str, object]] = []
 
@@ -976,7 +998,10 @@ def _build_summary_payload(
             "成功" if row["sample_size"] > 0 or int(quality["total_rows"]) > 0 else "失敗"
         )
         parse_status = "成功" if int(quality["total_rows"]) > 0 else "失敗"
-        override = (status_overrides or {}).get(store.display_name, {})
+        override = (status_overrides or {}).get(
+            store.store_id,
+            (status_overrides or {}).get(store.display_name, {}),
+        )
         stores_payload.append(
             _store_payload(
                 store=store,
@@ -1004,6 +1029,7 @@ def _build_summary_payload(
         if row["confidence"] == "D"
     ]
     notes = [
+        f"表示 source は {source or 'all'} です。",
         "machine_results から unit_results を推定で補完していません。",
         "差枚 '-' は 0 として扱わず、NULL と 0 を区別しています。",
         "欠損率が高い店舗では台番・末尾・並び分析を有効表示していません。",
@@ -1017,12 +1043,16 @@ def _build_summary_payload(
     return {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "target_date": target_date.isoformat(),
+        "source": source or "all",
         "lookback_days": lookback_days,
         "coverage_window": analysis.get(
             "coverage_window",
             _coverage_window_text(target_date, lookback_days),
         ),
-        "description": "9店舗の unit coverage・取得状況・明日の狙い候補を 1 画面で確認できます。",
+        "description": (
+            f"9店舗の unit coverage・取得状況・明日の狙い候補を 1 画面で確認できます。"
+            f" source={source or 'all'}"
+        ),
         "filters": [
             {"key": "all", "label": "全店舗"},
             {"key": "ready", "label": "台番分析可能"},
@@ -1064,6 +1094,7 @@ def build_static_site(
     target_date: date,
     lookback_days: int,
     output_dir: Path,
+    source: str | None = None,
     status_overrides: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, Path]:
     payload = _build_summary_payload(
@@ -1071,6 +1102,7 @@ def build_static_site(
         store_normalizer=store_normalizer,
         target_date=target_date,
         lookback_days=lookback_days,
+        source=source,
         status_overrides=status_overrides,
     )
     data_dir = output_dir / "data"

@@ -199,6 +199,9 @@ class SlorepoParser(BaseParser):
             if not unit_number or unit_number == "台番":
                 continue
 
+            diff_value = self._value_by_key(values, column_map, "diff")
+            games_value = self._value_by_key(values, column_map, "games")
+            payout_rate_value = self._value_by_key(values, column_map, "payout_rate")
             records.append(
                 UnitResultRecord(
                     source=self.source_name,
@@ -208,11 +211,14 @@ class SlorepoParser(BaseParser):
                     machine_name_raw=machine_name_raw,
                     machine_name_normalized=machine_name_normalized,
                     machine_category=MachineNormalizer.categorize_machine(machine_name_normalized),
-                    diff=self._value_by_key(values, column_map, "diff"),
-                    games=self._value_by_key(values, column_map, "games"),
-                    payout_rate=self._value_by_key(values, column_map, "payout_rate"),
+                    diff=diff_value,
+                    games=games_value,
+                    payout_rate=payout_rate_value,
                     bb=self._int_by_key(values, column_map, "bb"),
                     rb=self._int_by_key(values, column_map, "rb"),
+                    diff_source="unit_list_page" if diff_value is not None else None,
+                    games_source="unit_list_page" if games_value is not None else None,
+                    payout_rate_source="unit_list_page" if payout_rate_value is not None else None,
                     source_url=source_url,
                     created_at=utc_now_iso(),
                 )
@@ -433,6 +439,12 @@ class SlorepoParser(BaseParser):
             cleaned = cleaned.replace(pattern, " ")
         cleaned = re.sub(r"\d{4}/\d{1,2}/\d{1,2}\s*[（(][^)）]+[)）]", " ", cleaned)
         cleaned = re.sub(r"\d{4}年\d{1,2}月\d{1,2}日\s*[（(][^)）]+[)）]", " ", cleaned)
+        report_title_match = re.match(
+            r"^(.*?)\s+-\s+.+?\s+-\s+[（(][^）)]+[)）]\s+-スロレポ$",
+            cleaned,
+        )
+        if report_title_match:
+            cleaned = report_title_match.group(1).strip()
         cleaned = re.sub(r"\b(?:台データ|データ一覧|スランプグラフ|差枚情報)\b", " ", cleaned)
         cleaned = re.sub(r"\s+", " ", cleaned)
         cleaned = cleaned.strip(" |-:/")

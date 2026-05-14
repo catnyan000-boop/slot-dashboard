@@ -161,16 +161,25 @@ def test_parse_unit_page_returns_unit_records() -> None:
     assert rows[0].payout_rate == 98.7
     assert rows[0].bb == 20
     assert rows[0].rb == 10
+    assert rows[0].diff_source == "unit_list_page"
+    assert rows[0].games_source == "unit_list_page"
+    assert rows[0].payout_rate_source == "unit_list_page"
     assert rows[1].diff == 0
     assert rows[1].games == 0
     assert rows[1].payout_rate == 100.0
     assert rows[1].bb == 0
     assert rows[1].rb == 0
+    assert rows[1].diff_source == "unit_list_page"
+    assert rows[1].games_source == "unit_list_page"
+    assert rows[1].payout_rate_source == "unit_list_page"
     assert rows[2].diff is None
     assert rows[2].games is None
     assert rows[2].payout_rate is None
     assert rows[2].bb is None
     assert rows[2].rb is None
+    assert rows[2].diff_source is None
+    assert rows[2].games_source is None
+    assert rows[2].payout_rate_source is None
 
 
 def test_parse_unit_page_supports_unicode_minus() -> None:
@@ -219,3 +228,28 @@ def test_parse_unit_page_uses_source_url_when_html_has_no_date() -> None:
     )
 
     assert rows[0].report_date == date(2026, 5, 13)
+
+
+def test_parse_unit_page_strips_store_suffix_from_machine_name() -> None:
+    parser = SlorepoParser()
+    html = """
+    <html>
+      <head><title>キングハナハナ-30 - KYORAKU東海店 - (水) -スロレポ</title></head>
+      <body>
+        <h1>キングハナハナ-30 - KYORAKU東海店 - (水) -スロレポ</h1>
+        <table>
+          <tr><th>台番</th><th>差枚</th><th>G数</th><th>出率</th><th>BB</th><th>RB</th></tr>
+          <tr><td>301</td><td>1,000</td><td>5,000</td><td>106.7%</td><td>18</td><td>12</td></tr>
+        </table>
+      </body>
+    </html>
+    """
+
+    rows = parser.parse_unit_page(
+        html=html,
+        store_id="kyoraku_tokai",
+        source_url="https://www.slorepo.com/hole/test/20260513/kishu/?kishu=king-hanahana-30",
+    )
+
+    assert rows[0].machine_name_raw == "キングハナハナ-30"
+    assert rows[0].machine_name_normalized == "キングハナハナ-30"

@@ -4,13 +4,16 @@ from pathlib import Path
 
 from src.cli import (
     SourceProbe,
+    cmd_build_site,
     cmd_debug_fetch_minrepo,
     cmd_debug_minrepo_entrypoints,
     cmd_debug_slorepo,
     cmd_debug_source_entrypoints,
     cmd_fetch_slorepo,
     cmd_parse_minrepo,
+    cmd_parse_slorepo,
     cmd_parse_slorepo_raw,
+    cmd_report_tomorrow,
     cmd_unit_coverage,
     cmd_validate_unit_data,
 )
@@ -22,7 +25,7 @@ from src.collectors.minrepo_collector import (
 )
 from src.collectors.slorepo_collector import SlorepoCollector
 from src.db.database import Database, utc_now_iso
-from src.db.models import SourcePageRecord, UnitResultRecord
+from src.db.models import DailyStoreResultRecord, SourcePageRecord, UnitResultRecord
 from src.normalizers.store_normalizer import StoreNormalizer
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -178,6 +181,65 @@ def test_unit_coverage_supports_all_stores(
     assert "store_id: kyoraku_tokai" in captured.out
     assert "display_name: コスモジャパン大府" in captured.out
     assert "display_name: KYORAKU東海" in captured.out
+
+
+def test_unit_coverage_can_filter_by_source(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    database.upsert_unit_results(
+        [
+            UnitResultRecord(
+                source="minrepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 10),
+                unit_number="1",
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=None,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/minrepo",
+                created_at=utc_now_iso(),
+            ),
+            UnitResultRecord(
+                source="slorepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 10),
+                unit_number="1",
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=100.0,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/slorepo",
+                created_at=utc_now_iso(),
+            ),
+        ]
+    )
+
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+
+    result = cmd_unit_coverage(Namespace(store="cosmo_obu", all=False, days=7, source="slorepo"))
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "source: slorepo" in captured.out
+    assert "unit_results_total: 1" in captured.out
+    assert "unit_diff_missing_rate: 0.0" in captured.out
 
 
 def test_debug_fetch_minrepo_prints_failure_details(
@@ -681,3 +743,264 @@ def test_parse_slorepo_raw_counts_daily_machine_and_unit(
     assert "total_daily: 1" in captured.out
     assert "total_machine: 2" in captured.out
     assert "total_unit: 2" in captured.out
+
+
+def test_parse_slorepo_upserts_to_db_without_duplicates(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    raw_dir = tmp_path / "raw"
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    monkeypatch.setattr("src.cli.RAW_DIR", raw_dir)
+
+    store_dir = raw_dir / "slorepo" / "cosmo_obu"
+    store_dir.mkdir(parents=True, exist_ok=True)
+    (store_dir / "store_test.html").write_text("<html><body>store</body></html>", encoding="utf-8")
+    (store_dir / "2026-05-13_day.html").write_text(
+        """
+        <html><body>
+          <h1>2026/05/13(水) テスト店</h1>
+          <div>総差枚 1,234</div>
+          <div>平均差枚 -123</div>
+          <div>平均G数 4,567</div>
+          <div>勝率 3/5</div>
+          <table>
+            <tr><th>機種</th><th>平均差枚</th><th>平均G数</th><th>勝率</th><th>台数</th></tr>
+            <tr>
+              <td><a href="kishu/?kishu=alpha">L東京喰種</a></td>
+              <td>1,000</td><td>7,000</td><td>1/2</td><td>2</td>
+            </tr>
+            <tr>
+              <td><a href="kishu/?kishu=beta">マイジャグラーV</a></td>
+              <td>0</td><td>6,000</td><td>50%</td><td>1</td>
+            </tr>
+          </table>
+        </body></html>
+        """,
+        encoding="utf-8",
+    )
+    (store_dir / "2026-05-13_machine_alpha.html").write_text(
+        """
+        <html><body>
+          <h1>L東京喰種 2026/05/13 台データ</h1>
+          <table>
+            <tr><th>台番</th><th>差枚</th><th>G数</th><th>出率</th><th>BB</th><th>RB</th></tr>
+            <tr><td>101</td><td>-1,234</td><td>6,789</td><td>98.7%</td><td>20</td><td>10</td></tr>
+            <tr><td>102</td><td>-</td><td></td><td>-</td><td>-</td><td>-</td></tr>
+          </table>
+        </body></html>
+        """,
+        encoding="utf-8",
+    )
+
+    result = cmd_parse_slorepo(Namespace(store="cosmo_obu", all=False, days=7))
+    captured = capsys.readouterr()
+    assert result == 0
+    assert "cosmo_obu: daily=1 machine=2 unit=2" in captured.out
+
+    result = cmd_parse_slorepo(Namespace(store="cosmo_obu", all=False, days=7))
+    assert result == 0
+
+    with database.connect() as conn:
+        daily_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM daily_store_results WHERE source = 'slorepo'"
+        ).fetchone()["count"]
+        machine_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM machine_results WHERE source = 'slorepo'"
+        ).fetchone()["count"]
+        unit_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM unit_results WHERE source = 'slorepo'"
+        ).fetchone()["count"]
+
+    assert daily_count == 1
+    assert machine_count == 2
+    assert unit_count == 2
+
+
+def test_report_tomorrow_can_filter_by_source(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    database.upsert_daily_store_result(
+        DailyStoreResultRecord(
+            source="minrepo",
+            store_id="cosmo_obu",
+            report_date=date(2026, 5, 13),
+            total_diff=1000,
+            avg_diff=100,
+            avg_game=3000,
+            win_rate=0.5,
+            total_units=10,
+            source_url="https://example.com/minrepo",
+            created_at=utc_now_iso(),
+        )
+    )
+    database.upsert_daily_store_result(
+        DailyStoreResultRecord(
+            source="slorepo",
+            store_id="cosmo_obu",
+            report_date=date(2026, 5, 13),
+            total_diff=2000,
+            avg_diff=200,
+            avg_game=4000,
+            win_rate=0.6,
+            total_units=10,
+            source_url="https://example.com/slorepo",
+            created_at=utc_now_iso(),
+        )
+    )
+    database.upsert_unit_results(
+        [
+            UnitResultRecord(
+                source="minrepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 13),
+                unit_number=str(index),
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=None if index < 8 else 100.0,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/minrepo",
+                created_at=utc_now_iso(),
+            )
+            for index in range(10)
+        ]
+        + [
+            UnitResultRecord(
+                source="slorepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 13),
+                unit_number=str(index),
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=100.0,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/slorepo",
+                created_at=utc_now_iso(),
+            )
+            for index in range(20, 30)
+        ]
+    )
+
+    reports_dir = tmp_path / "reports"
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    monkeypatch.setattr("src.cli.REPORTS_DIR", reports_dir)
+
+    result = cmd_report_tomorrow(Namespace(date="2026-05-15", days=7, source="slorepo"))
+    assert result == 0
+
+    text = (reports_dir / "2026-05-15_tomorrow.md").read_text(encoding="utf-8")
+    assert "- source: slorepo" in text
+    assert "unit_diff_missing_rate: 0.0" in text
+
+
+def test_build_site_can_filter_by_source_and_read_slorepo_status_report(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+
+    database.upsert_daily_store_result(
+        DailyStoreResultRecord(
+            source="slorepo",
+            store_id="cosmo_obu",
+            report_date=date(2026, 5, 13),
+            total_diff=1200,
+            avg_diff=120,
+            avg_game=3200,
+            win_rate=0.55,
+            total_units=10,
+            source_url="https://example.com/slorepo",
+            created_at=utc_now_iso(),
+        )
+    )
+    database.upsert_unit_results(
+        [
+            UnitResultRecord(
+                source="slorepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 13),
+                unit_number=str(index),
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=100.0,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/slorepo",
+                created_at=utc_now_iso(),
+            )
+            for index in range(10)
+        ]
+        + [
+            UnitResultRecord(
+                source="minrepo",
+                store_id="cosmo_obu",
+                report_date=date(2026, 5, 13),
+                unit_number=str(index),
+                machine_name_raw="機種A",
+                machine_name_normalized="機種A",
+                machine_category="other",
+                diff=None,
+                games=1000.0,
+                payout_rate=100.0,
+                bb=None,
+                rb=None,
+                source_url="https://example.com/minrepo",
+                created_at=utc_now_iso(),
+            )
+            for index in range(20, 30)
+        ]
+    )
+
+    reports_dir = tmp_path / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    (reports_dir / "slorepo_coverage_9stores_7days.md").write_text(
+        (
+            "| 店舗ID | fetch | parse | daily_store_results | machine_results | unit_results | "
+            "unit_diff_missing_rate | 台番分析 | 末尾分析 | 並び分析 | 注意点 |\n"
+            "| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |\n"
+            "| `cosmo_obu` | 失敗 | 成功 | 7 | 100 | 1000 | 0.0 | "
+            "台番分析可能 | 台番分析可能 | 台番分析可能 | note |\n"
+        ),
+        encoding="utf-8",
+    )
+
+    public_dir = tmp_path / "public"
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    monkeypatch.setattr("src.cli.REPORTS_DIR", reports_dir)
+    monkeypatch.setattr("src.cli.PUBLIC_DIR", public_dir)
+
+    result = cmd_build_site(Namespace(date="2026-05-15", days=7, source="slorepo"))
+    assert result == 0
+
+    payload = (public_dir / "data" / "latest.json").read_text(encoding="utf-8")
+    assert '"source": "slorepo"' in payload
+    assert '"fetch_status": "失敗"' in payload

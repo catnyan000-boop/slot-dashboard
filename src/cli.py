@@ -839,6 +839,50 @@ def _slorepo_url_from_raw_path(store_id: str, path: Path) -> str:
     return ""
 
 
+def _parse_slorepo_store_raw(
+    *,
+    store_id: str,
+    days: int,
+    parser,
+    database: Database | None = None,
+) -> tuple[int, int, int]:
+    files = _list_recent_slorepo_raw_files(store_id, days)
+    if not files:
+        return 0, 0, 0
+
+    daily_count = 0
+    machine_count = 0
+    unit_count = 0
+    for path in files:
+        if path.name.startswith("store_"):
+            continue
+
+        html = path.read_text(encoding="utf-8")
+        source_url = _slorepo_url_from_raw_path(store_id, path)
+        if path.name.endswith("_day.html"):
+            daily_record, machine_records = parser.parse_detail_page(
+                html=html,
+                store_id=store_id,
+                source_url=source_url,
+            )
+            if database is not None:
+                database.upsert_daily_store_result(daily_record)
+                database.upsert_machine_results(machine_records)
+            daily_count += 1
+            machine_count += len(machine_records)
+        elif "_machine_" in path.name:
+            unit_records = parser.parse_unit_page(
+                html=html,
+                store_id=store_id,
+                source_url=source_url,
+            )
+            if database is not None:
+                database.upsert_unit_results(unit_records)
+            unit_count += len(unit_records)
+
+    return daily_count, machine_count, unit_count
+
+
 def cmd_debug_slorepo(args: argparse.Namespace) -> int:
     from src.collectors.slorepo_collector import SlorepoCollector
 
@@ -947,34 +991,51 @@ def cmd_parse_slorepo_raw(args: argparse.Namespace) -> int:
     total_unit = 0
 
     for store in _resolve_target_stores(args, normalizer):
-        files = _list_recent_slorepo_raw_files(store.store_id, args.days)
-        if not files:
+        daily_count, machine_count, unit_count = _parse_slorepo_store_raw(
+            store_id=store.store_id,
+            days=args.days,
+            parser=parser,
+        )
+        if daily_count == 0 and machine_count == 0 and unit_count == 0:
             print(f"{store.store_id}: no slorepo raw HTML files")
             continue
 
-        daily_count = 0
-        machine_count = 0
-        unit_count = 0
-        for path in files:
-            if path.name.startswith("store_"):
-                continue
-            html = path.read_text(encoding="utf-8")
-            source_url = _slorepo_url_from_raw_path(store.store_id, path)
-            if path.name.endswith("_day.html"):
-                _, machine_records = parser.parse_detail_page(
-                    html=html,
-                    store_id=store.store_id,
-                    source_url=source_url,
-                )
-                daily_count += 1
-                machine_count += len(machine_records)
-            elif "_machine_" in path.name:
-                unit_records = parser.parse_unit_page(
-                    html=html,
-                    store_id=store.store_id,
-                    source_url=source_url,
-                )
-                unit_count += len(unit_records)
+        total_daily += daily_count
+        total_machine += machine_count
+        total_unit += unit_count
+        print(
+            f"{store.store_id}: daily={daily_count} machine={machine_count} unit={unit_count}"
+        )
+
+    print(f"total_daily: {total_daily}")
+    print(f"total_machine: {total_machine}")
+    print(f"total_unit: {total_unit}")
+    return 0
+
+
+def cmd_parse_slorepo(args: argparse.Namespace) -> int:
+    from src.parsers.slorepo_parser import SlorepoParser
+
+    database = _database()
+    database.initialize(SCHEMA_PATH)
+    database.seed_stores(_store_normalizer().catalog)
+
+    normalizer = _store_normalizer()
+    parser = SlorepoParser()
+    total_daily = 0
+    total_machine = 0
+    total_unit = 0
+
+    for store in _resolve_target_stores(args, normalizer):
+        daily_count, machine_count, unit_count = _parse_slorepo_store_raw(
+            store_id=store.store_id,
+            days=args.days,
+            parser=parser,
+            database=database,
+        )
+        if daily_count == 0 and machine_count == 0 and unit_count == 0:
+            print(f"{store.store_id}: no slorepo raw HTML files")
+            continue
 
         total_daily += daily_count
         total_machine += machine_count
@@ -997,6 +1058,7 @@ def cmd_analyze_stores(args: argparse.Namespace) -> int:
         _store_normalizer(),
         target_date=target_date,
         lookback_days=args.days,
+        source=getattr(args, "source", None),
     )
     print(f"analysis run_id: {result['run_id']}")
     for row in result["rows"][:9]:
@@ -1016,6 +1078,7 @@ def cmd_report_tomorrow(args: argparse.Namespace) -> int:
         target_date=target_date,
         lookback_days=args.days,
         output_dir=REPORTS_DIR,
+        source=getattr(args, "source", None),
     )
     print(report_path)
     return 0
@@ -1026,13 +1089,20 @@ def cmd_build_site(args: argparse.Namespace) -> int:
     database.initialize(SCHEMA_PATH)
     database.seed_stores(_store_normalizer().catalog)
     target_date = date.fromisoformat(args.date) if args.date else date.today() + timedelta(days=1)
-    status_overrides = load_validation_statuses(REPORTS_DIR / "unit_coverage_9stores_7days.md")
+    source = getattr(args, "source", None)
+    status_report = (
+        REPORTS_DIR / "slorepo_coverage_9stores_7days.md"
+        if source == "slorepo"
+        else REPORTS_DIR / "unit_coverage_9stores_7days.md"
+    )
+    status_overrides = load_validation_statuses(status_report)
     outputs = build_static_site(
         database=database,
         store_normalizer=_store_normalizer(),
         target_date=target_date,
         lookback_days=args.days,
         output_dir=PUBLIC_DIR,
+        source=source,
         status_overrides=status_overrides,
     )
     for label, path in outputs.items():
@@ -1202,24 +1272,38 @@ def cmd_validate_unit_data(args: argparse.Namespace) -> int:
     return 0
 
 
-def _query_unit_quality(database: Database, store_id: str, days: int) -> dict[str, object]:
+def _query_unit_quality(
+    database: Database,
+    store_id: str,
+    days: int,
+    source: str | None = None,
+) -> dict[str, object]:
     cutoff = _date_cutoff(days).isoformat()
-    unit_df = database.query_dataframe(
-        """
-        SELECT *
-        FROM unit_results
-        WHERE store_id = ?
-          AND report_date >= ?
-        """,
-        [store_id, cutoff],
-    )
+    sql = """
+    SELECT *
+    FROM unit_results
+    WHERE store_id = ?
+      AND report_date >= ?
+    """
+    params: list[str] = [store_id, cutoff]
+    if source:
+        sql += "\n      AND source = ?"
+        params.append(source)
+    unit_df = database.query_dataframe(sql, params)
     return summarize_unit_data_quality(unit_df, store_id)
 
 
-def _print_unit_coverage(store, quality: dict[str, object], days: int) -> None:
+def _print_unit_coverage(
+    store,
+    quality: dict[str, object],
+    days: int,
+    source: str | None = None,
+) -> None:
     print(f"store_id: {store.store_id}")
     print(f"display_name: {store.display_name}")
     print(f"lookback_days: {days}")
+    if source:
+        print(f"source: {source}")
     print(f"unit_diff_missing_rate: {quality['diff_missing_rate']}")
     print(f"unit_results_total: {quality['total_rows']}")
     print(f"diff_null_count: {quality['diff_null_count']}")
@@ -1264,9 +1348,10 @@ def cmd_unit_coverage(args: argparse.Namespace) -> int:
     database.initialize(SCHEMA_PATH)
     normalizer = _store_normalizer()
     stores = _resolve_target_stores(args, normalizer)
+    source = getattr(args, "source", None)
     for index, store in enumerate(stores):
-        quality = _query_unit_quality(database, store.store_id, args.days)
-        _print_unit_coverage(store, quality, args.days)
+        quality = _query_unit_quality(database, store.store_id, args.days, source=source)
+        _print_unit_coverage(store, quality, args.days, source=source)
         if index < len(stores) - 1:
             print("")
     return 0
@@ -1416,6 +1501,15 @@ def build_parser() -> argparse.ArgumentParser:
     parse_slorepo.add_argument("--days", type=int, default=7)
     parse_slorepo.set_defaults(func=cmd_parse_slorepo_raw)
 
+    parse_slorepo_db = subparsers.add_parser(
+        "parse-slorepo",
+        help="Parse saved Slorepo HTML and persist results to DB",
+    )
+    parse_slorepo_db.add_argument("--store")
+    parse_slorepo_db.add_argument("--all", action="store_true")
+    parse_slorepo_db.add_argument("--days", type=int, default=7)
+    parse_slorepo_db.set_defaults(func=cmd_parse_slorepo)
+
     parse = subparsers.add_parser("parse-minrepo", help="Parse saved Minrepo HTML")
     parse.add_argument("--store")
     parse.add_argument("--all", action="store_true")
@@ -1424,16 +1518,19 @@ def build_parser() -> argparse.ArgumentParser:
     analyze = subparsers.add_parser("analyze-stores", help="Analyze stores")
     analyze.add_argument("--days", type=int, default=180)
     analyze.add_argument("--date")
+    analyze.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
     analyze.set_defaults(func=cmd_analyze_stores)
 
     report = subparsers.add_parser("report-tomorrow", help="Generate tomorrow report")
     report.add_argument("--date")
     report.add_argument("--days", type=int, default=180)
+    report.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
     report.set_defaults(func=cmd_report_tomorrow)
 
     build_site = subparsers.add_parser("build-site", help="Build static dashboard site")
     build_site.add_argument("--date")
     build_site.add_argument("--days", type=int, default=7)
+    build_site.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
     build_site.set_defaults(func=cmd_build_site)
 
     db_stats = subparsers.add_parser("db-stats", help="Show DB row counts")
@@ -1473,6 +1570,7 @@ def build_parser() -> argparse.ArgumentParser:
     unit_coverage.add_argument("--store")
     unit_coverage.add_argument("--all", action="store_true")
     unit_coverage.add_argument("--days", type=int, default=7)
+    unit_coverage.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
     unit_coverage.set_defaults(func=cmd_unit_coverage)
 
     list_missing = subparsers.add_parser(

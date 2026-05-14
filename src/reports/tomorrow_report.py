@@ -87,28 +87,37 @@ def _resolved_coverage_window_text(unit_df, target_date: date, lookback_days: in
     return f"{str(report_dates.min())} 〜 {str(report_dates.max())}"
 
 
-def _query_lookback_frames(database, target_date: date, lookback_days: int) -> tuple:
+def _query_lookback_frames(
+    database,
+    target_date: date,
+    lookback_days: int,
+    source: str | None = None,
+) -> tuple:
     start_date = target_date - timedelta(days=lookback_days)
     end_date = target_date
     params = [start_date.isoformat(), end_date.isoformat()]
+    source_clause = ""
+    if source:
+        source_clause = " AND source = ?"
+        params.append(source)
     daily_df = database.query_dataframe(
-        """
+        f"""
         SELECT * FROM daily_store_results
-        WHERE report_date >= ? AND report_date < ?
+        WHERE report_date >= ? AND report_date < ?{source_clause}
         """,
         params,
     )
     machine_df = database.query_dataframe(
-        """
+        f"""
         SELECT * FROM machine_results
-        WHERE report_date >= ? AND report_date < ?
+        WHERE report_date >= ? AND report_date < ?{source_clause}
         """,
         params,
     )
     unit_df = database.query_dataframe(
-        """
+        f"""
         SELECT * FROM unit_results
-        WHERE report_date >= ? AND report_date < ?
+        WHERE report_date >= ? AND report_date < ?{source_clause}
         """,
         params,
     )
@@ -120,15 +129,21 @@ def run_analysis(
     store_normalizer: StoreNormalizer,
     target_date: date,
     lookback_days: int,
+    source: str | None = None,
 ) -> dict:
     stores = store_normalizer.list_stores()
-    daily_df, machine_df, unit_df = _query_lookback_frames(database, target_date, lookback_days)
+    daily_df, machine_df, unit_df = _query_lookback_frames(
+        database,
+        target_date,
+        lookback_days,
+        source=source,
+    )
     scored_stores = score_stores(daily_df, stores, target_date)
     coverage_window = _resolved_coverage_window_text(unit_df, target_date, lookback_days)
 
     run_id = database.create_analysis_run(
         target_date=target_date.isoformat(),
-        memo=f"lookback_days={lookback_days}",
+        memo=f"lookback_days={lookback_days},source={source or 'all'}",
     )
 
     score_records: list[StoreScoreRecord] = []
@@ -206,7 +221,12 @@ def run_analysis(
 
     database.save_store_scores(score_records)
     database.save_target_recommendations(recommendation_records)
-    return {"run_id": run_id, "rows": report_rows, "coverage_window": coverage_window}
+    return {
+        "run_id": run_id,
+        "rows": report_rows,
+        "coverage_window": coverage_window,
+        "source": source or "all",
+    }
 
 
 def generate_tomorrow_report(
@@ -215,10 +235,18 @@ def generate_tomorrow_report(
     target_date: date,
     lookback_days: int,
     output_dir: Path,
+    source: str | None = None,
 ) -> Path:
-    analysis = run_analysis(database, store_normalizer, target_date, lookback_days)
+    analysis = run_analysis(
+        database,
+        store_normalizer,
+        target_date,
+        lookback_days,
+        source=source,
+    )
     rows = analysis["rows"]
     coverage_window = analysis["coverage_window"]
+    source_label = analysis["source"]
 
     ranking_lines = []
     basis_lines = []
@@ -306,6 +334,8 @@ def generate_tomorrow_report(
     markdown = "\n".join(
         [
             f"# {target_date.isoformat()} Tomorrow Report",
+            "",
+            f"- source: {source_label}",
             "",
             "## 1. 明日の狙い店舗ランキング",
             *ranking_lines,

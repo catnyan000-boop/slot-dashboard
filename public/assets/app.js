@@ -156,6 +156,10 @@ function mountDashboard(payload) {
           </div>
           <div class="meta-grid">
             <div class="stat">
+              <div class="stat-label">source</div>
+              <div class="stat-value">${escapeHtml(payload.source || "-")}</div>
+            </div>
+            <div class="stat">
               <div class="stat-label">最終更新日時</div>
               <div class="stat-value">${escapeHtml(payload.generated_at || "-")}</div>
             </div>
