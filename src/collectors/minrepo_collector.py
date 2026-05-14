@@ -282,6 +282,20 @@ class MinrepoCollector(BaseCollector):
             result.debug_saved_files = self._list_debug_saved_files(debug_raw_root, store.store_id)
         return result
 
+    def probe_url(
+        self,
+        url: str,
+        probe_name: str = "",
+        request_mode: str = "session",
+        headers: Optional[dict[str, str]] = None,
+    ) -> FetchDebugEntry:
+        return self._probe_single_request(
+            url=url,
+            probe_name=probe_name,
+            request_mode=request_mode,
+            headers=headers or self._sanitized_headers(dict(self.session.headers)),
+        )
+
     def _extract_report_urls(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
         urls: list[str] = []
@@ -445,6 +459,8 @@ class MinrepoCollector(BaseCollector):
             entry.error_reason = f"HTTP {response.status_code}"
         elif not response.text.strip():
             entry.error_reason = "Empty HTML returned"
+        else:
+            entry.fetch_usable = True
         return entry
 
     def _session_request(self, url: str, headers: dict[str, str]) -> requests.Response:

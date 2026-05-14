@@ -4,6 +4,7 @@ from pathlib import Path
 
 from src.cli import (
     cmd_debug_fetch_minrepo,
+    cmd_debug_minrepo_entrypoints,
     cmd_parse_minrepo,
     cmd_unit_coverage,
     cmd_validate_unit_data,
@@ -247,3 +248,87 @@ def test_debug_fetch_minrepo_prints_failure_details(
     assert "first_failure_stage: tag_page" in captured.out
     assert "status: 403" in captured.out
     assert "fetch_usable: no" in captured.out
+
+
+def test_debug_minrepo_entrypoints_prints_sources_and_summary(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+    database.upsert_source_page(
+        SourcePageRecord(
+            source="minrepo",
+            store_id="cosmo_obu",
+            url="https://min-repo.com/3099785/",
+            report_date=date(2026, 5, 13),
+            raw_path=str(tmp_path / "2026-05-13_detail.html"),
+            fetched_at=utc_now_iso(),
+            status_code=200,
+            content_hash="hash1",
+        )
+    )
+    database.upsert_source_page(
+        SourcePageRecord(
+            source="minrepo",
+            store_id="cosmo_obu",
+            url="https://min-repo.com/3099785/?kishu=all",
+            report_date=date(2026, 5, 13),
+            raw_path=str(tmp_path / "2026-05-13_units.html"),
+            fetched_at=utc_now_iso(),
+            status_code=200,
+            content_hash="hash2",
+        )
+    )
+
+    raw_path = tmp_path / "2026-05-13_units.html"
+    raw_path.write_text(
+        (
+            '<html><body>'
+            '<a href="https://min-repo.com/3099785/">detail</a>'
+            '<a href="https://min-repo.com/3099785/?num=1373">1373</a>'
+            '<a href="https://min-repo.com/category/%e6%84%9b%e7%9f%a5%e7%9c%8c/">pref</a>'
+            '<a href="https://min-repo.com/category/%e6%84%9b%e7%9f%a5%e7%9c%8c/%e5%a4%a7%e5%ba%9c%e5%b8%82/">city</a>'
+            '</body></html>'
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    monkeypatch.setattr("src.cli._list_recent_raw_files", lambda store_id, days: [raw_path])
+    monkeypatch.setattr(
+        MinrepoCollector,
+        "probe_url",
+        lambda self, url, probe_name="", request_mode="session", headers=None: FetchDebugEntry(
+            stage="probe",
+            url=url,
+            probe_name=probe_name,
+            status_code=200,
+            final_url=url,
+            response_size_bytes=123,
+            content_type="text/html; charset=UTF-8",
+            title="ok",
+            first_300_chars="<html>",
+            fetch_usable=False,
+            error_reason="Empty HTML returned",
+        ),
+    )
+
+    result = cmd_debug_minrepo_entrypoints(
+        Namespace(store="cosmo_obu", all=False, days=7, limit=5, sleep=2.0)
+    )
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "db_report_urls:" in captured.out
+    assert "raw_report_urls:" in captured.out
+    assert "detail_refetch_results:" in captured.out
+    assert "units_refetch_results:" in captured.out
+    assert "num_refetch_results:" in captured.out
+    assert "listing_page_results:" in captured.out
+    assert "entrypoint_summary:" in captured.out
+    assert "next_entrypoint:" in captured.out

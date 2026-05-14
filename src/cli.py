@@ -183,6 +183,198 @@ def cmd_debug_fetch_minrepo(args: argparse.Namespace) -> int:
     return 0
 
 
+def _extract_report_id(url: str) -> str:
+    match = re.search(r"/(\d+)/?(?:\?|$)", url)
+    return match.group(1) if match else ""
+
+
+def _extract_numeric_urls_from_html(html: str, pattern: str) -> list[str]:
+    return sorted(set(re.findall(pattern, html)))
+
+
+def _raw_report_urls(files: list[Path], limit: int) -> list[str]:
+    urls: list[str] = []
+    for path in files:
+        html = path.read_text(encoding="utf-8")
+        matches = _extract_numeric_urls_from_html(html, r"https://min-repo\.com/\d+/")
+        for url in matches:
+            if url not in urls:
+                urls.append(url)
+            if len(urls) >= limit:
+                return urls
+    return urls
+
+
+def _raw_num_urls(files: list[Path], limit: int) -> list[str]:
+    urls: list[str] = []
+    for path in files:
+        if not path.name.endswith("_units.html"):
+            continue
+        html = path.read_text(encoding="utf-8")
+        matches = _extract_numeric_urls_from_html(html, r"https://min-repo\.com/\d+/\?num=\d+")
+        for url in matches:
+            if url not in urls:
+                urls.append(url)
+            if len(urls) >= limit:
+                return urls
+    return urls
+
+
+def _listing_urls_from_raw(files: list[Path], db_rows: list[object]) -> list[tuple[str, str]]:
+    prefecture_url = ""
+    city_url = ""
+    latest_report_date = ""
+    for row in db_rows:
+        url = row["url"]
+        if "?kishu=all" in url:
+            continue
+        latest_report_date = row["report_date"] or ""
+        break
+
+    for path in files:
+        html = path.read_text(encoding="utf-8")
+        if not prefecture_url:
+            match = re.search(r"https://min-repo\.com/category/[^\"'\s<>]+/", html)
+            if match:
+                prefecture_url = match.group(0)
+        if not city_url:
+            match = re.search(r"https://min-repo\.com/category/[^\"'\s<>]+/[^\"'\s<>]+/", html)
+            if match:
+                city_url = match.group(0)
+        if prefecture_url and city_url:
+            break
+
+    urls: list[tuple[str, str]] = []
+    if prefecture_url:
+        urls.append(("prefecture_page", prefecture_url))
+    if city_url:
+        urls.append(("city_page", city_url))
+    if latest_report_date:
+        report_date = date.fromisoformat(latest_report_date)
+        urls.append(
+            (
+                "date_archive_page",
+                f"https://min-repo.com/{report_date.year:04d}/{report_date.month:02d}/{report_date.day:02d}/",
+            )
+        )
+    return urls
+
+
+def _print_probe_entry(label: str, entry) -> None:
+    print(f"label: {label}")
+    print(f"url: {entry.url}")
+    print(f"status: {entry.status_code if entry.status_code is not None else 'n/a'}")
+    print(f"final_url: {entry.final_url}")
+    print(f"response_size_bytes: {entry.response_size_bytes}")
+    print(f"content_type: {entry.content_type}")
+    print(f"first_300_chars: {entry.first_300_chars}")
+    print(f"title: {entry.title}")
+    print(f"error_reason: {entry.error_reason}")
+    print(f"fetch_usable: {'yes' if entry.fetch_usable else 'no'}")
+
+
+def cmd_debug_minrepo_entrypoints(args: argparse.Namespace) -> int:
+    from src.collectors.minrepo_collector import MinrepoCollector
+
+    database = _database()
+    normalizer = _store_normalizer()
+    store = _resolve_target_stores(args, normalizer)[0]
+    collector = MinrepoCollector(
+        raw_root=RAW_DIR,
+        base_url="https://min-repo.com",
+        request_delay_seconds=args.sleep,
+    )
+
+    db_rows = database.list_source_pages("minrepo", store_ids=[store.store_id])
+    db_detail_urls: list[str] = []
+    db_units_urls: list[str] = []
+    for row in reversed(db_rows):
+        url = row["url"]
+        if "?kishu=all" in url:
+            if url not in db_units_urls:
+                db_units_urls.append(url)
+        else:
+            if url not in db_detail_urls:
+                db_detail_urls.append(url)
+    db_detail_urls = list(reversed(db_detail_urls))[: args.limit]
+    db_units_urls = list(reversed(db_units_urls))[: args.limit]
+
+    raw_files = list(reversed(_list_recent_raw_files(store.store_id, args.days)))
+    raw_report_urls = _raw_report_urls(raw_files, args.limit)
+    raw_num_urls = _raw_num_urls(raw_files, args.limit)
+    listing_urls = _listing_urls_from_raw(raw_files, list(reversed(db_rows)))
+
+    print(f"store_id: {store.store_id}")
+    print(f"display_name: {store.display_name}")
+    print(f"canonical_name: {store.canonical_name}")
+    print(f"days: {args.days}")
+    print(f"limit: {args.limit}")
+    print("db_report_urls:")
+    for url in db_detail_urls:
+        print(f"- report_id={_extract_report_id(url)} url={url}")
+    print("raw_report_urls:")
+    for url in raw_report_urls:
+        print(f"- report_id={_extract_report_id(url)} url={url}")
+
+    print("detail_refetch_results:")
+    detail_entries = []
+    for index, url in enumerate(db_detail_urls[: args.limit], start=1):
+        entry = collector.probe_url(url)
+        detail_entries.append(entry)
+        print(f"[{index}]")
+        _print_probe_entry(f"detail_report_id_{_extract_report_id(url)}", entry)
+
+    print("units_refetch_results:")
+    units_entries = []
+    for index, url in enumerate(db_units_urls[: args.limit], start=1):
+        entry = collector.probe_url(url)
+        units_entries.append(entry)
+        print(f"[{index}]")
+        _print_probe_entry(f"units_report_id_{_extract_report_id(url)}", entry)
+
+    print("num_refetch_results:")
+    num_entries = []
+    for index, url in enumerate(raw_num_urls[: args.limit], start=1):
+        entry = collector.probe_url(url)
+        num_entries.append(entry)
+        print(f"[{index}]")
+        _print_probe_entry(f"num_report_id_{_extract_report_id(url)}", entry)
+
+    print("listing_page_results:")
+    listing_entries = []
+    for index, (label, url) in enumerate(listing_urls, start=1):
+        entry = collector.probe_url(url, probe_name=label)
+        listing_entries.append(entry)
+        print(f"[{index}]")
+        _print_probe_entry(label, entry)
+
+    detail_usable = any(entry.fetch_usable for entry in detail_entries)
+    units_usable = any(entry.fetch_usable for entry in units_entries)
+    num_usable = any(entry.fetch_usable for entry in num_entries)
+    listing_usable = any(entry.fetch_usable for entry in listing_entries)
+
+    print("entrypoint_summary:")
+    db_entrypoint_status = "usable (historical only)" if db_detail_urls else "unusable"
+    raw_entrypoint_status = "usable (historical only)" if raw_report_urls else "unusable"
+    print(f"- existing_db_report_urls: {db_entrypoint_status}")
+    print(f"- existing_raw_report_urls: {raw_entrypoint_status}")
+    print(f"- live_detail_urls: {'usable' if detail_usable else 'unusable'}")
+    print(f"- live_units_urls: {'usable' if units_usable else 'unusable'}")
+    print(f"- live_num_urls: {'usable' if num_usable else 'unusable'}")
+    print(f"- live_listing_pages: {'usable' if listing_usable else 'unusable'}")
+    next_entrypoint = "none"
+    if detail_usable:
+        next_entrypoint = "known detail URL refresh"
+    elif units_usable:
+        next_entrypoint = "known ?kishu=all refresh"
+    elif listing_usable:
+        next_entrypoint = "prefecture/city/date listing page"
+    elif db_detail_urls or raw_report_urls:
+        next_entrypoint = "existing DB/raw only; no live refresh entrypoint confirmed"
+    print(f"next_entrypoint: {next_entrypoint}")
+    return 0
+
+
 def cmd_parse_minrepo(args: argparse.Namespace) -> int:
     database = _database()
     parser = MinrepoParser()
@@ -600,6 +792,17 @@ def build_parser() -> argparse.ArgumentParser:
     debug_fetch.add_argument("--limit", type=int, default=3)
     debug_fetch.add_argument("--sleep", type=float, default=2.0)
     debug_fetch.set_defaults(func=cmd_debug_fetch_minrepo)
+
+    debug_entrypoints = subparsers.add_parser(
+        "debug-minrepo-entrypoints",
+        help="Debug alternative Minrepo entrypoints using DB and raw history",
+    )
+    debug_entrypoints.add_argument("--store")
+    debug_entrypoints.add_argument("--all", action="store_true")
+    debug_entrypoints.add_argument("--days", type=int, default=7)
+    debug_entrypoints.add_argument("--limit", type=int, default=5)
+    debug_entrypoints.add_argument("--sleep", type=float, default=2.0)
+    debug_entrypoints.set_defaults(func=cmd_debug_minrepo_entrypoints)
 
     parse = subparsers.add_parser("parse-minrepo", help="Parse saved Minrepo HTML")
     parse.add_argument("--store")
