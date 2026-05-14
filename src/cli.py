@@ -1089,13 +1089,21 @@ def cmd_analyze_stores(args: argparse.Namespace) -> int:
 def cmd_report_tomorrow(args: argparse.Namespace) -> int:
     database = _database()
     target_date = date.fromisoformat(args.date) if args.date else date.today() + timedelta(days=1)
+    source = getattr(args, "source", None)
+    status_report = (
+        REPORTS_DIR / "slorepo_coverage_9stores_7days.md"
+        if source == "slorepo"
+        else REPORTS_DIR / "unit_coverage_9stores_7days.md"
+    )
+    status_overrides = load_validation_statuses(status_report)
     report_path = generate_tomorrow_report(
         database=database,
         store_normalizer=_store_normalizer(),
         target_date=target_date,
         lookback_days=args.days,
         output_dir=REPORTS_DIR,
-        source=getattr(args, "source", None),
+        source=source,
+        status_overrides=status_overrides,
     )
     print(report_path)
     return 0

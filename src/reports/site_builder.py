@@ -519,6 +519,17 @@ function badgeClass(status) {
   return "ok";
 }
 
+function fetchBadgeClass(status) {
+  if (status === "partial_success") return "warn";
+  if (status === "failed" || status === "失敗") return "danger";
+  return "ok";
+}
+
+function parseBadgeClass(status) {
+  if (status === "failed" || status === "失敗") return "empty";
+  return "ok";
+}
+
 function renderBadge(text, extraClass = "") {
   return `<span class="badge ${extraClass}">${escapeHtml(text)}</span>`;
 }
@@ -543,11 +554,11 @@ function renderSummaryCard(label, value, note, kind) {
 function cardTemplate(store) {
   const fetchBadge = renderBadge(
     `取得:${store.fetch_status}`,
-    badgeClass(store.fetch_status === "成功" ? "台番分析可能" : "台番分析は信頼不可"),
+    fetchBadgeClass(store.fetch_status),
   );
   const parseBadge = renderBadge(
     `parse:${store.parse_status}`,
-    badgeClass(store.parse_status === "成功" ? "台番分析可能" : "データ不足"),
+    parseBadgeClass(store.parse_status),
   );
   const statusBadge = renderBadge(
     store.pattern_analysis_status,
@@ -583,6 +594,10 @@ function cardTemplate(store) {
           <div class="metric-label">有効分析範囲</div>
           <div class="metric-value">${escapeHtml(store.effective_analyses_text)}</div>
         </div>
+        <div class="metric">
+          <div class="metric-label">failed_machine_pages</div>
+          <div class="metric-value">${escapeHtml(store.failed_machine_pages || 0)}</div>
+        </div>
       </div>
       <div>
         <strong>分析ステータス</strong>
@@ -611,6 +626,7 @@ function tableRowTemplate(store) {
       <td>${escapeHtml(store.display_name)}</td>
       <td>${escapeHtml(store.fetch_status)}</td>
       <td>${escapeHtml(store.parse_status)}</td>
+      <td>${escapeHtml(store.failed_machine_pages || 0)}</td>
       <td>${escapeHtml(store.unit_diff_missing_rate_text)}</td>
       <td>${escapeHtml(store.unit_results_total_text)}</td>
       <td>${escapeHtml(store.diff_null_count_text)}</td>
@@ -781,6 +797,7 @@ function mountDashboard(payload) {
                   <th>店舗</th>
                   <th>取得</th>
                   <th>parse</th>
+                  <th>machine失敗</th>
                   <th>欠損率</th>
                   <th>unit件数</th>
                   <th>diff NULL</th>
@@ -880,16 +897,27 @@ def _make_store_notes(
     fetch_status: str,
     parse_status: str,
     quality: dict[str, object],
+    failed_machine_pages: int = 0,
+    status_note: str = "",
 ) -> list[str]:
     notes: list[str] = []
-    if fetch_status != "成功":
-        notes.append("取得状況は要確認")
-    if parse_status != "成功":
-        notes.append("parse済み unit_results が不足")
+
+    def add_note(note: str) -> None:
+        if note and note not in notes:
+            notes.append(note)
+
+    if fetch_status not in {"成功", "success"}:
+        add_note("取得状況は要確認")
+    if fetch_status == "partial_success":
+        add_note(f"一部機種ページ取得失敗: {failed_machine_pages}件")
+    if parse_status not in {"成功", "success"}:
+        add_note("parse済み unit_results が不足")
     if int(quality["total_rows"]) == 0:
-        notes.append("unit_results サンプルが 0 のためデータ不足")
+        add_note("unit_results サンプルが 0 のためデータ不足")
     if float(quality["diff_missing_rate"]) >= 0.5:
-        notes.append("欠損率50%以上のため台番・末尾・並び分析は信頼不可")
+        add_note("欠損率50%以上のため台番・末尾・並び分析は信頼不可")
+    if status_note:
+        add_note(status_note)
     return notes or ["大きな追加注意なし"]
 
 
@@ -899,6 +927,8 @@ def _store_payload(
     quality: dict[str, object],
     fetch_status: str,
     parse_status: str,
+    failed_machine_pages: int = 0,
+    status_note: str = "",
 ) -> dict[str, object]:
     filter_key = _store_filter_key(str(quality["pattern_analysis_status"]))
     severity_key = _store_severity_key(str(quality["pattern_analysis_status"]))
@@ -910,6 +940,7 @@ def _store_payload(
         "display_name": store.display_name,
         "fetch_status": fetch_status,
         "parse_status": parse_status,
+        "failed_machine_pages": failed_machine_pages,
         "unit_diff_missing_rate": quality["diff_missing_rate"],
         "unit_diff_missing_rate_text": (
             "データ不足"
@@ -934,6 +965,8 @@ def _store_payload(
             fetch_status=fetch_status,
             parse_status=parse_status,
             quality=quality,
+            failed_machine_pages=failed_machine_pages,
+            status_note=status_note,
         ),
         "filter_key": filter_key,
         "severity_key": severity_key,
@@ -958,6 +991,10 @@ def load_validation_statuses(report_path: Path) -> dict[str, dict[str, str]]:
                     "fetch_status": columns[1],
                     "parse_status": columns[2],
                 }
+                if len(columns) >= 4:
+                    statuses[store_id]["failed_machine_pages"] = columns[3]
+                if columns:
+                    statuses[store_id]["status_note"] = columns[-1]
             continue
         if line.startswith("## "):
             current_store = line.removeprefix("## ").strip()
@@ -969,6 +1006,12 @@ def load_validation_statuses(report_path: Path) -> dict[str, dict[str, str]]:
             statuses[current_store]["fetch_status"] = line.removeprefix("- 取得: ").strip()
         if line.startswith("- parse: "):
             statuses[current_store]["parse_status"] = line.removeprefix("- parse: ").strip()
+        if line.startswith("- failed_machine_pages: "):
+            statuses[current_store]["failed_machine_pages"] = (
+                line.removeprefix("- failed_machine_pages: ").strip()
+            )
+        if line.startswith("- 注意点: "):
+            statuses[current_store]["status_note"] = line.removeprefix("- 注意点: ").strip()
     return statuses
 
 
@@ -1002,12 +1045,15 @@ def _build_summary_payload(
             store.store_id,
             (status_overrides or {}).get(store.display_name, {}),
         )
+        failed_machine_pages = int(override.get("failed_machine_pages", "0") or "0")
         stores_payload.append(
             _store_payload(
                 store=store,
                 quality=quality,
                 fetch_status=override.get("fetch_status", fetch_status),
                 parse_status=override.get("parse_status", parse_status),
+                failed_machine_pages=failed_machine_pages,
+                status_note=override.get("status_note", ""),
             )
         )
 

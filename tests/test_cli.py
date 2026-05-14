@@ -926,6 +926,18 @@ def test_report_tomorrow_can_filter_by_source(
     )
 
     reports_dir = tmp_path / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    (reports_dir / "slorepo_coverage_9stores_7days.md").write_text(
+        (
+            "| 店舗ID | fetch | parse | failed_machine_pages | daily_store_results | "
+            "machine_results | unit_results | unit_diff_missing_rate | 台番分析 | 末尾分析 | "
+            "並び分析 | 注意点 |\n"
+            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |\n"
+            "| `cosmo_obu` | partial_success | success | 1 | 7 | 100 | 1000 | 0.0 | "
+            "台番分析可能 | 台番分析可能 | 台番分析可能 | 一部機種ページ取得失敗 |\n"
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setattr("src.cli._database", lambda: database)
     monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
     monkeypatch.setattr("src.cli.REPORTS_DIR", reports_dir)
@@ -936,6 +948,8 @@ def test_report_tomorrow_can_filter_by_source(
     text = (reports_dir / "2026-05-15_tomorrow.md").read_text(encoding="utf-8")
     assert "- source: slorepo" in text
     assert "unit_diff_missing_rate: 0.0" in text
+    assert "fetch_status: partial_success" in text
+    assert "failed_machine_pages: 1" in text
 
 
 def test_build_site_can_filter_by_source_and_read_slorepo_status_report(
@@ -1006,10 +1020,11 @@ def test_build_site_can_filter_by_source_and_read_slorepo_status_report(
     reports_dir.mkdir(parents=True, exist_ok=True)
     (reports_dir / "slorepo_coverage_9stores_7days.md").write_text(
         (
-            "| 店舗ID | fetch | parse | daily_store_results | machine_results | unit_results | "
-            "unit_diff_missing_rate | 台番分析 | 末尾分析 | 並び分析 | 注意点 |\n"
-            "| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |\n"
-            "| `cosmo_obu` | 失敗 | 成功 | 7 | 100 | 1000 | 0.0 | "
+            "| 店舗ID | fetch | parse | failed_machine_pages | daily_store_results | "
+            "machine_results | unit_results | unit_diff_missing_rate | 台番分析 | 末尾分析 | "
+            "並び分析 | 注意点 |\n"
+            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |\n"
+            "| `cosmo_obu` | partial_success | success | 2 | 7 | 100 | 1000 | 0.0 | "
             "台番分析可能 | 台番分析可能 | 台番分析可能 | note |\n"
         ),
         encoding="utf-8",
@@ -1026,4 +1041,5 @@ def test_build_site_can_filter_by_source_and_read_slorepo_status_report(
 
     payload = (public_dir / "data" / "latest.json").read_text(encoding="utf-8")
     assert '"source": "slorepo"' in payload
-    assert '"fetch_status": "失敗"' in payload
+    assert '"fetch_status": "partial_success"' in payload
+    assert '"failed_machine_pages": 2' in payload

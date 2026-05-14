@@ -22,6 +22,17 @@ function badgeClass(status) {
   return "ok";
 }
 
+function fetchBadgeClass(status) {
+  if (status === "partial_success") return "warn";
+  if (status === "failed" || status === "失敗") return "danger";
+  return "ok";
+}
+
+function parseBadgeClass(status) {
+  if (status === "failed" || status === "失敗") return "empty";
+  return "ok";
+}
+
 function renderBadge(text, extraClass = "") {
   return `<span class="badge ${extraClass}">${escapeHtml(text)}</span>`;
 }
@@ -46,11 +57,11 @@ function renderSummaryCard(label, value, note, kind) {
 function cardTemplate(store) {
   const fetchBadge = renderBadge(
     `取得:${store.fetch_status}`,
-    badgeClass(store.fetch_status === "成功" ? "台番分析可能" : "台番分析は信頼不可"),
+    fetchBadgeClass(store.fetch_status),
   );
   const parseBadge = renderBadge(
     `parse:${store.parse_status}`,
-    badgeClass(store.parse_status === "成功" ? "台番分析可能" : "データ不足"),
+    parseBadgeClass(store.parse_status),
   );
   const statusBadge = renderBadge(
     store.pattern_analysis_status,
@@ -86,6 +97,10 @@ function cardTemplate(store) {
           <div class="metric-label">有効分析範囲</div>
           <div class="metric-value">${escapeHtml(store.effective_analyses_text)}</div>
         </div>
+        <div class="metric">
+          <div class="metric-label">failed_machine_pages</div>
+          <div class="metric-value">${escapeHtml(store.failed_machine_pages || 0)}</div>
+        </div>
       </div>
       <div>
         <strong>分析ステータス</strong>
@@ -114,6 +129,7 @@ function tableRowTemplate(store) {
       <td>${escapeHtml(store.display_name)}</td>
       <td>${escapeHtml(store.fetch_status)}</td>
       <td>${escapeHtml(store.parse_status)}</td>
+      <td>${escapeHtml(store.failed_machine_pages || 0)}</td>
       <td>${escapeHtml(store.unit_diff_missing_rate_text)}</td>
       <td>${escapeHtml(store.unit_results_total_text)}</td>
       <td>${escapeHtml(store.diff_null_count_text)}</td>
@@ -284,6 +300,7 @@ function mountDashboard(payload) {
                   <th>店舗</th>
                   <th>取得</th>
                   <th>parse</th>
+                  <th>machine失敗</th>
                   <th>欠損率</th>
                   <th>unit件数</th>
                   <th>diff NULL</th>

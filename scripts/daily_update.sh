@@ -41,24 +41,35 @@ while IFS=$'\t' read -r store_id display_name; do
   raw_count=0
   fetch_status=""
   fetch_note=""
+  failed_machine_pages="0"
   if [ -d "$raw_dir" ]; then
     raw_count="$(find "$raw_dir" -maxdepth 1 -type f | wc -l | tr -d ' ')"
   fi
 
   if python3 -m src.cli fetch-slorepo --store "$store_id" --days 7 --sleep 2.0 >"$log_path" 2>&1; then
-    fetch_status="成功"
-    fetch_note="最新取得に成功"
+    summary_line="$(grep "^${store_id}: status=" "$log_path" | tail -n 1 || true)"
+    if [ -n "$summary_line" ]; then
+      fetch_status="$(printf '%s\n' "$summary_line" | sed -E 's/.*status=([^ ]+).*/\1/')"
+      failed_machine_pages="$(printf '%s\n' "$summary_line" | sed -E 's/.*failed_machine_pages=([0-9]+).*/\1/')"
+    else
+      fetch_status="success"
+    fi
+    if [ "$fetch_status" = "partial_success" ]; then
+      fetch_note="一部機種ページ取得失敗: ${failed_machine_pages}件"
+    else
+      fetch_note="最新取得に成功"
+    fi
   else
     if [ "$raw_count" -gt 0 ]; then
-      fetch_status="失敗（前回データ使用）"
+      fetch_status="failed"
       fetch_note="fetch失敗のため既存rawを継続利用"
     else
-      fetch_status="失敗"
+      fetch_status="failed"
       fetch_note="fetch失敗で利用可能なrawなし"
     fi
   fi
 
-  printf '%s\t%s\t%s\t%s\n' "$store_id" "$display_name" "$fetch_status" "$fetch_note" >>"$FETCH_STATUS_TSV"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$store_id" "$display_name" "$fetch_status" "$failed_machine_pages" "$fetch_note" >>"$FETCH_STATUS_TSV"
   echo "${store_id}: ${fetch_status}"
 done <"$STORES_TSV"
 
@@ -90,12 +101,12 @@ output_path = Path(sys.argv[1])
 status_tsv_path = Path(sys.argv[2])
 source = sys.argv[3]
 database = Database(DB_PATH)
-stores: list[tuple[str, str, str, str]] = []
+stores: list[tuple[str, str, str, int, str]] = []
 for line in status_tsv_path.read_text(encoding="utf-8").splitlines():
     if not line.strip():
         continue
-    store_id, display_name, fetch_status, fetch_note = line.split("\t", 3)
-    stores.append((store_id, display_name, fetch_status, fetch_note))
+    store_id, display_name, fetch_status, failed_machine_pages, fetch_note = line.split("\t", 4)
+    stores.append((store_id, display_name, fetch_status, int(failed_machine_pages), fetch_note))
 
 cutoff = (date.today()).fromordinal(date.today().toordinal() - 7).isoformat()
 today_text = date.today().isoformat()
@@ -108,7 +119,7 @@ lines = [
     "",
 ]
 
-for store_id, display_name, fetch_status, fetch_note in stores:
+for store_id, display_name, fetch_status, failed_machine_pages, fetch_note in stores:
     unit_df = database.query_dataframe(
         "SELECT * FROM unit_results WHERE source = ? AND store_id = ? AND report_date >= ?",
         [source, store_id, cutoff],
@@ -142,6 +153,7 @@ for store_id, display_name, fetch_status, fetch_note in stores:
             "",
             f"- 取得: {fetch_status}",
             f"- parse: {parse_status}",
+            f"- failed_machine_pages: {failed_machine_pages}",
             f"- unit_results_total: {quality['total_rows']}",
             f"- diff_null_count: {quality['diff_null_count']}",
             f"- unit_diff_missing_rate: {quality['diff_missing_rate']}",

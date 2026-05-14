@@ -23,8 +23,21 @@ def _quality_section_lines(row: dict[str, object]) -> list[str]:
     quality = row["unit_quality"]
     display_name = row["display_name"]
     total_rows = int(quality["total_rows"])
+    fetch_status = str(row.get("fetch_status", "不明"))
+    parse_status = str(row.get("parse_status", "不明"))
+    failed_machine_pages = int(row.get("failed_machine_pages", 0) or 0)
+    status_note = str(row.get("status_note", "") or "")
 
     lines = [f"### {display_name}"]
+    lines.extend(
+        [
+            f"- fetch_status: {fetch_status}",
+            f"- parse_status: {parse_status}",
+            f"- failed_machine_pages: {failed_machine_pages}",
+        ]
+    )
+    if status_note:
+        lines.append(f"- 注意点: {status_note}")
     if total_rows == 0:
         lines.extend(
             [
@@ -236,6 +249,7 @@ def generate_tomorrow_report(
     lookback_days: int,
     output_dir: Path,
     source: str | None = None,
+    status_overrides: dict[str, dict[str, str]] | None = None,
 ) -> Path:
     analysis = run_analysis(
         database,
@@ -311,6 +325,24 @@ def generate_tomorrow_report(
         alternative_lines.append(
             f"- {row['display_name']}: score {row['score']} / 信頼度 {row['confidence']}"
         )
+    overrides = status_overrides or {}
+    for row in rows:
+        override = overrides.get(row["store_id"], overrides.get(row["display_name"], {}))
+        row["fetch_status"] = override.get(
+            "fetch_status",
+            (
+                "成功"
+                if row["sample_size"] > 0 or int(row["unit_quality"]["total_rows"]) > 0
+                else "失敗"
+            ),
+        )
+        row["parse_status"] = override.get(
+            "parse_status",
+            "成功" if int(row["unit_quality"]["total_rows"]) > 0 else "失敗",
+        )
+        row["failed_machine_pages"] = int(override.get("failed_machine_pages", "0") or "0")
+        row["status_note"] = override.get("status_note", "")
+
     for row in rows:
         if row["confidence"] == "D":
             skip_lines.append(
@@ -321,6 +353,9 @@ def generate_tomorrow_report(
         )
         note_lines.append(
             f"- {row['display_name']}: "
+            f"取得 {row['fetch_status']} / "
+            f"parse {row['parse_status']} / "
+            f"machine失敗 {row['failed_machine_pages']}件 / "
             f"直近傾向 {row['reason'].get('recent_trend', 0)} / "
             f"標準偏差 {row['reason'].get('volatility', 0)} / "
             f"平均差枚 {row['reason'].get('avg_diff', 0)} / "
