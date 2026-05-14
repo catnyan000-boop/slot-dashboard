@@ -23,6 +23,7 @@ from src.reports.tomorrow_report import generate_tomorrow_report, run_analysis
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
+DEBUG_RAW_DIR = DATA_DIR / "debug_raw"
 DB_PATH = DATA_DIR / "slot.db"
 SCHEMA_PATH = PROJECT_ROOT / "sql" / "schema.sql"
 STORES_PATH = PROJECT_ROOT / "stores.yaml"
@@ -106,6 +107,79 @@ def cmd_fetch_minrepo(args: argparse.Namespace) -> int:
         total_pages += len(pages)
         print(f"{store.store_id}: fetched {len(pages)} pages")
     print(f"total fetched pages: {total_pages}")
+    return 0
+
+
+def cmd_debug_fetch_minrepo(args: argparse.Namespace) -> int:
+    from src.collectors.minrepo_collector import MinrepoCollector
+
+    normalizer = _store_normalizer()
+    store = _resolve_target_stores(args, normalizer)[0]
+    collector = MinrepoCollector(
+        raw_root=RAW_DIR,
+        base_url="https://min-repo.com",
+        request_delay_seconds=args.sleep,
+    )
+    result = collector.debug_fetch_store_history(
+        store=store,
+        days=args.days,
+        limit=args.limit,
+        debug_raw_root=DEBUG_RAW_DIR,
+    )
+
+    print(f"store_id: {result.store_id}")
+    print(f"display_name: {result.store_display_name}")
+    print(f"canonical_name: {result.canonical_name}")
+    print(f"days: {args.days}")
+    print(f"limit: {args.limit}")
+    print(f"user_agent: {result.user_agent}")
+    print(f"request_delay_seconds: {result.request_delay_seconds}")
+    print(f"tag_base_url: {result.tag_base_url}")
+    print(f"separate_store_page_requested: {result.separate_store_page_requested}")
+    for index, entry in enumerate(result.tag_probe_entries, start=1):
+        print("")
+        print(f"[probe {index}] probe_name: {entry.probe_name}")
+        print(f"request_mode: {entry.request_mode}")
+        print(f"request_headers: {json.dumps(entry.request_headers, ensure_ascii=False)}")
+        print(f"url: {entry.url}")
+        print(f"status: {entry.status_code if entry.status_code is not None else 'n/a'}")
+        print(f"final_url: {entry.final_url}")
+        print(f"redirect: {'yes' if entry.redirected else 'no'}")
+        print(f"content_type: {entry.content_type}")
+        print(f"response_size_bytes: {entry.response_size_bytes}")
+        print(f"first_300_chars: {entry.first_300_chars}")
+        print(f"title: {entry.title}")
+        print(f"error_reason: {entry.error_reason}")
+    print(f"existing_raw_recent_count: {len(result.existing_raw_files)}")
+    for path in result.existing_raw_files:
+        print(f"existing_raw_recent: {path}")
+    print(f"debug_saved_count: {len(result.debug_saved_files)}")
+    for path in result.debug_saved_files:
+        print(f"debug_saved: {path}")
+    if result.first_failure_stage:
+        print(f"first_failure_stage: {result.first_failure_stage}")
+        print(f"first_failure_reason: {result.first_failure_reason}")
+    else:
+        print("first_failure_stage: none")
+        print("first_failure_reason: none")
+
+    for index, entry in enumerate(result.entries, start=1):
+        print("")
+        print(f"[{index}] stage: {entry.stage}")
+        print(f"url: {entry.url}")
+        print(f"status: {entry.status_code if entry.status_code is not None else 'n/a'}")
+        print(f"final_url: {entry.final_url}")
+        print(f"redirect: {'yes' if entry.redirected else 'no'}")
+        print(f"content_type: {entry.content_type}")
+        print(f"response_size_bytes: {entry.response_size_bytes}")
+        print(f"title: {entry.title}")
+        print(f"h1: {entry.h1}")
+        print(f"first_300_chars: {entry.first_300_chars}")
+        print(f"empty_html_reason: {entry.empty_html_reason}")
+        print(f"expected_content_status: {entry.expected_content_status}")
+        print(f"error_reason: {entry.error_reason}")
+        print(f"saved_raw_path: {entry.saved_raw_path}")
+        print(f"fetch_usable: {'yes' if entry.fetch_usable else 'no'}")
     return 0
 
 
@@ -515,6 +589,17 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--all", action="store_true")
     fetch.add_argument("--days", type=int, default=180)
     fetch.set_defaults(func=cmd_fetch_minrepo)
+
+    debug_fetch = subparsers.add_parser(
+        "debug-fetch-minrepo",
+        help="Debug Minrepo fetch flow and raw HTML usability",
+    )
+    debug_fetch.add_argument("--store")
+    debug_fetch.add_argument("--all", action="store_true")
+    debug_fetch.add_argument("--days", type=int, default=7)
+    debug_fetch.add_argument("--limit", type=int, default=3)
+    debug_fetch.add_argument("--sleep", type=float, default=2.0)
+    debug_fetch.set_defaults(func=cmd_debug_fetch_minrepo)
 
     parse = subparsers.add_parser("parse-minrepo", help="Parse saved Minrepo HTML")
     parse.add_argument("--store")

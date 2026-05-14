@@ -2,9 +2,18 @@ from argparse import Namespace
 from datetime import date
 from pathlib import Path
 
-from src.cli import cmd_parse_minrepo, cmd_unit_coverage, cmd_validate_unit_data
+from src.cli import (
+    cmd_debug_fetch_minrepo,
+    cmd_parse_minrepo,
+    cmd_unit_coverage,
+    cmd_validate_unit_data,
+)
 from src.collectors.base_collector import CollectorError
-from src.collectors.minrepo_collector import MinrepoCollector
+from src.collectors.minrepo_collector import (
+    FetchDebugEntry,
+    MinrepoCollector,
+    StoreFetchDebugResult,
+)
 from src.db.database import Database, utc_now_iso
 from src.db.models import SourcePageRecord, UnitResultRecord
 from src.normalizers.store_normalizer import StoreNormalizer
@@ -162,3 +171,79 @@ def test_unit_coverage_supports_all_stores(
     assert "store_id: kyoraku_tokai" in captured.out
     assert "display_name: コスモジャパン大府" in captured.out
     assert "display_name: KYORAKU東海" in captured.out
+
+
+def test_debug_fetch_minrepo_prints_failure_details(
+    monkeypatch,
+    capsys,
+) -> None:
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+
+    debug_result = StoreFetchDebugResult(
+        store_id="cosmo_obu",
+        store_display_name="コスモジャパン大府",
+        canonical_name="コスモジャパン大府店",
+        tag_base_url="https://min-repo.com/tag/%E3%82%B3%E3%82%B9%E3%83%A2/",
+        user_agent="slot-store-analyzer/0.1 (+respectful public-data collector)",
+        request_delay_seconds=2.0,
+        existing_raw_files=["data/raw/minrepo/cosmo_obu/2026-05-13_detail.html"],
+        debug_saved_files=["data/debug_raw/minrepo/cosmo_obu/tag_page_1.html"],
+        tag_probe_entries=[
+            FetchDebugEntry(
+                stage="tag_probe",
+                url="https://min-repo.com/tag/%E3%82%B3%E3%82%B9%E3%83%A2/",
+                probe_name="current_session",
+                request_mode="session",
+                request_headers={"User-Agent": "slot-store-analyzer/0.1"},
+                status_code=200,
+                final_url="https://min-repo.com/tag/%E3%82%B3%E3%82%B9%E3%83%A2/",
+                redirected=False,
+                content_type="text/html; charset=UTF-8",
+                response_size_bytes=0,
+                first_300_chars="",
+                title="",
+                error_reason="Empty HTML returned",
+            )
+        ],
+        entries=[
+            FetchDebugEntry(
+                stage="tag_page",
+                url="https://min-repo.com/tag/%E3%82%B3%E3%82%B9%E3%83%A2/",
+                status_code=403,
+                final_url="https://min-repo.com/tag/%E3%82%B3%E3%82%B9%E3%83%A2/",
+                redirected=False,
+                content_type="text/html; charset=UTF-8",
+                response_size_bytes=1234,
+                title="Forbidden",
+                h1="Access denied",
+                first_300_chars="<html>forbidden</html>",
+                empty_html_reason="non-empty HTML",
+                expected_content_status="report detail links not found",
+                error_reason="HTTP 403",
+                saved_raw_path="data/debug_raw/minrepo/cosmo_obu/tag_page_1.html",
+                fetch_usable=False,
+            )
+        ],
+        first_failure_stage="tag_page",
+        first_failure_reason="HTTP 403",
+        separate_store_page_requested=False,
+    )
+
+    monkeypatch.setattr(
+        MinrepoCollector,
+        "debug_fetch_store_history",
+        lambda self, store, days, limit, debug_raw_root: debug_result,
+    )
+
+    result = cmd_debug_fetch_minrepo(
+        Namespace(store="cosmo_obu", all=False, days=7, limit=3, sleep=2.0)
+    )
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "canonical_name: コスモジャパン大府店" in captured.out
+    assert "probe_name: current_session" in captured.out
+    assert "first_failure_stage: tag_page" in captured.out
+    assert "status: 403" in captured.out
+    assert "fetch_usable: no" in captured.out
