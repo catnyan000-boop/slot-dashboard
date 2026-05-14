@@ -19,6 +19,7 @@ PY
 )"
 
 export PYTHONWARNINGS="ignore:urllib3 v2 only supports OpenSSL 1.1.1+"
+SOURCE="slorepo"
 
 STORES_TSV="$TMP_DIR/stores.tsv"
 python3 - >"$STORES_TSV" <<'PY'
@@ -32,11 +33,11 @@ PY
 
 FETCH_STATUS_TSV="$TMP_DIR/fetch_statuses.tsv"
 
-echo "== fetch-minrepo (per store keep-going mode, days=7) =="
+echo "== fetch-slorepo (per store keep-going mode, days=7, source=${SOURCE}) =="
 >"$FETCH_STATUS_TSV"
 while IFS=$'\t' read -r store_id display_name; do
   log_path="$TMP_DIR/fetch_${store_id}.log"
-  raw_dir="$ROOT_DIR/data/raw/minrepo/$store_id"
+  raw_dir="$ROOT_DIR/data/raw/slorepo/$store_id"
   raw_count=0
   fetch_status=""
   fetch_note=""
@@ -44,7 +45,7 @@ while IFS=$'\t' read -r store_id display_name; do
     raw_count="$(find "$raw_dir" -maxdepth 1 -type f | wc -l | tr -d ' ')"
   fi
 
-  if python3 -m src.cli fetch-minrepo --store "$store_id" --days 7 >"$log_path" 2>&1; then
+  if python3 -m src.cli fetch-slorepo --store "$store_id" --days 7 --sleep 2.0 >"$log_path" 2>&1; then
     fetch_status="成功"
     fetch_note="最新取得に成功"
   else
@@ -62,21 +63,21 @@ while IFS=$'\t' read -r store_id display_name; do
 done <"$STORES_TSV"
 
 echo ""
-echo "== parse-minrepo --all =="
+echo "== parse-slorepo --all (source=${SOURCE}) =="
 PARSE_ALL_LOG="$TMP_DIR/parse_all.log"
 PARSE_ALL_STATUS="成功"
-if ! python3 -m src.cli parse-minrepo --all >"$PARSE_ALL_LOG" 2>&1; then
+if ! python3 -m src.cli parse-slorepo --all --days 7 >"$PARSE_ALL_LOG" 2>&1; then
   PARSE_ALL_STATUS="失敗"
 fi
 echo "parse_all: $PARSE_ALL_STATUS"
 
 echo ""
-echo "== unit-coverage --all --days 7 =="
-python3 -m src.cli unit-coverage --all --days 7 >"$TMP_DIR/unit_coverage_all_7days.txt" 2>&1 || true
+echo "== unit-coverage --all --days 7 --source ${SOURCE} =="
+python3 -m src.cli unit-coverage --all --days 7 --source "$SOURCE" >"$TMP_DIR/unit_coverage_all_7days.txt" 2>&1 || true
 
 echo ""
 echo "== summarize validation report =="
-python3 - "$REPORTS_DIR/unit_coverage_9stores_7days.md" "$FETCH_STATUS_TSV" <<'PY'
+python3 - "$REPORTS_DIR/slorepo_coverage_9stores_7days.md" "$FETCH_STATUS_TSV" "$SOURCE" <<'PY'
 from datetime import date
 from pathlib import Path
 import sys
@@ -87,6 +88,7 @@ from src.db.database import Database
 
 output_path = Path(sys.argv[1])
 status_tsv_path = Path(sys.argv[2])
+source = sys.argv[3]
 database = Database(DB_PATH)
 stores: list[tuple[str, str, str, str]] = []
 for line in status_tsv_path.read_text(encoding="utf-8").splitlines():
@@ -98,17 +100,18 @@ for line in status_tsv_path.read_text(encoding="utf-8").splitlines():
 cutoff = (date.today()).fromordinal(date.today().toordinal() - 7).isoformat()
 today_text = date.today().isoformat()
 lines = [
-    "# Unit Coverage Validation (9 stores / 7 days)",
+    "# slorepo coverage 9 stores / 7 days",
     "",
     f"最終更新日: {today_text}",
+    f"source: {source}",
     "対象期間は直近7日です。",
     "",
 ]
 
 for store_id, display_name, fetch_status, fetch_note in stores:
     unit_df = database.query_dataframe(
-        "SELECT * FROM unit_results WHERE store_id = ? AND report_date >= ?",
-        [store_id, cutoff],
+        "SELECT * FROM unit_results WHERE source = ? AND store_id = ? AND report_date >= ?",
+        [source, store_id, cutoff],
     )
     quality = summarize_unit_data_quality(unit_df, store_id)
     parse_status = "成功" if int(quality["total_rows"]) > 0 else "失敗"
@@ -157,14 +160,14 @@ print(output_path)
 PY
 
 echo ""
-echo "== report-tomorrow --date ${TOMORROW} --days 7 =="
-if ! python3 -m src.cli report-tomorrow --date "$TOMORROW" --days 7 >"$TMP_DIR/report_tomorrow.log" 2>&1; then
+echo "== report-tomorrow --date ${TOMORROW} --days 7 --source ${SOURCE} =="
+if ! python3 -m src.cli report-tomorrow --date "$TOMORROW" --days 7 --source "$SOURCE" >"$TMP_DIR/report_tomorrow.log" 2>&1; then
   cat "$TMP_DIR/report_tomorrow.log"
 fi
 
 echo ""
-echo "== build-site --date ${TOMORROW} --days 7 =="
-if ! python3 -m src.cli build-site --date "$TOMORROW" --days 7 >"$TMP_DIR/build_site.log" 2>&1; then
+echo "== build-site --date ${TOMORROW} --days 7 --source ${SOURCE} =="
+if ! python3 -m src.cli build-site --date "$TOMORROW" --days 7 --source "$SOURCE" >"$TMP_DIR/build_site.log" 2>&1; then
   cat "$TMP_DIR/build_site.log"
   exit 1
 fi
