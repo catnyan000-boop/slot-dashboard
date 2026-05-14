@@ -51,10 +51,30 @@ def _raw_store_dir(store_id: str) -> Path:
     return RAW_DIR / "minrepo" / store_id
 
 
+def _slorepo_raw_store_dir(store_id: str) -> Path:
+    return RAW_DIR / "slorepo" / store_id
+
+
 def _list_recent_raw_files(store_id: str, days: int) -> list[Path]:
     cutoff = _date_cutoff(days)
     files: list[Path] = []
     for path in sorted(_raw_store_dir(store_id).glob("*.html")):
+        try:
+            report_date = date.fromisoformat(path.name[:10])
+        except ValueError:
+            continue
+        if report_date >= cutoff:
+            files.append(path)
+    return files
+
+
+def _list_recent_slorepo_raw_files(store_id: str, days: int) -> list[Path]:
+    cutoff = _date_cutoff(days)
+    files: list[Path] = []
+    for path in sorted(_slorepo_raw_store_dir(store_id).glob("*.html")):
+        if path.name.startswith("store_"):
+            files.append(path)
+            continue
         try:
             report_date = date.fromisoformat(path.name[:10])
         except ValueError:
@@ -790,6 +810,185 @@ def cmd_parse_minrepo(args: argparse.Namespace) -> int:
     return 0
 
 
+def _slorepo_store_slug(store_id: str) -> str:
+    directory = _slorepo_raw_store_dir(store_id)
+    for path in sorted(directory.glob("store_*.html")):
+        slug = path.stem.removeprefix("store_")
+        if slug:
+            return slug
+    return ""
+
+
+def _slorepo_url_from_raw_path(store_id: str, path: Path) -> str:
+    store_slug = _slorepo_store_slug(store_id) or "unknown"
+    if path.name.startswith("store_"):
+        return f"https://www.slorepo.com/hole/{store_slug}/"
+    if path.name.endswith("_day.html"):
+        report_date = date.fromisoformat(path.name[:10])
+        return (
+            f"https://www.slorepo.com/hole/{store_slug}/"
+            f"{report_date.strftime('%Y%m%d')}/"
+        )
+    if "_machine_" in path.name:
+        report_date = date.fromisoformat(path.name[:10])
+        machine_slug = path.stem.split("_machine_", 1)[1]
+        return (
+            f"https://www.slorepo.com/hole/{store_slug}/"
+            f"{report_date.strftime('%Y%m%d')}/kishu/?kishu={machine_slug}"
+        )
+    return ""
+
+
+def cmd_debug_slorepo(args: argparse.Namespace) -> int:
+    from src.collectors.slorepo_collector import SlorepoCollector
+
+    normalizer = _store_normalizer()
+    store = _resolve_target_stores(args, normalizer)[0]
+    collector = SlorepoCollector(
+        raw_root=RAW_DIR,
+        request_delay_seconds=args.sleep,
+    )
+
+    print(f"store_id: {store.store_id}")
+    print(f"display_name: {store.display_name}")
+    print(f"canonical_name: {store.canonical_name}")
+    print(f"days: {args.days}")
+    print(f"limit: {args.limit}")
+
+    store_page = collector.fetch_store_page(store)
+    store_status = (
+        store_page.record.status_code
+        if store_page.record.status_code is not None
+        else "cached"
+    )
+    print("store_page:")
+    print(f"- url: {store_page.record.url}")
+    print(f"- status: {store_status}")
+    print(f"- raw_path: {store_page.record.raw_path}")
+
+    day_pages = collector.fetch_day_pages(store=store, days=args.days, store_page=store_page)
+    print(f"day_pages_count: {len(day_pages)}")
+    for index, page in enumerate(day_pages[: args.limit], start=1):
+        status = page.record.status_code if page.record.status_code is not None else "cached"
+        daily_record, machine_records = collector.parser.parse_detail_page(
+            html=page.raw_html,
+            store_id=store.store_id,
+            source_url=page.record.url,
+        )
+        machine_urls = collector.extract_machine_page_urls(
+            page.raw_html,
+            page.record.url,
+            limit=args.limit,
+        )
+        print(f"day_page[{index}]:")
+        print(f"- url: {page.record.url}")
+        print(f"- status: {status}")
+        print(f"- raw_path: {page.record.raw_path}")
+        print(f"- report_date: {daily_record.report_date.isoformat()}")
+        print(f"- machine_url_count: {len(machine_urls)}")
+        print(f"- machine_record_count: {len(machine_records)}")
+
+    machine_pages = collector.fetch_machine_pages(
+        store=store,
+        day_pages=day_pages[: args.limit],
+        max_pages_per_day=args.limit,
+    )
+    print(f"machine_pages_count: {len(machine_pages)}")
+    for index, page in enumerate(machine_pages[: args.limit], start=1):
+        status = page.record.status_code if page.record.status_code is not None else "cached"
+        unit_records = collector.parser.parse_unit_page(
+            html=page.raw_html,
+            store_id=store.store_id,
+            source_url=page.record.url,
+        )
+        print(f"machine_page[{index}]:")
+        print(f"- url: {page.record.url}")
+        print(f"- status: {status}")
+        print(f"- raw_path: {page.record.raw_path}")
+        print(f"- unit_record_count: {len(unit_records)}")
+    return 0
+
+
+def cmd_fetch_slorepo(args: argparse.Namespace) -> int:
+    from src.collectors.slorepo_collector import SlorepoCollector
+
+    normalizer = _store_normalizer()
+    collector = SlorepoCollector(
+        raw_root=RAW_DIR,
+        request_delay_seconds=args.sleep,
+    )
+    total_pages = 0
+    total_saved = 0
+    total_cached = 0
+    for store in _resolve_target_stores(args, normalizer):
+        pages = collector.collect_store_days(store=store, days=args.days)
+        saved = sum(1 for page in pages if page.record.status_code is not None)
+        cached = len(pages) - saved
+        total_pages += len(pages)
+        total_saved += saved
+        total_cached += cached
+        print(
+            f"{store.store_id}: pages={len(pages)} saved={saved} cached={cached} "
+            f"raw_dir={_slorepo_raw_store_dir(store.store_id)}"
+        )
+    print(f"total_pages: {total_pages}")
+    print(f"saved_pages: {total_saved}")
+    print(f"cached_pages: {total_cached}")
+    return 0
+
+
+def cmd_parse_slorepo_raw(args: argparse.Namespace) -> int:
+    from src.parsers.slorepo_parser import SlorepoParser
+
+    normalizer = _store_normalizer()
+    parser = SlorepoParser()
+    total_daily = 0
+    total_machine = 0
+    total_unit = 0
+
+    for store in _resolve_target_stores(args, normalizer):
+        files = _list_recent_slorepo_raw_files(store.store_id, args.days)
+        if not files:
+            print(f"{store.store_id}: no slorepo raw HTML files")
+            continue
+
+        daily_count = 0
+        machine_count = 0
+        unit_count = 0
+        for path in files:
+            if path.name.startswith("store_"):
+                continue
+            html = path.read_text(encoding="utf-8")
+            source_url = _slorepo_url_from_raw_path(store.store_id, path)
+            if path.name.endswith("_day.html"):
+                _, machine_records = parser.parse_detail_page(
+                    html=html,
+                    store_id=store.store_id,
+                    source_url=source_url,
+                )
+                daily_count += 1
+                machine_count += len(machine_records)
+            elif "_machine_" in path.name:
+                unit_records = parser.parse_unit_page(
+                    html=html,
+                    store_id=store.store_id,
+                    source_url=source_url,
+                )
+                unit_count += len(unit_records)
+
+        total_daily += daily_count
+        total_machine += machine_count
+        total_unit += unit_count
+        print(
+            f"{store.store_id}: daily={daily_count} machine={machine_count} unit={unit_count}"
+        )
+
+    print(f"total_daily: {total_daily}")
+    print(f"total_machine: {total_machine}")
+    print(f"total_unit: {total_unit}")
+    return 0
+
+
 def cmd_analyze_stores(args: argparse.Namespace) -> int:
     database = _database()
     target_date = date.fromisoformat(args.date) if args.date else date.today() + timedelta(days=1)
@@ -1189,6 +1388,33 @@ def build_parser() -> argparse.ArgumentParser:
     debug_source_entrypoints.add_argument("--limit", type=int, default=3)
     debug_source_entrypoints.add_argument("--sleep", type=float, default=2.0)
     debug_source_entrypoints.set_defaults(func=cmd_debug_source_entrypoints)
+
+    debug_slorepo = subparsers.add_parser(
+        "debug-slorepo",
+        help="Debug Slorepo store/day/machine fetch flow without DB writes",
+    )
+    debug_slorepo.add_argument("--store")
+    debug_slorepo.add_argument("--all", action="store_true")
+    debug_slorepo.add_argument("--days", type=int, default=7)
+    debug_slorepo.add_argument("--limit", type=int, default=3)
+    debug_slorepo.add_argument("--sleep", type=float, default=2.0)
+    debug_slorepo.set_defaults(func=cmd_debug_slorepo)
+
+    fetch_slorepo = subparsers.add_parser("fetch-slorepo", help="Fetch Slorepo HTML")
+    fetch_slorepo.add_argument("--store")
+    fetch_slorepo.add_argument("--all", action="store_true")
+    fetch_slorepo.add_argument("--days", type=int, default=7)
+    fetch_slorepo.add_argument("--sleep", type=float, default=2.0)
+    fetch_slorepo.set_defaults(func=cmd_fetch_slorepo)
+
+    parse_slorepo = subparsers.add_parser(
+        "parse-slorepo-raw",
+        help="Parse saved Slorepo raw HTML without DB writes",
+    )
+    parse_slorepo.add_argument("--store")
+    parse_slorepo.add_argument("--all", action="store_true")
+    parse_slorepo.add_argument("--days", type=int, default=7)
+    parse_slorepo.set_defaults(func=cmd_parse_slorepo_raw)
 
     parse = subparsers.add_parser("parse-minrepo", help="Parse saved Minrepo HTML")
     parse.add_argument("--store")

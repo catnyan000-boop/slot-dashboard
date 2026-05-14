@@ -6,8 +6,11 @@ from src.cli import (
     SourceProbe,
     cmd_debug_fetch_minrepo,
     cmd_debug_minrepo_entrypoints,
+    cmd_debug_slorepo,
     cmd_debug_source_entrypoints,
+    cmd_fetch_slorepo,
     cmd_parse_minrepo,
+    cmd_parse_slorepo_raw,
     cmd_unit_coverage,
     cmd_validate_unit_data,
 )
@@ -17,6 +20,7 @@ from src.collectors.minrepo_collector import (
     MinrepoCollector,
     StoreFetchDebugResult,
 )
+from src.collectors.slorepo_collector import SlorepoCollector
 from src.db.database import Database, utc_now_iso
 from src.db.models import SourcePageRecord, UnitResultRecord
 from src.normalizers.store_normalizer import StoreNormalizer
@@ -479,3 +483,201 @@ def test_debug_source_entrypoints_anaslo_marks_blocked_store_page(
     assert result == 0
     assert "- store_page: unusable" in captured.out
     assert "- daily_data: unusable" in captured.out
+
+
+def test_debug_slorepo_prints_urls_counts_and_raw_paths(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    monkeypatch.setattr(
+        "src.collectors.base_collector.BaseCollector._load_robots_text",
+        lambda _: None,
+    )
+
+    store = store_normalizer.get_by_store_id("cosmo_obu")
+    assert store is not None
+    collector = SlorepoCollector(raw_root=tmp_path / "raw")
+    day_html = """
+    <html><body>
+      <h1>2026/05/13(水) テスト店</h1>
+      <div>総差枚 1,000</div>
+      <div>平均差枚 500</div>
+      <div>平均G数 7,000</div>
+      <div>勝率 1/2</div>
+      <table>
+        <tr><th>機種</th><th>平均差枚</th><th>平均G数</th><th>勝率</th><th>台数</th></tr>
+        <tr>
+          <td><a href="kishu/?kishu=alpha">L東京喰種</a></td>
+          <td>1,000</td><td>7,000</td><td>1/2</td><td>2</td>
+        </tr>
+      </table>
+    </body></html>
+    """
+    machine_html = """
+    <html><body>
+      <h1>L東京喰種 2026/05/13 台データ</h1>
+      <table>
+        <tr><th>台番</th><th>差枚</th><th>G数</th><th>出率</th><th>BB</th><th>RB</th></tr>
+        <tr><td>101</td><td>-</td><td>5,000</td><td>98.7%</td><td>10</td><td>5</td></tr>
+      </table>
+    </body></html>
+    """
+    store_page = collector._build_cached_page(
+        store_id=store.store_id,
+        url="https://www.slorepo.com/hole/test/",
+        report_date=None,
+        raw_path=tmp_path / "raw" / "slorepo" / store.store_id / "store_test.html",
+        html='<html><body><a href="20260513">5/13</a></body></html>',
+    )
+    day_page = collector._build_cached_page(
+        store_id=store.store_id,
+        url="https://www.slorepo.com/hole/test/20260513/",
+        report_date=date(2026, 5, 13),
+        raw_path=tmp_path / "raw" / "slorepo" / store.store_id / "2026-05-13_day.html",
+        html=day_html,
+    )
+    machine_page = collector._build_cached_page(
+        store_id=store.store_id,
+        url="https://www.slorepo.com/hole/test/20260513/kishu/?kishu=alpha",
+        report_date=date(2026, 5, 13),
+        raw_path=tmp_path / "raw" / "slorepo" / store.store_id / "2026-05-13_machine_alpha.html",
+        html=machine_html,
+    )
+
+    monkeypatch.setattr(SlorepoCollector, "fetch_store_page", lambda self, target_store: store_page)
+    monkeypatch.setattr(
+        SlorepoCollector,
+        "fetch_day_pages",
+        lambda self, store, days, store_page=None: [day_page],
+    )
+    monkeypatch.setattr(
+        SlorepoCollector,
+        "fetch_machine_pages",
+        lambda self, store, day_pages, max_pages_per_day=None: [machine_page],
+    )
+
+    result = cmd_debug_slorepo(
+        Namespace(store="cosmo_obu", all=False, days=7, limit=3, sleep=0.0)
+    )
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "store_page:" in captured.out
+    assert "- url: https://www.slorepo.com/hole/test/" in captured.out
+    assert "day_pages_count: 1" in captured.out
+    assert "machine_pages_count: 1" in captured.out
+    assert "- machine_record_count: 1" in captured.out
+    assert "- unit_record_count: 1" in captured.out
+    assert "2026-05-13_day.html" in captured.out
+    assert "2026-05-13_machine_alpha.html" in captured.out
+
+
+def test_fetch_slorepo_prints_saved_and_cached_counts(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    monkeypatch.setattr("src.cli.RAW_DIR", tmp_path / "raw")
+
+    store = store_normalizer.get_by_store_id("cosmo_obu")
+    assert store is not None
+    fake_pages = [
+        SlorepoCollector(raw_root=tmp_path / "raw")._build_cached_page(
+            store_id=store.store_id,
+            url="https://www.slorepo.com/hole/test/",
+            report_date=None,
+            raw_path=tmp_path / "raw" / "slorepo" / store.store_id / "store_test.html",
+            html="<html>cached</html>",
+        ),
+        SlorepoCollector(raw_root=tmp_path / "raw")._build_cached_page(
+            store_id=store.store_id,
+            url="https://www.slorepo.com/hole/test/20260513/",
+            report_date=date(2026, 5, 13),
+            raw_path=tmp_path / "raw" / "slorepo" / store.store_id / "2026-05-13_day.html",
+            html="<html>cached</html>",
+        ),
+    ]
+    fake_pages[1].record.status_code = 200
+    monkeypatch.setattr(
+        "src.collectors.base_collector.BaseCollector._load_robots_text",
+        lambda _: None,
+    )
+    monkeypatch.setattr(
+        SlorepoCollector,
+        "collect_store_days",
+        lambda self, store, days: fake_pages,
+    )
+
+    result = cmd_fetch_slorepo(Namespace(store="cosmo_obu", all=False, days=7, sleep=0.0))
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "cosmo_obu: pages=2 saved=1 cached=1" in captured.out
+    assert "total_pages: 2" in captured.out
+    assert "saved_pages: 1" in captured.out
+    assert "cached_pages: 1" in captured.out
+
+
+def test_parse_slorepo_raw_counts_daily_machine_and_unit(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+    raw_dir = tmp_path / "raw"
+    monkeypatch.setattr("src.cli.RAW_DIR", raw_dir)
+    store_dir = raw_dir / "slorepo" / "cosmo_obu"
+    store_dir.mkdir(parents=True, exist_ok=True)
+
+    (store_dir / "store_test.html").write_text("<html><body>store</body></html>", encoding="utf-8")
+    (store_dir / "2026-05-13_day.html").write_text(
+        """
+        <html><body>
+          <h1>2026/05/13(水) テスト店</h1>
+          <div>総差枚 1,234</div>
+          <div>平均差枚 -123</div>
+          <div>平均G数 4,567</div>
+          <div>勝率 3/5</div>
+          <table>
+            <tr><th>機種</th><th>平均差枚</th><th>平均G数</th><th>勝率</th><th>台数</th></tr>
+            <tr>
+              <td><a href="kishu/?kishu=alpha">L東京喰種</a></td>
+              <td>1,000</td><td>7,000</td><td>1/2</td><td>2</td>
+            </tr>
+            <tr>
+              <td><a href="kishu/?kishu=beta">マイジャグラーV</a></td>
+              <td>0</td><td>6,000</td><td>50%</td><td>1</td>
+            </tr>
+          </table>
+        </body></html>
+        """,
+        encoding="utf-8",
+    )
+    (store_dir / "2026-05-13_machine_alpha.html").write_text(
+        """
+        <html><body>
+          <h1>L東京喰種 2026/05/13 台データ</h1>
+          <table>
+            <tr><th>台番</th><th>差枚</th><th>G数</th><th>出率</th><th>BB</th><th>RB</th></tr>
+            <tr><td>101</td><td>-1,234</td><td>6,789</td><td>98.7%</td><td>20</td><td>10</td></tr>
+            <tr><td>102</td><td>-</td><td></td><td>-</td><td>-</td><td>-</td></tr>
+          </table>
+        </body></html>
+        """,
+        encoding="utf-8",
+    )
+
+    result = cmd_parse_slorepo_raw(Namespace(store="cosmo_obu", all=False, days=7))
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "cosmo_obu: daily=1 machine=2 unit=2" in captured.out
+    assert "total_daily: 1" in captured.out
+    assert "total_machine: 2" in captured.out
+    assert "total_unit: 2" in captured.out
