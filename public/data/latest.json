@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-14T10:45:43+09:00",
+  "generated_at": "2026-05-14T11:23:45+09:00",
   "target_date": "2026-05-15",
   "lookback_days": 7,
   "coverage_window": "2026-05-08 〜 2026-05-13",
@@ -220,7 +220,7 @@
     {
       "store_id": "ogiya_anjo",
       "display_name": "オーギヤ安城",
-      "fetch_status": "成功",
+      "fetch_status": "失敗（前回データ使用）",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.5898,
       "unit_diff_missing_rate_text": "0.5898",
@@ -250,6 +250,7 @@
         "L範馬刃牙 (欠損率 80.0% のため除外)"
       ],
       "notes": [
+        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -258,7 +259,7 @@
     {
       "store_id": "keiz_galerie_apita",
       "display_name": "KEIZギャラリエアピタ",
-      "fetch_status": "成功",
+      "fetch_status": "失敗（前回データ使用）",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.6094,
       "unit_diff_missing_rate_text": "0.6094",
@@ -288,6 +289,7 @@
         "L東京喰種 (欠損率 76.0% のため除外)"
       ],
       "notes": [
+        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -296,7 +298,7 @@
     {
       "store_id": "marushin_777",
       "display_name": "マルシン777",
-      "fetch_status": "成功",
+      "fetch_status": "失敗（前回データ使用）",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.5973,
       "unit_diff_missing_rate_text": "0.5973",
@@ -326,6 +328,7 @@
         "スマスロ ストライク・ザ・ブラッド (欠損率 83.3% のため除外)"
       ],
       "notes": [
+        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -334,7 +337,7 @@
     {
       "store_id": "apan_kobo",
       "display_name": "APANCLUB弘法通り",
-      "fetch_status": "成功",
+      "fetch_status": "失敗（前回データ使用）",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.6406,
       "unit_diff_missing_rate_text": "0.6406",
@@ -364,6 +367,7 @@
         "L真・一騎当千 (欠損率 83.3% のため除外)"
       ],
       "notes": [
+        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
