@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-14T02:43:02+09:00",
+  "generated_at": "2026-05-14T10:45:43+09:00",
   "target_date": "2026-05-15",
   "lookback_days": 7,
   "coverage_window": "2026-05-08 〜 2026-05-13",
@@ -30,7 +30,7 @@
     {
       "store_id": "cosmo_obu",
       "display_name": "コスモジャパン大府",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.5953,
       "unit_diff_missing_rate_text": "0.5953",
@@ -60,7 +60,6 @@
         "Lパチスロ 機動戦士ガンダムユニコーン 覚醒DRIVE (欠損率 73.3% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -69,14 +68,14 @@
     {
       "store_id": "kyoraku_tokai",
       "display_name": "KYORAKU東海",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
-      "unit_diff_missing_rate": 0.6039,
-      "unit_diff_missing_rate_text": "0.6039",
-      "unit_results_total": 1285,
-      "unit_results_total_text": "1285",
-      "diff_null_count": 776,
-      "diff_null_count_text": "776",
+      "unit_diff_missing_rate": 0.6128,
+      "unit_diff_missing_rate_text": "0.6128",
+      "unit_results_total": 1542,
+      "unit_results_total_text": "1542",
+      "diff_null_count": 945,
+      "diff_null_count_text": "945",
       "pattern_analysis_status": "台番分析は信頼不可",
       "tail_analysis_status": "台番分析は信頼不可",
       "cluster_analysis_status": "台番分析は信頼不可",
@@ -88,18 +87,17 @@
       "effective_analyses_text": "店舗別, 機種別, カテゴリ別",
       "excluded_machines": [
         "Lダーリン・イン・ザ・フランキス (欠損率 100.0% のため除外)",
-        "スマスロ バイオハザードRE:3 (欠損率 100.0% のため除外)",
-        "スマスロとある科学の超電磁砲2 (欠損率 100.0% のため除外)",
         "スマスロ ビッグドリーム THE GOLDEN PUSHER (欠損率 100.0% のため除外)",
-        "Lタクトオーパス デスティニー (欠損率 100.0% のため除外)",
-        "Lパチスロからくりサーカス (欠損率 85.0% のため除外)",
-        "A-SLOT+異世界かるてっとBT (欠損率 80.0% のため除外)",
-        "Lスマスロ キン肉マン~7人の悪魔超人編~ (欠損率 80.0% のため除外)",
-        "スマスロ スーパーブラックジャック (欠損率 80.0% のため除外)",
-        "スマスロ秘宝伝 (欠損率 80.0% のため除外)"
+        "スマスロとある科学の超電磁砲2 (欠損率 100.0% のため除外)",
+        "スマスロ スーパーブラックジャック (欠損率 83.3% のため除外)",
+        "スマスロ スーパーリオエース2 (欠損率 83.3% のため除外)",
+        "Lパチスロからくりサーカス (欠損率 79.2% のため除外)",
+        "チバリヨ2プラス (欠損率 77.8% のため除外)",
+        "スマスロ ミリオンゴッド-神々の軌跡- (欠損率 75.0% のため除外)",
+        "スマスロ バイオハザードRE:3 (欠損率 75.0% のため除外)",
+        "スマスロ ゴッドイーター リザレクション (欠損率 73.3% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -108,14 +106,14 @@
     {
       "store_id": "keiz_odaka",
       "display_name": "KEIZ大高",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
-      "unit_diff_missing_rate": 0.5699,
-      "unit_diff_missing_rate_text": "0.5699",
-      "unit_results_total": 2641,
-      "unit_results_total_text": "2641",
-      "diff_null_count": 1505,
-      "diff_null_count_text": "1505",
+      "unit_diff_missing_rate": 0.5711,
+      "unit_diff_missing_rate_text": "0.5711",
+      "unit_results_total": 3171,
+      "unit_results_total_text": "3171",
+      "diff_null_count": 1811,
+      "diff_null_count_text": "1811",
       "pattern_analysis_status": "台番分析は信頼不可",
       "tail_analysis_status": "台番分析は信頼不可",
       "cluster_analysis_status": "台番分析は信頼不可",
@@ -128,17 +126,16 @@
       "excluded_machines": [
         "Lダーリン・イン・ザ・フランキス (欠損率 100.0% のため除外)",
         "スマスロ 緑ドン VIVA!情熱南米編 REVIVAL (欠損率 87.5% のため除外)",
+        "L不二子BT (欠損率 83.3% のため除外)",
+        "クレアの秘宝伝~はじまりの扉と太陽の石~ボーナストリガーver. (欠損率 83.3% のため除外)",
+        "SアイムジャグラーEX (欠損率 83.3% のため除外)",
         "スマスロ ギルティクラウン2 (欠損率 83.3% のため除外)",
-        "L不二子BT (欠損率 80.0% のため除外)",
-        "クレアの秘宝伝~はじまりの扉と太陽の石~ボーナストリガーver. (欠損率 80.0% のため除外)",
-        "SアイムジャグラーEX (欠損率 80.0% のため除外)",
-        "チバリヨ2 (欠損率 75.0% のため除外)",
-        "Lタクトオーパス デスティニー (欠損率 73.3% のため除外)",
-        "L絶対衝激IV (欠損率 73.3% のため除外)",
-        "スロット ゾンビランドサガ (欠損率 73.3% のため除外)"
+        "L絶対衝激IV (欠損率 77.8% のため除外)",
+        "Lパチスロからくりサーカス (欠損率 77.1% のため除外)",
+        "チバリヨ2 (欠損率 73.5% のため除外)",
+        "ジャグラーガールズSS (欠損率 72.2% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -147,14 +144,14 @@
     {
       "store_id": "kyoraku_toyoake",
       "display_name": "KYORAKU豊明",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
-      "unit_diff_missing_rate": 0.5333,
-      "unit_diff_missing_rate_text": "0.5333",
-      "unit_results_total": 1200,
-      "unit_results_total_text": "1200",
-      "diff_null_count": 640,
-      "diff_null_count_text": "640",
+      "unit_diff_missing_rate": 0.5347,
+      "unit_diff_missing_rate_text": "0.5347",
+      "unit_results_total": 1440,
+      "unit_results_total_text": "1440",
+      "diff_null_count": 770,
+      "diff_null_count_text": "770",
       "pattern_analysis_status": "台番分析は信頼不可",
       "tail_analysis_status": "台番分析は信頼不可",
       "cluster_analysis_status": "台番分析は信頼不可",
@@ -165,19 +162,18 @@
       ],
       "effective_analyses_text": "店舗別, 機種別, カテゴリ別",
       "excluded_machines": [
-        "クレアの秘宝伝~はじまりの扉と太陽の石~ボーナストリガーver. (欠損率 100.0% のため除外)",
         "バーニングエクスプレス (欠損率 100.0% のため除外)",
+        "クレアの秘宝伝~はじまりの扉と太陽の石~ボーナストリガーver. (欠損率 91.7% のため除外)",
+        "スマスロヨルムンガンド (欠損率 83.3% のため除外)",
+        "A-SLOT+異世界かるてっとBT (欠損率 83.3% のため除外)",
+        "Lパチスロ炎炎ノ消防隊 (欠損率 83.3% のため除外)",
         "吉宗 (欠損率 83.3% のため除外)",
-        "スマスロヨルムンガンド (欠損率 80.0% のため除外)",
-        "A-SLOT+異世界かるてっとBT (欠損率 80.0% のため除外)",
-        "Lパチスロ炎炎ノ消防隊 (欠損率 80.0% のため除外)",
-        "Lパチスロ炎炎ノ消防隊2 (欠損率 73.3% のため除外)",
-        "マイジャグラーV (欠損率 73.3% のため除外)",
-        "スマスロ北斗の拳 転生の章2 (欠損率 72.0% のため除外)",
-        "Lスマスロ北斗の拳 (欠損率 70.0% のため除外)"
+        "Lパチスロ炎炎ノ消防隊2 (欠損率 77.8% のため除外)",
+        "スマスロ 攻殻機動隊 (欠損率 75.0% のため除外)",
+        "スマスロ ミリオンゴッド-神々の軌跡- (欠損率 73.3% のため除外)",
+        "Lスマスロ北斗の拳 (欠損率 72.2% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -186,7 +182,7 @@
     {
       "store_id": "winglet",
       "display_name": "ウイングレット",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.596,
       "unit_diff_missing_rate_text": "0.596",
@@ -216,7 +212,6 @@
         "スマスロモンキーターンV (欠損率 80.0% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -225,7 +220,7 @@
     {
       "store_id": "ogiya_anjo",
       "display_name": "オーギヤ安城",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
       "unit_diff_missing_rate": 0.5898,
       "unit_diff_missing_rate_text": "0.5898",
@@ -255,7 +250,6 @@
         "L範馬刃牙 (欠損率 80.0% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -264,14 +258,14 @@
     {
       "store_id": "keiz_galerie_apita",
       "display_name": "KEIZギャラリエアピタ",
-      "fetch_status": "失敗",
+      "fetch_status": "成功",
       "parse_status": "成功",
-      "unit_diff_missing_rate": 0.5954,
-      "unit_diff_missing_rate_text": "0.5954",
-      "unit_results_total": 1001,
-      "unit_results_total_text": "1001",
-      "diff_null_count": 596,
-      "diff_null_count_text": "596",
+      "unit_diff_missing_rate": 0.6094,
+      "unit_diff_missing_rate_text": "0.6094",
+      "unit_results_total": 1252,
+      "unit_results_total_text": "1252",
+      "diff_null_count": 763,
+      "diff_null_count_text": "763",
       "pattern_analysis_status": "台番分析は信頼不可",
       "tail_analysis_status": "台番分析は信頼不可",
       "cluster_analysis_status": "台番分析は信頼不可",
@@ -282,19 +276,18 @@
       ],
       "effective_analyses_text": "店舗別, 機種別, カテゴリ別",
       "excluded_machines": [
-        "スマスロ スーパーブラックジャック (欠損率 100.0% のため除外)",
-        "スマスロ マギアレコード 魔法少女まどか☆マギカ外伝 (欠損率 87.5% のため除外)",
-        "スマスロ ミリオンゴッド-神々の軌跡- (欠損率 83.3% のため除外)",
+        "スマスロ マギアレコード 魔法少女まどか☆マギカ外伝 (欠損率 90.0% のため除外)",
+        "スマスロ ミリオンゴッド-神々の軌跡- (欠損率 82.2% のため除外)",
         "ジャグラーガールズSS (欠損率 80.0% のため除外)",
         "ミスタージャグラー (欠損率 80.0% のため除外)",
-        "スマスロ ビッグドリーム THE GOLDEN PUSHER (欠損率 80.0% のため除外)",
-        "ハッピージャグラーVIII (欠損率 79.2% のため除外)",
-        "ウルトラミラクルジャグラー (欠損率 75.0% のため除外)",
-        "スマスロ 攻殻機動隊 (欠損率 75.0% のため除外)",
-        "スマスロ化物語 (欠損率 75.0% のため除外)"
+        "スマスロ スーパーブラックジャック (欠損率 80.0% のため除外)",
+        "パチスロ ダンジョンに出会いを求めるのは間違っているだろうか2 (欠損率 80.0% のため除外)",
+        "ハッピージャグラーVIII (欠損率 78.3% のため除外)",
+        "ウルトラミラクルジャグラー (欠損率 77.5% のため除外)",
+        "いざ!番長 (欠損率 76.9% のため除外)",
+        "L東京喰種 (欠損率 76.0% のため除外)"
       ],
       "notes": [
-        "取得状況は要確認",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
       "filter_key": "unreliable",
@@ -303,79 +296,89 @@
     {
       "store_id": "marushin_777",
       "display_name": "マルシン777",
-      "fetch_status": "失敗",
-      "parse_status": "失敗",
-      "unit_diff_missing_rate": 1.0,
-      "unit_diff_missing_rate_text": "データ不足",
-      "unit_results_total": 0,
-      "unit_results_total_text": "0",
-      "diff_null_count": 0,
-      "diff_null_count_text": "0",
-      "pattern_analysis_status": "データ不足",
-      "tail_analysis_status": "データ不足",
-      "cluster_analysis_status": "データ不足",
+      "fetch_status": "成功",
+      "parse_status": "成功",
+      "unit_diff_missing_rate": 0.5973,
+      "unit_diff_missing_rate_text": "0.5973",
+      "unit_results_total": 2076,
+      "unit_results_total_text": "2076",
+      "diff_null_count": 1240,
+      "diff_null_count_text": "1240",
+      "pattern_analysis_status": "台番分析は信頼不可",
+      "tail_analysis_status": "台番分析は信頼不可",
+      "cluster_analysis_status": "台番分析は信頼不可",
       "effective_analyses": [
         "店舗別",
         "機種別",
         "カテゴリ別"
       ],
-      "effective_analyses_text": "データ不足",
-      "excluded_machines": [],
+      "effective_analyses_text": "店舗別, 機種別, カテゴリ別",
+      "excluded_machines": [
+        "Lラブ嬢3~Wご指名はいかがですか?~ (欠損率 100.0% のため除外)",
+        "SHAKE BONUS TRIGGER (欠損率 100.0% のため除外)",
+        "スマスロ スーパーリオエース2 (欠損率 90.0% のため除外)",
+        "吉宗 (欠損率 87.5% のため除外)",
+        "Lパチスロからくりサーカス (欠損率 83.3% のため除外)",
+        "Lパチスロ炎炎ノ消防隊2 (欠損率 83.3% のため除外)",
+        "スマスロ ハナビ (欠損率 83.3% のため除外)",
+        "アニマルスロット ドッチ (欠損率 83.3% のため除外)",
+        "L不二子BT (欠損率 83.3% のため除外)",
+        "スマスロ ストライク・ザ・ブラッド (欠損率 83.3% のため除外)"
+      ],
       "notes": [
-        "取得状況は要確認",
-        "parse済み unit_results が不足",
-        "unit_results サンプルが 0 のためデータ不足",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
-      "filter_key": "shortage",
-      "severity_key": "shortage"
+      "filter_key": "unreliable",
+      "severity_key": "critical"
     },
     {
       "store_id": "apan_kobo",
       "display_name": "APANCLUB弘法通り",
-      "fetch_status": "失敗",
-      "parse_status": "失敗",
-      "unit_diff_missing_rate": 1.0,
-      "unit_diff_missing_rate_text": "データ不足",
-      "unit_results_total": 0,
-      "unit_results_total_text": "0",
-      "diff_null_count": 0,
-      "diff_null_count_text": "0",
-      "pattern_analysis_status": "データ不足",
-      "tail_analysis_status": "データ不足",
-      "cluster_analysis_status": "データ不足",
+      "fetch_status": "成功",
+      "parse_status": "成功",
+      "unit_diff_missing_rate": 0.6406,
+      "unit_diff_missing_rate_text": "0.6406",
+      "unit_results_total": 1266,
+      "unit_results_total_text": "1266",
+      "diff_null_count": 811,
+      "diff_null_count_text": "811",
+      "pattern_analysis_status": "台番分析は信頼不可",
+      "tail_analysis_status": "台番分析は信頼不可",
+      "cluster_analysis_status": "台番分析は信頼不可",
       "effective_analyses": [
         "店舗別",
         "機種別",
         "カテゴリ別"
       ],
-      "effective_analyses_text": "データ不足",
-      "excluded_machines": [],
+      "effective_analyses_text": "店舗別, 機種別, カテゴリ別",
+      "excluded_machines": [
+        "Lパチスロ ありふれた職業で世界最強 (欠損率 100.0% のため除外)",
+        "アニマルスロット ドッチ (欠損率 100.0% のため除外)",
+        "スマスロ ミリオンゴッド-神々の軌跡- (欠損率 94.4% のため除外)",
+        "スマスロ化物語 (欠損率 91.7% のため除外)",
+        "スマスロ 沖ドキ!DUO アンコール (欠損率 86.1% のため除外)",
+        "スマスロヨルムンガンド (欠損率 83.3% のため除外)",
+        "L少女☆歌劇 レヴュースタァライト -The SLOT- (欠損率 83.3% のため除外)",
+        "スマスロ秘宝伝 (欠損率 83.3% のため除外)",
+        "L戦国乙女4 戦乱に閃く炯眼の軍師 (欠損率 83.3% のため除外)",
+        "L真・一騎当千 (欠損率 83.3% のため除外)"
+      ],
       "notes": [
-        "取得状況は要確認",
-        "parse済み unit_results が不足",
-        "unit_results サンプルが 0 のためデータ不足",
         "欠損率50%以上のため台番・末尾・並び分析は信頼不可"
       ],
-      "filter_key": "shortage",
-      "severity_key": "shortage"
+      "filter_key": "unreliable",
+      "severity_key": "critical"
     }
   ],
-  "data_shortage_stores": [
-    "マルシン777",
-    "APANCLUB弘法通り"
-  ],
+  "data_shortage_stores": [],
   "tomorrow_candidates": [
     "コスモジャパン大府 (score=88.25, 信頼度=C, sample=6)",
-    "KYORAKU東海 (score=85.86, 信頼度=C, sample=5)",
-    "KYORAKU豊明 (score=85.14, 信頼度=C, sample=5)",
-    "KEIZギャラリエアピタ (score=84.91, 信頼度=C, sample=4)",
-    "KEIZ大高 (score=81.44, 信頼度=C, sample=5)"
+    "KYORAKU豊明 (score=85.08, 信頼度=C, sample=6)",
+    "KYORAKU東海 (score=84.24, 信頼度=C, sample=6)",
+    "KEIZギャラリエアピタ (score=81.3, 信頼度=C, sample=5)",
+    "オーギヤ安城 (score=80.47, 信頼度=C, sample=5)"
   ],
-  "skip_recommendations": [
-    "マルシン777 (サンプル不足または傾向不安定)",
-    "APANCLUB弘法通り (サンプル不足または傾向不安定)"
-  ],
+  "skip_recommendations": [],
   "notes": [
     "machine_results から unit_results を推定で補完していません。",
     "差枚 '-' は 0 として扱わず、NULL と 0 を区別しています。",
@@ -384,7 +387,7 @@
   "summary_counts": {
     "ready": 0,
     "caution": 0,
-    "unreliable": 7,
-    "shortage": 2
+    "unreliable": 9,
+    "shortage": 0
   }
 }
