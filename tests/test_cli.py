@@ -3,8 +3,10 @@ from datetime import date
 from pathlib import Path
 
 from src.cli import (
+    SourceProbe,
     cmd_debug_fetch_minrepo,
     cmd_debug_minrepo_entrypoints,
+    cmd_debug_source_entrypoints,
     cmd_parse_minrepo,
     cmd_unit_coverage,
     cmd_validate_unit_data,
@@ -332,3 +334,148 @@ def test_debug_minrepo_entrypoints_prints_sources_and_summary(
     assert "listing_page_results:" in captured.out
     assert "entrypoint_summary:" in captured.out
     assert "next_entrypoint:" in captured.out
+
+
+    def test_debug_source_entrypoints_slorepo_prints_summary(
+        monkeypatch,
+        capsys,
+    ) -> None:
+        store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+        monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+        monkeypatch.setattr("src.cli._store_search_terms", lambda store: [store.canonical_name])
+
+    def fake_probe(session, url, label, delay_seconds, last_request_at):
+        del session, delay_seconds, last_request_at
+        if "search" in url:
+            return SourceProbe(
+                label=label,
+                url=url,
+                status_code=200,
+                final_url="https://www.slorepo.com/hole/test/",
+                response_size_bytes=100,
+                content_type="text/html",
+                title="search",
+                first_300_chars="<html>",
+                usable=True,
+            )
+        if "kishu/?kishu=" in url:
+            return SourceProbe(
+                label=label,
+                url=url,
+                status_code=200,
+                final_url=url,
+                response_size_bytes=100,
+                content_type="text/html",
+                title="machine",
+                table_headers=["台番 | 5/13(水) | 5/12(火)"],
+                has_daiban_text=True,
+                first_300_chars="<html>",
+                usable=True,
+            )
+        if "20260513" in url:
+            return SourceProbe(
+                label=label,
+                url=url,
+                status_code=200,
+                final_url=url,
+                response_size_bytes=100,
+                content_type="text/html",
+                title="daily",
+                table_headers=["機種 | 平均差枚 | 平均G数 | 勝率"],
+                first_300_chars="<html>",
+                usable=True,
+            )
+        return SourceProbe(
+            label=label,
+            url=url,
+            status_code=200,
+            final_url=url,
+            response_size_bytes=100,
+            content_type="text/html",
+            title="store",
+            first_300_chars="<html>",
+            usable=True,
+        )
+
+    class FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+    class FakeSession:
+        def get(self, url, timeout):
+            del timeout
+            if "20260513" in url and "kishu" not in url:
+                return FakeResponse('<a href="kishu/?kishu=test">機種</a>')
+            return FakeResponse('<a href="20260513">5/13</a>')
+
+    monkeypatch.setattr("src.cli._probe_source_url", fake_probe)
+    monkeypatch.setattr("src.cli._make_source_session", lambda: FakeSession())
+
+    result = cmd_debug_source_entrypoints(
+        Namespace(source="slorepo", store="cosmo_obu", all=False, limit=3, sleep=0.0)
+    )
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "source_summary:" in captured.out
+    assert "- store_page: usable" in captured.out
+    assert "- daily_data: usable" in captured.out
+    assert "- machine_data: usable" in captured.out
+    assert "- unit_data: usable" in captured.out
+
+
+def test_debug_source_entrypoints_anaslo_marks_blocked_store_page(
+    monkeypatch,
+    capsys,
+) -> None:
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+
+    class FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+    class FakeSession:
+        def get(self, url, timeout):
+            del url, timeout
+            return FakeResponse('<a href="https://ana-slo.com/hall-page/">データ一覧</a>')
+
+    def fake_probe(session, url, label, delay_seconds, last_request_at):
+        del session, delay_seconds, last_request_at
+        if "?s=" in url:
+            return SourceProbe(
+                label=label,
+                url=url,
+                status_code=200,
+                final_url=url,
+                response_size_bytes=100,
+                content_type="text/html",
+                title="search",
+                first_300_chars="<html>",
+                usable=True,
+            )
+        return SourceProbe(
+            label=label,
+            url=url,
+            status_code=403,
+            final_url=url,
+            response_size_bytes=100,
+            content_type="text/html",
+            title="Just a moment...",
+            first_300_chars="<html>",
+            usable=False,
+            error_reason="HTTP 403",
+        )
+
+    monkeypatch.setattr("src.cli._probe_source_url", fake_probe)
+    monkeypatch.setattr("src.cli._store_search_terms", lambda store: [store.canonical_name])
+    monkeypatch.setattr("src.cli._make_source_session", lambda: FakeSession())
+
+    result = cmd_debug_source_entrypoints(
+        Namespace(source="anaslo", store="cosmo_obu", all=False, limit=3, sleep=0.0)
+    )
+    captured = capsys.readouterr()
+
+    assert result == 0
+    assert "- store_page: unusable" in captured.out
+    assert "- daily_data: unusable" in captured.out

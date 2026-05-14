@@ -4,9 +4,13 @@ import argparse
 import json
 import re
 import sys
+import time
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
+from urllib.parse import quote, urljoin
 
+import requests
 from bs4 import BeautifulSoup
 
 from src.analysis.unit_data_quality import summarize_unit_data_quality
@@ -58,6 +62,147 @@ def _list_recent_raw_files(store_id: str, days: int) -> list[Path]:
         if report_date >= cutoff:
             files.append(path)
     return files
+
+
+@dataclass
+class SourceProbe:
+    label: str
+    url: str
+    status_code: int | None = None
+    final_url: str = ""
+    response_size_bytes: int = 0
+    content_type: str = ""
+    title: str = ""
+    first_300_chars: str = ""
+    table_headers: list[str] = field(default_factory=list)
+    has_daiban_text: bool = False
+    usable: bool = False
+    error_reason: str = ""
+
+
+def _make_source_session() -> requests.Session:
+    session = requests.Session()
+    session.headers.update(
+        {
+            "User-Agent": (
+                "slot-store-analyzer/0.1 "
+                "(+respectful public-data collector; source entrypoint diagnostics)"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        }
+    )
+    return session
+
+
+def _probe_source_url(
+    session: requests.Session,
+    url: str,
+    label: str,
+    delay_seconds: float,
+    last_request_at: list[float],
+) -> SourceProbe:
+    elapsed = time.monotonic() - last_request_at[0]
+    if elapsed < delay_seconds:
+        time.sleep(delay_seconds - elapsed)
+    probe = SourceProbe(label=label, url=url)
+    try:
+        response = session.get(url, timeout=20)
+    except Exception as exc:
+        probe.error_reason = f"{type(exc).__name__}: {exc}"
+        last_request_at[0] = time.monotonic()
+        return probe
+
+    last_request_at[0] = time.monotonic()
+    probe.status_code = response.status_code
+    probe.final_url = response.url
+    probe.response_size_bytes = len(response.content or b"")
+    probe.content_type = response.headers.get("Content-Type", "")
+    probe.first_300_chars = re.sub(r"\s+", " ", response.text).strip()[:300]
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    probe.title = soup.title.get_text(" ", strip=True) if soup.title else ""
+    probe.has_daiban_text = "台番" in soup.get_text(" ", strip=True)
+    for table in soup.find_all("table")[:3]:
+        first_row = table.find("tr")
+        if not first_row:
+            continue
+        cells = [cell.get_text(" ", strip=True) for cell in first_row.find_all(["th", "td"])]
+        probe.table_headers.append(" | ".join(cells[:8]))
+
+    if response.status_code >= 400:
+        probe.error_reason = f"HTTP {response.status_code}"
+    elif not response.text.strip():
+        probe.error_reason = "Empty HTML returned"
+    else:
+        probe.usable = True
+    return probe
+
+
+def _print_source_probe(probe: SourceProbe) -> None:
+    print(f"label: {probe.label}")
+    print(f"url: {probe.url}")
+    print(f"status: {probe.status_code if probe.status_code is not None else 'n/a'}")
+    print(f"final_url: {probe.final_url}")
+    print(f"response_size_bytes: {probe.response_size_bytes}")
+    print(f"content_type: {probe.content_type}")
+    print(f"title: {probe.title}")
+    print(f"table_headers: {json.dumps(probe.table_headers, ensure_ascii=False)}")
+    print(f"first_300_chars: {probe.first_300_chars}")
+    print(f"error_reason: {probe.error_reason}")
+    print(f"usable: {'yes' if probe.usable else 'no'}")
+
+
+def _store_search_terms(store) -> list[str]:
+    terms = [store.canonical_name, store.display_name, *store.aliases]
+    deduped: list[str] = []
+    for term in terms:
+        if term and term not in deduped:
+            deduped.append(term)
+    return deduped
+
+
+def _find_anaslo_store_url(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        href = anchor["href"]
+        text = anchor.get_text(" ", strip=True)
+        if "データ一覧" in text and "ana-slo.com" in href:
+            return href
+    return ""
+
+
+def _find_slorepo_store_url(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        href = re.sub(r"\s+", "", anchor["href"])
+        if "/hole/" in href:
+            return href
+    return ""
+
+
+def _slorepo_date_urls(store_html: str, store_url: str, limit: int) -> list[str]:
+    soup = BeautifulSoup(store_html, "html.parser")
+    urls: list[str] = []
+    for anchor in soup.find_all("a", href=True):
+        href = anchor["href"].strip()
+        if not re.fullmatch(r"\d{8}/?", href):
+            continue
+        url = urljoin(store_url if store_url.endswith("/") else store_url + "/", href)
+        if url not in urls:
+            urls.append(url)
+        if len(urls) >= limit:
+            break
+    return urls
+
+
+def _slorepo_first_machine_url(date_html: str, date_url: str) -> str:
+    soup = BeautifulSoup(date_html, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        href = anchor["href"].strip()
+        if "kishu/?kishu=" in href:
+            return urljoin(date_url if date_url.endswith("/") else date_url + "/", href)
+    return ""
 
 
 def cmd_init_db(_: argparse.Namespace) -> int:
@@ -372,6 +517,236 @@ def cmd_debug_minrepo_entrypoints(args: argparse.Namespace) -> int:
     elif db_detail_urls or raw_report_urls:
         next_entrypoint = "existing DB/raw only; no live refresh entrypoint confirmed"
     print(f"next_entrypoint: {next_entrypoint}")
+    return 0
+
+
+def _source_search_urls(source: str, query: str) -> list[str]:
+    encoded = quote(query)
+    if source == "slorepo":
+        return [f"https://www.slorepo.com/search/?query={encoded}"]
+    if source == "anaslo":
+        return [f"https://ana-slo.com/?s={encoded}"]
+    raise SystemExit(f"unsupported source: {source}")
+
+
+def _debug_slorepo_store(
+    session,
+    store,
+    limit: int,
+    sleep: float,
+    last_request_at: list[float],
+) -> None:
+    search_probe = None
+    store_probe = None
+    date_probe = None
+    machine_probe = None
+    store_url = ""
+    search_html = ""
+
+    for term in _store_search_terms(store):
+        for search_url in _source_search_urls("slorepo", term):
+            search_probe = _probe_source_url(
+                session,
+                search_url,
+                label=f"search:{term}",
+                delay_seconds=sleep,
+                last_request_at=last_request_at,
+            )
+            if "/hole/" in search_probe.final_url:
+                store_url = (
+                    search_probe.final_url
+                    if search_probe.final_url.endswith("/")
+                    else search_probe.final_url + "/"
+                )
+                break
+            if search_probe.usable:
+                elapsed = time.monotonic() - last_request_at[0]
+                if elapsed < sleep:
+                    time.sleep(sleep - elapsed)
+                response = session.get(search_url, timeout=20)
+                last_request_at[0] = time.monotonic()
+                search_html = response.text
+                store_url = _find_slorepo_store_url(search_html)
+        if store_url:
+            break
+
+    print("search_result:")
+    if search_probe is not None:
+        _print_source_probe(search_probe)
+
+    if not store_url and search_probe is not None and search_probe.final_url:
+        store_url = search_probe.final_url if "/hole/" in search_probe.final_url else ""
+    if not store_url:
+        print("store_page_result:")
+        print("label: store_page")
+        print("url: ")
+        print("status: n/a")
+        print("final_url: ")
+        print("response_size_bytes: 0")
+        print("content_type: ")
+        print("title: ")
+        print("table_headers: []")
+        print("first_300_chars: ")
+        print("error_reason: store page URL not found from search")
+        print("usable: no")
+        print("source_summary:")
+        print("- store_page: unusable")
+        print("- daily_data: unusable")
+        print("- machine_data: unusable")
+        print("- unit_data: unusable")
+        return
+
+    store_probe = _probe_source_url(
+        session,
+        store_url,
+        label="store_page",
+        delay_seconds=sleep,
+        last_request_at=last_request_at,
+    )
+    print("store_page_result:")
+    _print_source_probe(store_probe)
+
+    store_html = ""
+    if store_probe.usable:
+        elapsed = time.monotonic() - last_request_at[0]
+        if elapsed < sleep:
+            time.sleep(sleep - elapsed)
+        response = session.get(store_url, timeout=20)
+        last_request_at[0] = time.monotonic()
+        store_html = response.text
+
+    date_urls = _slorepo_date_urls(store_html, store_url, limit) if store_html else []
+    if date_urls:
+        date_probe = _probe_source_url(
+            session,
+            date_urls[0],
+            label="daily_page",
+            delay_seconds=sleep,
+            last_request_at=last_request_at,
+        )
+        print("daily_page_result:")
+        _print_source_probe(date_probe)
+
+    machine_url = ""
+    if date_probe and date_probe.usable:
+        elapsed = time.monotonic() - last_request_at[0]
+        if elapsed < sleep:
+            time.sleep(sleep - elapsed)
+        response = session.get(date_urls[0], timeout=20)
+        last_request_at[0] = time.monotonic()
+        machine_url = _slorepo_first_machine_url(response.text, date_urls[0])
+    if machine_url:
+        machine_probe = _probe_source_url(
+            session,
+            machine_url,
+            label="machine_or_unit_page",
+            delay_seconds=sleep,
+            last_request_at=last_request_at,
+        )
+        print("machine_or_unit_page_result:")
+        _print_source_probe(machine_probe)
+
+    has_machine_data = bool(
+        date_probe
+        and any("機種" in header and "平均差枚" in header for header in date_probe.table_headers)
+    )
+    has_unit_data = bool(machine_probe and machine_probe.has_daiban_text)
+    print("source_summary:")
+    print(f"- store_page: {'usable' if store_probe and store_probe.usable else 'unusable'}")
+    print(f"- daily_data: {'usable' if date_probe and date_probe.usable else 'unusable'}")
+    print(f"- machine_data: {'usable' if has_machine_data else 'unusable'}")
+    print(f"- unit_data: {'usable' if has_unit_data else 'unusable'}")
+
+
+def _debug_anaslo_store(
+    session,
+    store,
+    limit: int,
+    sleep: float,
+    last_request_at: list[float],
+) -> None:
+    del limit
+    search_probe = None
+    store_probe = None
+    store_url = ""
+
+    for term in _store_search_terms(store):
+        for search_url in _source_search_urls("anaslo", term):
+            search_probe = _probe_source_url(
+                session,
+                search_url,
+                label=f"search:{term}",
+                delay_seconds=sleep,
+                last_request_at=last_request_at,
+            )
+            if search_probe.usable:
+                elapsed = time.monotonic() - last_request_at[0]
+                if elapsed < sleep:
+                    time.sleep(sleep - elapsed)
+                response = session.get(search_url, timeout=20)
+                last_request_at[0] = time.monotonic()
+                store_url = _find_anaslo_store_url(response.text)
+            if store_url:
+                break
+        if store_url:
+            break
+
+    print("search_result:")
+    if search_probe is not None:
+        _print_source_probe(search_probe)
+
+    if store_url:
+        store_probe = _probe_source_url(
+            session,
+            store_url,
+            label="store_page",
+            delay_seconds=sleep,
+            last_request_at=last_request_at,
+        )
+    print("store_page_result:")
+    if store_probe is not None:
+        _print_source_probe(store_probe)
+    else:
+        print("label: store_page")
+        print(f"url: {store_url}")
+        print("status: n/a")
+        print("final_url: ")
+        print("response_size_bytes: 0")
+        print("content_type: ")
+        print("title: ")
+        print("table_headers: []")
+        print("first_300_chars: ")
+        print("error_reason: store page URL not found from search")
+        print("usable: no")
+
+    print("source_summary:")
+    print(f"- store_page: {'usable' if store_probe and store_probe.usable else 'unusable'}")
+    print("- daily_data: unusable")
+    print("- machine_data: unusable")
+    print("- unit_data: unusable")
+
+
+def cmd_debug_source_entrypoints(args: argparse.Namespace) -> int:
+    normalizer = _store_normalizer()
+    stores = _resolve_target_stores(args, normalizer)
+    session = _make_source_session()
+    last_request_at = [0.0]
+
+    print(f"source: {args.source}")
+    print(f"limit: {args.limit}")
+    print(f"sleep: {args.sleep}")
+    for index, store in enumerate(stores, start=1):
+        if index > 1:
+            print("")
+        print(f"store_id: {store.store_id}")
+        print(f"display_name: {store.display_name}")
+        print(f"canonical_name: {store.canonical_name}")
+        if args.source == "slorepo":
+            _debug_slorepo_store(session, store, args.limit, args.sleep, last_request_at)
+        elif args.source == "anaslo":
+            _debug_anaslo_store(session, store, args.limit, args.sleep, last_request_at)
+        else:
+            raise SystemExit(f"unsupported source: {args.source}")
     return 0
 
 
@@ -803,6 +1178,17 @@ def build_parser() -> argparse.ArgumentParser:
     debug_entrypoints.add_argument("--limit", type=int, default=5)
     debug_entrypoints.add_argument("--sleep", type=float, default=2.0)
     debug_entrypoints.set_defaults(func=cmd_debug_minrepo_entrypoints)
+
+    debug_source_entrypoints = subparsers.add_parser(
+        "debug-source-entrypoints",
+        help="Debug Anaslo or Slorepo store/day/machine/unit entrypoints",
+    )
+    debug_source_entrypoints.add_argument("--source", choices=["anaslo", "slorepo"], required=True)
+    debug_source_entrypoints.add_argument("--store")
+    debug_source_entrypoints.add_argument("--all", action="store_true")
+    debug_source_entrypoints.add_argument("--limit", type=int, default=3)
+    debug_source_entrypoints.add_argument("--sleep", type=float, default=2.0)
+    debug_source_entrypoints.set_defaults(func=cmd_debug_source_entrypoints)
 
     parse = subparsers.add_parser("parse-minrepo", help="Parse saved Minrepo HTML")
     parse.add_argument("--store")
