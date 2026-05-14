@@ -246,3 +246,51 @@ def test_collect_store_days_respects_sleep_and_max_limit(
         machine3_url,
     ]
     assert sleep_calls == [2.0, 2.0, 2.0, 2.0, 2.0]
+
+
+def test_collect_store_days_result_keeps_partial_machine_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    collector = _build_collector(tmp_path, monkeypatch)
+    search_url = collector.build_store_search_url(_store())
+    store_url = "https://www.slorepo.com/hole/test/"
+    day_url = "https://www.slorepo.com/hole/test/20260513/"
+    ok_machine_url = "https://www.slorepo.com/hole/test/20260513/kishu/?kishu=alpha"
+    failed_machine_url = "https://www.slorepo.com/hole/test/20260513/kishu/?kishu=beta"
+
+    collector.session = _FakeSession(
+        {
+            search_url: _FakeResponse(search_url, '<a href="/hole/test/">店舗</a>'),
+            store_url: _FakeResponse(
+                store_url,
+                '<a href="20260513">5/13</a>',
+            ),
+            day_url: _FakeResponse(
+                day_url,
+                """
+                <html><body>
+                  <h1>2026/05/13(水) テスト店</h1>
+                  <a href="kishu/?kishu=alpha">A</a>
+                  <a href="kishu/?kishu=beta">B</a>
+                </body></html>
+                """,
+            ),
+            ok_machine_url: _FakeResponse(ok_machine_url, "<html><body>machine-a</body></html>"),
+            failed_machine_url: _FakeResponse(failed_machine_url, "", status_code=403),
+        }
+    )
+
+    result = collector.collect_store_days_result(_store(), days=1)
+
+    assert result.status == "partial_success"
+    assert [page.record.url for page in result.pages] == [
+        store_url,
+        day_url,
+        ok_machine_url,
+    ]
+    assert result.total_machine_pages == 2
+    assert result.saved_machine_pages == 1
+    assert len(result.failed_machine_pages) == 1
+    assert result.failed_machine_pages[0].url == failed_machine_url
+    assert "HTTP 403" in result.failed_machine_pages[0].error

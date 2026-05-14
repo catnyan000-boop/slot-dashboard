@@ -669,20 +669,43 @@ def test_fetch_slorepo_prints_saved_and_cached_counts(
         "src.collectors.base_collector.BaseCollector._load_robots_text",
         lambda _: None,
     )
+    class _FakeFetchResult:
+        def __init__(self, pages):
+            self.pages = pages
+            self.status = "partial_success"
+            self.total_machine_pages = 2
+            self.saved_machine_pages = 1
+            self.failed_machine_pages = [
+                type(
+                    "FailedMachinePage",
+                    (),
+                    {
+                        "url": "https://www.slorepo.com/hole/test/20260513/kishu/?kishu=beta",
+                        "error": "HTTP 403 for https://www.slorepo.com/hole/test/20260513/kishu/?kishu=beta",
+                    },
+                )()
+            ]
+
     monkeypatch.setattr(
         SlorepoCollector,
-        "collect_store_days",
-        lambda self, store, days: fake_pages,
+        "collect_store_days_result",
+        lambda self, store, days: _FakeFetchResult(fake_pages),
     )
 
     result = cmd_fetch_slorepo(Namespace(store="cosmo_obu", all=False, days=7, sleep=0.0))
     captured = capsys.readouterr()
 
     assert result == 0
-    assert "cosmo_obu: pages=2 saved=1 cached=1" in captured.out
+    assert "cosmo_obu: status=partial_success pages=2 saved=1 cached=1" in captured.out
+    assert "total_machine_pages=2 saved_machine_pages=1 failed_machine_pages=1" in captured.out
+    assert "failed_machine_urls:" in captured.out
+    assert "kishu/?kishu=beta" in captured.out
     assert "total_pages: 2" in captured.out
     assert "saved_pages: 1" in captured.out
     assert "cached_pages: 1" in captured.out
+    assert "total_machine_pages: 2" in captured.out
+    assert "saved_machine_pages: 1" in captured.out
+    assert "failed_machine_pages: 1" in captured.out
 
 
 def test_parse_slorepo_raw_counts_daily_machine_and_unit(

@@ -964,20 +964,37 @@ def cmd_fetch_slorepo(args: argparse.Namespace) -> int:
     total_pages = 0
     total_saved = 0
     total_cached = 0
+    total_machine_pages = 0
+    total_saved_machine_pages = 0
+    total_failed_machine_pages = 0
     for store in _resolve_target_stores(args, normalizer):
-        pages = collector.collect_store_days(store=store, days=args.days)
+        result = collector.collect_store_days_result(store=store, days=args.days)
+        pages = result.pages
         saved = sum(1 for page in pages if page.record.status_code is not None)
         cached = len(pages) - saved
         total_pages += len(pages)
         total_saved += saved
         total_cached += cached
+        total_machine_pages += result.total_machine_pages
+        total_saved_machine_pages += result.saved_machine_pages
+        total_failed_machine_pages += len(result.failed_machine_pages)
         print(
-            f"{store.store_id}: pages={len(pages)} saved={saved} cached={cached} "
+            f"{store.store_id}: status={result.status} pages={len(pages)} saved={saved} "
+            f"cached={cached} total_machine_pages={result.total_machine_pages} "
+            f"saved_machine_pages={result.saved_machine_pages} "
+            f"failed_machine_pages={len(result.failed_machine_pages)} "
             f"raw_dir={_slorepo_raw_store_dir(store.store_id)}"
         )
+        if result.failed_machine_pages:
+            print("failed_machine_urls:")
+            for failed_page in result.failed_machine_pages:
+                print(f"- {failed_page.url} ({failed_page.error})")
     print(f"total_pages: {total_pages}")
     print(f"saved_pages: {total_saved}")
     print(f"cached_pages: {total_cached}")
+    print(f"total_machine_pages: {total_machine_pages}")
+    print(f"saved_machine_pages: {total_saved_machine_pages}")
+    print(f"failed_machine_pages: {total_failed_machine_pages}")
     return 0
 
 

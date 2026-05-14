@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -12,6 +13,47 @@ from src.db.models import StoreDefinition
 from src.parsers.slorepo_parser import SlorepoParser
 
 from .base_collector import BaseCollector, CollectedPage, CollectorError
+
+
+@dataclass
+class FailedMachinePage:
+    url: str
+    report_date: Optional[date]
+    error: str
+
+
+@dataclass
+class MachinePageFetchResult:
+    pages: list[CollectedPage]
+    failed_pages: list[FailedMachinePage]
+
+
+@dataclass
+class SlorepoFetchResult:
+    store_page: CollectedPage
+    day_pages: list[CollectedPage]
+    machine_pages: list[CollectedPage]
+    failed_machine_pages: list[FailedMachinePage]
+
+    @property
+    def pages(self) -> list[CollectedPage]:
+        return [self.store_page, *self.day_pages, *self.machine_pages]
+
+    @property
+    def total_machine_pages(self) -> int:
+        return len(self.machine_pages) + len(self.failed_machine_pages)
+
+    @property
+    def saved_machine_pages(self) -> int:
+        return len(self.machine_pages)
+
+    @property
+    def status(self) -> str:
+        if self.failed_machine_pages and self.machine_pages:
+            return "partial_success"
+        if self.failed_machine_pages:
+            return "failed"
+        return "success"
 
 
 class SlorepoCollector(BaseCollector):
@@ -38,20 +80,37 @@ class SlorepoCollector(BaseCollector):
     def fetch_store_history(self, store: StoreDefinition, days: int) -> list[CollectedPage]:
         return self.collect_store_days(store=store, days=days)
 
+    def collect_store_days_result(
+        self,
+        store: StoreDefinition,
+        days: int,
+        max_machine_pages_per_day: Optional[int] = None,
+    ) -> SlorepoFetchResult:
+        store_page = self.fetch_store_page(store)
+        day_pages = self.fetch_day_pages(store=store, days=days, store_page=store_page)
+        machine_result = self.fetch_machine_pages_result(
+            store=store,
+            day_pages=day_pages,
+            max_pages_per_day=max_machine_pages_per_day,
+        )
+        return SlorepoFetchResult(
+            store_page=store_page,
+            day_pages=day_pages,
+            machine_pages=machine_result.pages,
+            failed_machine_pages=machine_result.failed_pages,
+        )
+
     def collect_store_days(
         self,
         store: StoreDefinition,
         days: int,
         max_machine_pages_per_day: Optional[int] = None,
     ) -> list[CollectedPage]:
-        store_page = self.fetch_store_page(store)
-        day_pages = self.fetch_day_pages(store=store, days=days, store_page=store_page)
-        machine_pages = self.fetch_machine_pages(
+        return self.collect_store_days_result(
             store=store,
-            day_pages=day_pages,
-            max_pages_per_day=max_machine_pages_per_day,
-        )
-        return [store_page, *day_pages, *machine_pages]
+            days=days,
+            max_machine_pages_per_day=max_machine_pages_per_day,
+        ).pages
 
     def fetch_store_page(self, store: StoreDefinition) -> CollectedPage:
         cached_store = self._load_cached_store_page(store.store_id)
@@ -160,7 +219,20 @@ class SlorepoCollector(BaseCollector):
         day_pages: list[CollectedPage],
         max_pages_per_day: Optional[int] = None,
     ) -> list[CollectedPage]:
+        return self.fetch_machine_pages_result(
+            store=store,
+            day_pages=day_pages,
+            max_pages_per_day=max_pages_per_day,
+        ).pages
+
+    def fetch_machine_pages_result(
+        self,
+        store: StoreDefinition,
+        day_pages: list[CollectedPage],
+        max_pages_per_day: Optional[int] = None,
+    ) -> MachinePageFetchResult:
         collected: list[CollectedPage] = []
+        failed_pages: list[FailedMachinePage] = []
         for day_page in day_pages:
             report_date = day_page.record.report_date or self._extract_date_from_url(
                 day_page.record.url
@@ -197,27 +269,37 @@ class SlorepoCollector(BaseCollector):
                     )
                     continue
 
-                response = self.ensure_success_response(self.get(machine_url), machine_url)
-                raw_path = self.save_raw_html(
-                    store_id=store.store_id,
-                    report_date=report_date,
-                    page_kind="machine",
-                    html=response.text,
-                    source_url=machine_url,
-                    machine_slug=machine_slug,
-                )
-                record = self.build_source_page_record(
-                    source=self.source_name,
-                    store_id=store.store_id,
-                    url=machine_url,
-                    report_date=report_date,
-                    raw_path=raw_path,
-                    status_code=response.status_code,
-                    html=response.text,
-                )
-                collected.append(CollectedPage(record=record, raw_html=response.text))
+                try:
+                    response = self.ensure_success_response(self.get(machine_url), machine_url)
+                    raw_path = self.save_raw_html(
+                        store_id=store.store_id,
+                        report_date=report_date,
+                        page_kind="machine",
+                        html=response.text,
+                        source_url=machine_url,
+                        machine_slug=machine_slug,
+                    )
+                    record = self.build_source_page_record(
+                        source=self.source_name,
+                        store_id=store.store_id,
+                        url=machine_url,
+                        report_date=report_date,
+                        raw_path=raw_path,
+                        status_code=response.status_code,
+                        html=response.text,
+                    )
+                    collected.append(CollectedPage(record=record, raw_html=response.text))
+                except Exception as exc:
+                    failed_pages.append(
+                        FailedMachinePage(
+                            url=machine_url,
+                            report_date=report_date,
+                            error=str(exc),
+                        )
+                    )
+                    continue
 
-        return collected
+        return MachinePageFetchResult(pages=collected, failed_pages=failed_pages)
 
     def save_raw_html(
         self,
