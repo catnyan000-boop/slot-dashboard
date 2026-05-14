@@ -58,15 +58,20 @@ class SlorepoCollector(BaseCollector):
         if cached_store is not None:
             return cached_store
 
-        search_url = self.build_store_search_url(store)
-        search_response = self.ensure_success_response(self.get(search_url), search_url)
-        store_url = self.extract_store_page_url(search_response.text, search_response.url)
-        if not store_url:
-            raise CollectorError(f"Could not find slorepo store page URL for {store.store_id}")
-
-        store_response = search_response
-        if search_response.url.rstrip("/") != store_url.rstrip("/"):
+        store_url = self.preferred_store_url(store)
+        store_response = None
+        if store_url:
             store_response = self.ensure_success_response(self.get(store_url), store_url)
+        else:
+            search_url = self.build_store_search_url(store)
+            search_response = self.ensure_success_response(self.get(search_url), search_url)
+            store_url = self.extract_store_page_url(search_response.text, search_response.url)
+            if not store_url:
+                raise CollectorError(f"Could not find slorepo store page URL for {store.store_id}")
+
+            store_response = search_response
+            if search_response.url.rstrip("/") != store_url.rstrip("/"):
+                store_response = self.ensure_success_response(self.get(store_url), store_url)
 
         raw_path = self.save_raw_html(
             store_id=store.store_id,
@@ -85,6 +90,12 @@ class SlorepoCollector(BaseCollector):
             html=store_response.text,
         )
         return CollectedPage(record=record, raw_html=store_response.text)
+
+    def preferred_store_url(self, store: StoreDefinition) -> str:
+        slug = (store.slorepo_slug or "").strip().strip("/")
+        if not slug:
+            return ""
+        return f"{self.base_url}/hole/{slug}/"
 
     def fetch_day_pages(
         self,

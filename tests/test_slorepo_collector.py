@@ -73,6 +73,36 @@ def test_fetch_store_page_resolves_store_url(
     assert page.record.raw_path.endswith("data/raw/slorepo/cosmo_obu/store_test.html")
 
 
+def test_fetch_store_page_uses_slorepo_slug_without_search(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    collector = _build_collector(tmp_path, monkeypatch)
+    store = StoreDefinition(
+        store_id="kyoraku_toyoake",
+        display_name="KYORAKU豊明",
+        canonical_name="京楽会館豊明店",
+        aliases=["KYORAKU豊明"],
+        slorepo_slug="toy-slug",
+        event_days=["9"],
+    )
+    store_url = "https://www.slorepo.com/hole/toy-slug/"
+    collector.session = _FakeSession(
+        {
+            store_url: _FakeResponse(
+                store_url,
+                '<html><body><a href="20260513">5/13</a></body></html>',
+            ),
+        }
+    )
+
+    page = collector.fetch_store_page(store)
+
+    assert page.record.url == store_url
+    assert collector.session.calls == [store_url]
+    assert page.record.raw_path.endswith("data/raw/slorepo/kyoraku_toyoake/store_toy-slug.html")
+
+
 def test_raw_path_for_generates_store_day_machine_paths(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

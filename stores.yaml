@@ -32,6 +32,8 @@ stores:
       - KYORAKU豊明
       - KYORAKU豊明店
       - 京楽会館豊明店
+      - 京楽会館 豊明店
+    slorepo_slug: 4b594f52414b55e8b18ae6988ee5ba97code
     event_days: ["9", "14"]
 
   - store_id: winglet
@@ -74,4 +76,3 @@ stores:
       - APANCLUB弘法通り店
       - ＡＰＡＮＣＬＵＢ弘法通り店
     event_days: ["8"]
-
