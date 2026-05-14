@@ -6,3 +6,4 @@ data/processed/
 data/*.db
 reports/*.md
 .env
+logs/*.log
