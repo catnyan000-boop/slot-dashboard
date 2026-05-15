@@ -8,21 +8,20 @@ from src.reports.tomorrow_report import run_analysis
 
 SITE_CSS = """\
 :root {
-  --bg: #f5efe6;
-  --surface: #fffaf2;
+  --bg: #f6f1e8;
+  --surface: rgba(255, 252, 247, 0.94);
   --surface-strong: #ffffff;
-  --ink: #1f1a17;
-  --muted: #6e6258;
-  --line: #d7c7b4;
-  --accent: #0f766e;
-  --accent-soft: #d7f3ef;
-  --warn: #b45309;
-  --warn-soft: #fff1d6;
-  --danger: #b42318;
-  --danger-soft: #ffe2df;
-  --empty: #5b21b6;
-  --empty-soft: #efe4ff;
-  --shadow: 0 18px 40px rgba(55, 33, 10, 0.08);
+  --ink: #1f1d1a;
+  --muted: #6a6258;
+  --line: rgba(122, 108, 90, 0.18);
+  --shadow: 0 22px 48px rgba(67, 48, 22, 0.08);
+  --grade-a: #165f55;
+  --grade-a-soft: #dff6f0;
+  --grade-b: #a15b00;
+  --grade-b-soft: #fff1d9;
+  --grade-c: #9f2d2d;
+  --grade-c-soft: #ffe3e0;
+  --grade-calm: #e7ddd0;
 }
 
 * {
@@ -34,128 +33,177 @@ body {
   font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 32%),
-    linear-gradient(180deg, #f6f1ea 0%, #f2e9de 100%);
+    radial-gradient(circle at top left, rgba(22, 95, 85, 0.12), transparent 28%),
+    linear-gradient(180deg, #f9f4ec 0%, #f2e8da 100%);
 }
 
-a {
-  color: inherit;
+button,
+summary {
+  font: inherit;
 }
 
 .page {
-  width: min(1200px, calc(100% - 32px));
+  width: min(1180px, calc(100% - 28px));
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 18px 0 40px;
+}
+
+.hero,
+.panel,
+.group-panel,
+.store-card,
+.table-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  box-shadow: var(--shadow);
 }
 
 .hero {
-  background: linear-gradient(145deg, rgba(255, 250, 242, 0.96), rgba(247, 237, 223, 0.92));
-  border: 1px solid rgba(215, 199, 180, 0.8);
-  border-radius: 28px;
-  box-shadow: var(--shadow);
-  padding: 28px;
+  padding: 24px;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(245, 236, 224, 0.92));
 }
 
 .eyebrow {
-  margin: 0 0 8px;
-  font-size: 0.86rem;
+  margin: 0;
+  color: var(--grade-a);
+  font-size: 0.82rem;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
 }
 
-.hero h1 {
-  margin: 0;
-  font-size: clamp(1.9rem, 4vw, 3.2rem);
-  line-height: 1.1;
+.hero-title {
+  margin: 10px 0 0;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: 1.02;
 }
 
-.hero p {
+.hero-copy {
+  margin: 14px 0 0;
   color: var(--muted);
-  margin: 12px 0 0;
-  max-width: 70ch;
-}
-
-.hero-alert {
-  margin-top: 18px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  border: 1px solid rgba(180, 35, 24, 0.24);
-  background: linear-gradient(180deg, rgba(255, 226, 223, 0.92), rgba(255, 239, 236, 0.92));
-}
-
-.hero-alert strong {
-  display: block;
   font-size: 1rem;
+  max-width: 72ch;
 }
 
-.hero-alert p {
-  margin-top: 8px;
-  color: #7a271a;
+.decision-card {
+  margin-top: 20px;
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(22, 95, 85, 0.95), rgba(27, 43, 40, 0.92));
+  color: #f8f5ef;
+}
+
+.decision-kicker {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.decision-title {
+  margin: 8px 0 0;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  line-height: 1.2;
+}
+
+.decision-copy {
+  margin: 12px 0 0;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  max-width: 68ch;
 }
 
 .meta-grid,
 .summary-grid,
 .filter-row,
-.card-grid,
-.list-grid {
+.group-grid,
+.detail-grid {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
-.meta-grid,
-.summary-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  margin-top: 20px;
-}
-
-.stat,
-.panel,
-.store-card,
-.table-wrap {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(215, 199, 180, 0.95);
-  border-radius: 22px;
-  box-shadow: var(--shadow);
-}
-
-.stat,
-.panel {
-  padding: 18px;
-}
-
-.stat-label,
-.panel h2,
-.table-wrap h2 {
-  margin: 0;
-}
-
-.stat-label {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.stat-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-top: 10px;
-}
-
-.panel {
+.meta-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   margin-top: 18px;
 }
 
-.panel h2 {
-  font-size: 1.3rem;
-  margin-bottom: 14px;
+.summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 18px;
 }
 
-.filters {
-  margin-top: 22px;
+.meta-card,
+.summary-card {
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.meta-label,
+.summary-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.meta-value,
+.summary-value {
+  margin-top: 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.summary-note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.summary-card.a .summary-value,
+.badge.grade-a,
+.store-card[data-grade="A"] .decision-mark {
+  color: var(--grade-a);
+}
+
+.summary-card.b .summary-value,
+.badge.grade-b,
+.store-card[data-grade="B"] .decision-mark {
+  color: var(--grade-b);
+}
+
+.summary-card.c .summary-value,
+.badge.grade-c,
+.store-card[data-grade="C"] .decision-mark {
+  color: var(--grade-c);
+}
+
+.panel,
+.group-panel,
+.table-panel {
+  margin-top: 20px;
+  padding: 18px;
+}
+
+.panel h2,
+.group-head h2,
+.table-panel h2 {
+  margin: 0;
+  font-size: 1.24rem;
+}
+
+.panel-copy,
+.group-copy,
+.table-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .filter-row {
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin-top: 14px;
 }
 
 .filter-button {
@@ -165,158 +213,95 @@ a {
   color: var(--ink);
   padding: 12px 14px;
   border-radius: 999px;
-  font-size: 0.95rem;
-  font-weight: 700;
   cursor: pointer;
-  transition: 180ms ease;
+  font-weight: 800;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
 }
 
 .filter-button.active {
+  border-color: transparent;
   background: var(--ink);
   color: #fff;
-  border-color: var(--ink);
 }
 
 .filter-button:hover {
   transform: translateY(-1px);
 }
 
-.summary-grid {
-  margin-top: 28px;
+.group-panel[data-grade="A"] {
+  border-color: rgba(22, 95, 85, 0.18);
 }
 
-.summary-hero-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 16px;
-  margin-top: 28px;
+.group-panel[data-grade="B"] {
+  border-color: rgba(161, 91, 0, 0.2);
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(255, 247, 230, 0.94));
 }
 
-.summary-card {
-  padding: 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(215, 199, 180, 0.95);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow);
+.group-panel[data-grade="C"] {
+  border-color: rgba(159, 45, 45, 0.2);
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(255, 235, 232, 0.94));
 }
 
-.summary-card strong {
-  display: block;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.summary-card .big-number {
-  margin-top: 8px;
-  font-size: 2rem;
-  font-weight: 800;
-}
-
-.summary-card .summary-note {
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
-.summary-card.ready .big-number {
-  color: var(--accent);
-}
-
-.summary-card.caution .big-number {
-  color: var(--warn);
-}
-
-.summary-card.unreliable .big-number {
-  color: var(--danger);
-}
-
-.summary-card.shortage .big-number {
-  color: var(--empty);
-}
-
-.list-grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.plain-list {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--muted);
-}
-
-.plain-list strong {
-  color: var(--ink);
-}
-
-.card-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  margin-top: 22px;
-}
-
-.section-title-row {
+.group-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 28px;
+  gap: 14px;
+  align-items: flex-start;
 }
 
-.section-title-row h2 {
-  margin: 0;
-  font-size: 1.4rem;
+.group-count {
+  min-width: 70px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
 }
 
-.section-kicker {
-  margin: 8px 0 0;
+.group-count strong {
+  display: block;
+  font-size: 1.3rem;
+}
+
+.group-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  margin-top: 18px;
+}
+
+.empty-note {
+  margin: 18px 0 0;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
   color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.empty-zone {
-  margin-top: 28px;
-  padding: 20px;
-  border-radius: 22px;
-  border: 1px solid rgba(91, 33, 182, 0.18);
-  background: linear-gradient(180deg, rgba(239, 228, 255, 0.92), rgba(248, 242, 255, 0.95));
-  box-shadow: var(--shadow);
-}
-
-.empty-zone h2 {
-  margin: 0;
-}
-
-.empty-zone p {
-  margin: 8px 0 0;
-  color: #5f3b9b;
 }
 
 .store-card {
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
-.store-card[data-severity="critical"] {
-  border-color: rgba(180, 35, 24, 0.35);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 226, 223, 0.78));
+.store-card[data-grade="A"] {
+  border-color: rgba(22, 95, 85, 0.18);
 }
 
-.store-card[data-severity="shortage"] {
-  border-color: rgba(91, 33, 182, 0.28);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 228, 255, 0.84));
+.store-card[data-grade="B"] {
+  border-color: rgba(161, 91, 0, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 246, 225, 0.9));
 }
 
-.store-card[data-severity="caution"] {
-  border-color: rgba(180, 83, 9, 0.35);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 241, 214, 0.86));
+.store-card[data-grade="C"] {
+  border-color: rgba(159, 45, 45, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 235, 232, 0.92));
 }
 
-.store-header {
+.store-top {
   display: flex;
   justify-content: space-between;
+  gap: 14px;
   align-items: flex-start;
-  gap: 12px;
 }
 
 .store-title {
@@ -324,16 +309,17 @@ a {
   font-size: 1.15rem;
 }
 
-.store-subtitle {
+.store-id {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
-.badge-group {
+.badge-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .badge {
@@ -341,154 +327,223 @@ a {
   align-items: center;
   border-radius: 999px;
   padding: 6px 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 800;
   line-height: 1;
 }
 
+.badge.grade-a,
 .badge.ok {
-  color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--grade-a-soft);
 }
 
+.badge.grade-b,
 .badge.warn {
-  color: var(--warn);
-  background: var(--warn-soft);
+  background: var(--grade-b-soft);
 }
 
+.badge.grade-c,
 .badge.danger {
-  color: var(--danger);
-  background: var(--danger-soft);
+  background: var(--grade-c-soft);
 }
 
-.badge.empty {
-  color: var(--empty);
-  background: var(--empty-soft);
+.badge.neutral {
+  background: #f1ece5;
+  color: #5a5249;
 }
 
-.warning-strip {
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(180, 35, 24, 0.22);
-  background: rgba(255, 226, 223, 0.72);
-  color: #8e1c17;
-  font-weight: 700;
+.decision-mark {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.decision-state {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.metric {
-  padding: 12px;
-  border: 1px solid rgba(215, 199, 180, 0.9);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.metric-label {
+.decision-copy-short {
   color: var(--muted);
-  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
-.metric-value {
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.status-tile {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--line);
+}
+
+.status-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.status-value {
   margin-top: 6px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.4;
 }
 
-.store-list,
-.note-list {
+.reason-box {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+}
+
+.reason-box strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.reason-box p,
+.detail-grid p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.detail-box {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.detail-box summary {
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+}
+
+.detail-box summary::-webkit-details-marker {
+  display: none;
+}
+
+.detail-box summary::after {
+  content: "＋";
+  margin-left: 8px;
+}
+
+.detail-box[open] summary::after {
+  content: "−";
+}
+
+.detail-grid {
+  margin-top: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-item {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--line);
+}
+
+.detail-item strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.detail-list {
   margin: 0;
   padding-left: 18px;
   color: var(--muted);
 }
 
-.store-list li + li,
-.note-list li + li {
-  margin-top: 6px;
+.detail-list li + li {
+  margin-top: 4px;
 }
 
-.table-wrap {
-  padding: 18px;
-  margin-top: 28px;
-  overflow: hidden;
+.table-panel details {
+  margin-top: 12px;
+}
+
+.table-panel summary {
+  cursor: pointer;
+  font-weight: 800;
 }
 
 .table-scroll {
   overflow: auto;
+  margin-top: 12px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 980px;
+  min-width: 760px;
 }
 
 thead th {
   text-align: left;
-  font-size: 0.85rem;
-  color: var(--muted);
   padding: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
   border-bottom: 1px solid var(--line);
 }
 
 tbody td {
   padding: 12px;
-  border-bottom: 1px solid rgba(215, 199, 180, 0.7);
+  border-bottom: 1px solid rgba(122, 108, 90, 0.14);
   vertical-align: top;
 }
 
-tbody tr[data-severity="critical"] {
-  background: rgba(255, 226, 223, 0.55);
-}
-
-tbody tr[data-severity="shortage"] {
-  background: rgba(239, 228, 255, 0.55);
-}
-
 .footer {
-  margin-top: 28px;
+  margin-top: 24px;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   text-align: center;
 }
 
 @media (max-width: 720px) {
   .page {
-    width: min(100% - 20px, 1200px);
-    padding-top: 16px;
+    width: min(100% - 18px, 1180px);
+    padding-top: 14px;
   }
 
   .hero,
   .panel,
-  .stat,
+  .group-panel,
   .store-card,
-  .table-wrap {
+  .table-panel {
     border-radius: 20px;
   }
 
-  .hero {
-    padding: 22px 18px;
+  .hero,
+  .panel,
+  .group-panel,
+  .table-panel {
+    padding: 16px;
   }
 
-  .metric-grid {
-    grid-template-columns: 1fr;
+  .decision-card {
+    padding: 18px;
   }
 
-  .store-header {
+  .group-head,
+  .store-top,
+  .decision-state {
     flex-direction: column;
   }
 
-  .summary-hero-grid {
-    grid-template-columns: 1fr 1fr;
+  .badge-row {
+    justify-content: flex-start;
   }
-}
 
-@media (max-width: 520px) {
-  .summary-hero-grid {
+  .status-grid,
+  .detail-grid,
+  .summary-grid,
+  .meta-grid,
+  .group-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -497,10 +552,11 @@ tbody tr[data-severity="shortage"] {
 SITE_JS = """\
 const FILTERS = {
   all: () => true,
-  ready: (store) => store.filter_key === "ready",
-  caution: (store) => store.filter_key === "caution" || store.filter_key === "reference",
-  unreliable: (store) => store.filter_key === "unreliable",
-  shortage: (store) => store.filter_key === "shortage",
+  grade_a: (store) => store.decision_grade === "A",
+  grade_b: (store) => store.decision_grade === "B",
+  grade_c: (store) => store.decision_grade === "C",
+  partial_success: (store) => store.fetch_status === "partial_success",
+  shortage: (store) => Number(store.unit_results_total || 0) === 0,
 };
 
 function escapeHtml(value) {
@@ -512,26 +568,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function badgeClass(status) {
-  if (status === "データ不足") return "empty";
-  if (status === "台番分析は信頼不可") return "danger";
-  if (status === "台番分析は注意付き" || status === "台番分析は参考程度") return "warn";
-  return "ok";
-}
-
-function fetchBadgeClass(status) {
-  if (status === "partial_success") return "warn";
-  if (status === "failed" || status === "失敗") return "danger";
-  return "ok";
-}
-
-function parseBadgeClass(status) {
-  if (status === "failed" || status === "失敗") return "empty";
-  return "ok";
-}
-
-function renderBadge(text, extraClass = "") {
-  return `<span class="badge ${extraClass}">${escapeHtml(text)}</span>`;
+function renderBadge(text, kind = "neutral") {
+  return `<span class="badge ${escapeHtml(kind)}">${escapeHtml(text)}</span>`;
 }
 
 function renderList(items, emptyLabel = "なし") {
@@ -541,99 +579,208 @@ function renderList(items, emptyLabel = "なし") {
   return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
-function renderSummaryCard(label, value, note, kind) {
+function gradeBadgeKind(grade) {
+  if (grade === "A") return "grade-a";
+  if (grade === "B") return "grade-b";
+  return "grade-c";
+}
+
+function stateBadgeKind(grade) {
+  if (grade === "A") return "ok";
+  if (grade === "B") return "warn";
+  return "danger";
+}
+
+function fetchStatusText(status) {
+  if (status === "success") return "success";
+  if (status === "partial_success") return "partial_success";
+  return "failed";
+}
+
+function groupedStores(stores) {
+  return {
+    A: stores.filter((store) => store.decision_grade === "A"),
+    B: stores.filter((store) => store.decision_grade === "B"),
+    C: stores.filter((store) => store.decision_grade === "C"),
+  };
+}
+
+function renderHeroCard(payload, stores) {
+  const counts = payload.decision_counts || {};
   return `
-    <div class="summary-card ${escapeHtml(kind)}">
-      <strong>${escapeHtml(label)}</strong>
-      <div class="big-number">${escapeHtml(value)}</div>
-      <div class="summary-note">${escapeHtml(note)}</div>
-    </div>
+    <section class="hero">
+      <p class="eyebrow">Source ${escapeHtml(payload.source || "-")}</p>
+      <h1 class="hero-title">今日どう判断するかを最初に見る画面</h1>
+      <p class="hero-copy">${escapeHtml(payload.description || "")}</p>
+      <div class="decision-card">
+        <p class="decision-kicker">今日の全体判定</p>
+        <h2 class="decision-title">
+          全体として ${counts.shortage ? "一部見送りあり" : "利用可能"}
+        </h2>
+        <p class="decision-copy">${escapeHtml(payload.today_conclusion || "")}</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-card">
+          <div class="meta-label">データソース</div>
+          <div class="meta-value">${escapeHtml(payload.source || "-")}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">最終更新日時</div>
+          <div class="meta-value">${escapeHtml(payload.generated_at || "-")}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">集計対象期間</div>
+          <div class="meta-value">${escapeHtml(payload.coverage_window || "-")}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">対象店舗数</div>
+          <div class="meta-value">${stores.length}店舗</div>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card a">
+          <div class="summary-label">台番分析可能店舗数</div>
+          <div class="summary-value">${escapeHtml(counts.analysis_ready || 0)}</div>
+          <div class="summary-note">今日の判断に使える店舗数</div>
+        </div>
+        <div class="summary-card b">
+          <div class="summary-label">注意付き店舗数</div>
+          <div class="summary-value">${escapeHtml(counts.B || 0)}</div>
+          <div class="summary-note">一部機種取得失敗あり</div>
+        </div>
+        <div class="summary-card c">
+          <div class="summary-label">データ不足店舗数</div>
+          <div class="summary-value">${escapeHtml(counts.shortage || 0)}</div>
+          <div class="summary-note">今日の判断には使わない</div>
+        </div>
+        <div class="summary-card a">
+          <div class="summary-label">A / B / C</div>
+          <div class="summary-value">
+            ${escapeHtml(`${counts.A || 0} / ${counts.B || 0} / ${counts.C || 0}`)}
+          </div>
+          <div class="summary-note">通常 / 注意付き / 見送り</div>
+        </div>
+      </div>
+    </section>
   `;
 }
 
 function cardTemplate(store) {
-  const fetchBadge = renderBadge(
-    `取得:${store.fetch_status}`,
-    fetchBadgeClass(store.fetch_status),
-  );
-  const parseBadge = renderBadge(
-    `parse:${store.parse_status}`,
-    parseBadgeClass(store.parse_status),
-  );
-  const statusBadge = renderBadge(
-    store.pattern_analysis_status,
-    badgeClass(store.pattern_analysis_status),
-  );
+  const failedText = Number(store.failed_machine_pages || 0) > 0
+    ? `${store.failed_machine_pages}件`
+    : "なし";
+  const failedUrls = store.failed_machine_urls || [];
   return `
-    <article class="store-card" data-severity="${escapeHtml(store.severity_key)}">
-      <div class="store-header">
+    <article class="store-card" data-grade="${escapeHtml(store.decision_grade)}">
+      <div class="store-top">
         <div>
           <h3 class="store-title">${escapeHtml(store.display_name)}</h3>
-          <p class="store-subtitle">${escapeHtml(store.store_id)}</p>
+          <p class="store-id">${escapeHtml(store.store_id)}</p>
         </div>
-        <div class="badge-group">
-          ${fetchBadge}
-          ${parseBadge}
-          ${statusBadge}
-        </div>
-      </div>
-      <div class="metric-grid">
-        <div class="metric">
-          <div class="metric-label">unit_diff_missing_rate</div>
-          <div class="metric-value">${escapeHtml(store.unit_diff_missing_rate_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">unit_results_total</div>
-          <div class="metric-value">${escapeHtml(store.unit_results_total_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">diff_null_count</div>
-          <div class="metric-value">${escapeHtml(store.diff_null_count_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">有効分析範囲</div>
-          <div class="metric-value">${escapeHtml(store.effective_analyses_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">failed_machine_pages</div>
-          <div class="metric-value">${escapeHtml(store.failed_machine_pages || 0)}</div>
+        <div class="badge-row">
+          ${renderBadge(`判定 ${store.decision_grade}`, gradeBadgeKind(store.decision_grade))}
+          ${renderBadge(store.decision_state, stateBadgeKind(store.decision_grade))}
+          ${renderBadge(
+            `台番分析 ${store.analysis_availability_text}`,
+            stateBadgeKind(store.decision_grade),
+          )}
         </div>
       </div>
-      <div>
-        <strong>分析ステータス</strong>
-        <ul class="store-list">
-          <li>台番: ${escapeHtml(store.pattern_analysis_status)}</li>
-          <li>末尾: ${escapeHtml(store.tail_analysis_status)}</li>
-          <li>並び: ${escapeHtml(store.cluster_analysis_status)}</li>
-        </ul>
+      <div class="decision-state">
+        <div class="decision-mark">${escapeHtml(store.decision_grade)}</div>
+        <div class="decision-copy-short">${escapeHtml(store.decision_reason || "")}</div>
       </div>
-      <div>
-        <strong>注意点</strong>
-        <ul class="note-list">${renderList(store.notes, "追加注意なし")}</ul>
+      <div class="status-grid">
+        <div class="status-tile">
+          <div class="status-label">状態</div>
+          <div class="status-value">${escapeHtml(store.decision_state)}</div>
+        </div>
+        <div class="status-tile">
+          <div class="status-label">台番差枚</div>
+          <div class="status-value">${escapeHtml(store.diff_status_text)}</div>
+        </div>
+        <div class="status-tile">
+          <div class="status-label">unit_diff_missing_rate</div>
+          <div class="status-value">${escapeHtml(store.unit_diff_missing_rate_text)}</div>
+        </div>
+        <div class="status-tile">
+          <div class="status-label">failed_machine_pages</div>
+          <div class="status-value">${escapeHtml(failedText)}</div>
+        </div>
+      </div>
+      <div class="reason-box">
+        <strong>注意理由</strong>
+        <p>${escapeHtml((store.notes || [store.decision_reason])[0] || "追加注意なし")}</p>
+      </div>
+      <details class="detail-box">
+        <summary>詳細を開く</summary>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <strong>件数</strong>
+            <p>
+              daily ${escapeHtml(store.daily_count || 0)} /
+              machine ${escapeHtml(store.machine_count || 0)} /
+              unit ${escapeHtml(store.unit_count || 0)}
+            </p>
+          </div>
+          <div class="detail-item">
+            <strong>取得状態</strong>
+            <p>fetch_status: ${escapeHtml(fetchStatusText(store.fetch_status))}</p>
+            <p>parse_status: ${escapeHtml(store.parse_status)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>有効分析範囲</strong>
+            <p>${escapeHtml(store.effective_analyses_text)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>failed_machine_urls</strong>
+            ${
+              failedUrls.length
+                ? `<ul class="detail-list">${renderList(failedUrls)}</ul>`
+                : `<p>記録なし</p>`
+            }
+          </div>
+          <div class="detail-item">
+            <strong>注意点</strong>
+            <ul class="detail-list">${renderList(store.notes, "追加注意なし")}</ul>
+          </div>
+        </div>
+      </details>
+    </article>
+  `;
+}
+
+function groupSection(grade, title, copy, stores) {
+  return `
+    <section class="group-panel" data-grade="${escapeHtml(grade)}">
+      <div class="group-head">
+        <div>
+          <h2>${escapeHtml(title)}</h2>
+          <p class="group-copy">${escapeHtml(copy)}</p>
+        </div>
+        <div class="group-count">
+          <strong>${stores.length}</strong>
+          <span>店舗</span>
+        </div>
       </div>
       ${
-        store.severity_key === "critical"
-          ? `<div class="warning-strip">現時点では店舗別・機種別・カテゴリ別分析のみ有効</div>`
-          : ""
+        stores.length
+          ? `<div class="group-grid">${stores.map(cardTemplate).join("")}</div>`
+          : `<div class="empty-note">該当店舗はありません。</div>`
       }
-    </article>
+    </section>
   `;
 }
 
 function tableRowTemplate(store) {
   return `
-    <tr data-severity="${escapeHtml(store.severity_key)}">
+    <tr>
       <td>${escapeHtml(store.display_name)}</td>
-      <td>${escapeHtml(store.fetch_status)}</td>
-      <td>${escapeHtml(store.parse_status)}</td>
-      <td>${escapeHtml(store.failed_machine_pages || 0)}</td>
+      <td>${escapeHtml(store.decision_grade)}</td>
+      <td>${escapeHtml(fetchStatusText(store.fetch_status))}</td>
+      <td>${escapeHtml(store.unit_count || 0)}</td>
       <td>${escapeHtml(store.unit_diff_missing_rate_text)}</td>
-      <td>${escapeHtml(store.unit_results_total_text)}</td>
-      <td>${escapeHtml(store.diff_null_count_text)}</td>
-      <td>${escapeHtml(store.pattern_analysis_status)}</td>
-      <td>${escapeHtml(store.tail_analysis_status)}</td>
-      <td>${escapeHtml(store.cluster_analysis_status)}</td>
-      <td>${escapeHtml(store.effective_analyses_text)}</td>
+      <td>${escapeHtml((store.notes || [store.decision_reason])[0] || "追加注意なし")}</td>
     </tr>
   `;
 }
@@ -651,70 +798,17 @@ function mountDashboard(payload) {
 
   function render() {
     const visibleStores = filteredStores();
-    const visibleShortageStores = visibleStores.filter(
-      (store) => store.severity_key === "shortage",
-    );
-    const visibleActiveStores = visibleStores.filter(
-      (store) => store.severity_key !== "shortage",
-    );
+    const groups = groupedStores(visibleStores);
+
     root.innerHTML = `
       <main class="page">
-        <section class="hero">
-          <p class="eyebrow">Slot Analyzer Dashboard</p>
-          <h1>9店舗の unit coverage を一覧できる静的ダッシュボード</h1>
-          <p>${escapeHtml(payload.description || "")}</p>
-          <div class="hero-alert">
-            <strong>現時点では店舗別・機種別・カテゴリ別分析のみ有効</strong>
-            <p>欠損率が高い店舗では、台番・末尾・並び分析を有効に見せないよう固定しています。</p>
-          </div>
-          <div class="meta-grid">
-            <div class="stat">
-              <div class="stat-label">source</div>
-              <div class="stat-value">${escapeHtml(payload.source || "-")}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">最終更新日時</div>
-              <div class="stat-value">${escapeHtml(payload.generated_at || "-")}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">集計対象期間</div>
-              <div class="stat-value">${escapeHtml(payload.coverage_window || "-")}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">表示店舗数</div>
-              <div class="stat-value">${visibleStores.length} / ${stores.length}</div>
-            </div>
-          </div>
-          <div class="summary-hero-grid">
-            ${renderSummaryCard(
-              "台番分析可能店舗数",
-              payload.summary_counts.ready,
-              "いまは 0 店舗でも一目で確認",
-              "ready",
-            )}
-            ${renderSummaryCard(
-              "注意付き店舗数",
-              payload.summary_counts.caution,
-              "注意付き・参考程度",
-              "caution",
-            )}
-            ${renderSummaryCard(
-              "信頼不可店舗数",
-              payload.summary_counts.unreliable,
-              "欠損率50%以上は赤系で強調",
-              "unreliable",
-            )}
-            ${renderSummaryCard(
-              "データ不足店舗数",
-              payload.summary_counts.shortage,
-              "別枠で確認が必要",
-              "shortage",
-            )}
-          </div>
-        </section>
+        ${renderHeroCard(payload, stores)}
 
-        <section class="filters panel">
-          <h2>フィルタ</h2>
+        <section class="panel">
+          <h2>店舗フィルタ</h2>
+          <p class="panel-copy">
+            まずは A / B / C で見て、必要なときだけ partial_success やデータ不足を確認します。
+          </p>
           <div class="filter-row">
             ${filters
               .map(
@@ -726,93 +820,57 @@ function mountDashboard(payload) {
                   >
                     ${escapeHtml(filter.label)}
                   </button>
-                `
+                `,
               )
               .join("")}
           </div>
         </section>
 
-        <section class="summary-grid">
-          <div class="panel">
-            <h2>データ不足店舗</h2>
-            <div class="list-grid">
-              <ol class="plain-list">${renderList(payload.data_shortage_stores, "なし")}</ol>
+        ${groupSection(
+          "A",
+          "A 通常利用可能",
+          "fetch 成功、欠損率が低く、そのまま判断に使える店舗です。",
+          groups.A,
+        )}
+        ${groupSection(
+          "B",
+          "B 注意付きで利用可能",
+          "一部機種ページ取得失敗はあるものの、台番判断には使える店舗です。",
+          groups.B,
+        )}
+        ${groupSection(
+          "C",
+          "C 見送り / データ不足",
+          "欠損率や取得状態の都合で、今日の判断材料としては弱い店舗です。",
+          groups.C,
+        )}
+
+        <section class="table-panel">
+          <h2>比較テーブル</h2>
+          <p class="table-copy">カードで判断したあとに、必要なら比較だけ確認します。</p>
+          <details>
+            <summary>比較テーブルを開く</summary>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>店舗</th>
+                    <th>判定</th>
+                    <th>fetch_status</th>
+                    <th>unit件数</th>
+                    <th>欠損率</th>
+                    <th>注意点</th>
+                  </tr>
+                </thead>
+                <tbody>${visibleStores.map(tableRowTemplate).join("")}</tbody>
+              </table>
             </div>
-          </div>
-          <div class="panel">
-            <h2>明日の狙い候補</h2>
-            <div class="list-grid">
-              <ol class="plain-list">${renderList(payload.tomorrow_candidates, "候補なし")}</ol>
-            </div>
-          </div>
-          <div class="panel">
-            <h2>見送り推奨店舗</h2>
-            <div class="list-grid">
-              <ol class="plain-list">${renderList(payload.skip_recommendations, "該当なし")}</ol>
-            </div>
-          </div>
-          <div class="panel">
-            <h2>注意点</h2>
-            <div class="list-grid">
-              <ul class="plain-list">${renderList(payload.notes, "追加注意なし")}</ul>
-            </div>
-          </div>
+          </details>
         </section>
 
-        ${
-          visibleShortageStores.length
-            ? `
-              <section class="empty-zone">
-                <h2>データ不足店舗</h2>
-                <p>
-                  この店舗群は unit_results サンプルが不足しているため、
-                  台番・末尾・並び分析の対象外です。
-                </p>
-                <div class="card-grid">
-                  ${visibleShortageStores.map(cardTemplate).join("")}
-                </div>
-              </section>
-            `
-            : ""
-        }
-
-        <section>
-          <div class="section-title-row">
-            <div>
-              <h2>店舗カード</h2>
-              <p class="section-kicker">信頼不可は赤系、データ不足は別枠で表示しています。</p>
-            </div>
-          </div>
-          <div class="card-grid">
-            ${visibleActiveStores.map(cardTemplate).join("")}
-          </div>
-        </section>
-
-        <section class="table-wrap">
-          <h2>9店舗比較テーブル</h2>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>店舗</th>
-                  <th>取得</th>
-                  <th>parse</th>
-                  <th>machine失敗</th>
-                  <th>欠損率</th>
-                  <th>unit件数</th>
-                  <th>diff NULL</th>
-                  <th>台番</th>
-                  <th>末尾</th>
-                  <th>並び</th>
-                  <th>有効分析範囲</th>
-                </tr>
-              </thead>
-              <tbody>${visibleStores.map(tableRowTemplate).join("")}</tbody>
-            </table>
-          </div>
-        </section>
-
-        <p class="footer">raw HTML や SQLite DB は公開せず、summary JSON のみを出力しています。</p>
+        <p class="footer">
+          source=${escapeHtml(payload.source || "-")} / raw HTML や SQLite DB は公開していません。
+        </p>
       </main>
     `;
 
@@ -864,26 +922,97 @@ def _coverage_window_text(target_date: date, lookback_days: int) -> str:
     return f"{start_date.isoformat()} 〜 {end_date.isoformat()}"
 
 
-def _store_filter_key(status: str) -> str:
-    if status == "データ不足":
-        return "shortage"
-    if status == "台番分析可能":
-        return "ready"
-    if status == "台番分析は信頼不可":
-        return "unreliable"
-    if status == "台番分析は参考程度":
-        return "reference"
-    return "caution"
+def _normalize_fetch_status(status: str) -> str:
+    value = status.strip()
+    if value in {"success", "partial_success", "failed"}:
+        return value
+    if value == "成功":
+        return "success"
+    if value == "失敗":
+        return "failed"
+    if value == "失敗（前回データ使用）":
+        return "failed"
+    return value or "failed"
 
 
-def _store_severity_key(status: str) -> str:
-    if status == "データ不足":
+def _normalize_parse_status(status: str) -> str:
+    value = status.strip()
+    if value in {"success", "failed"}:
+        return value
+    if value == "成功":
+        return "success"
+    if value == "失敗":
+        return "failed"
+    return value or "failed"
+
+
+def _decision_grade(
+    *,
+    fetch_status: str,
+    total_rows: int,
+    diff_missing_rate: float,
+    pattern_status: str,
+) -> str:
+    if (
+        fetch_status == "success"
+        and total_rows > 0
+        and diff_missing_rate < 0.1
+        and pattern_status == "台番分析可能"
+    ):
+        return "A"
+    if (
+        fetch_status == "partial_success"
+        and total_rows > 0
+        and diff_missing_rate < 0.1
+        and pattern_status == "台番分析可能"
+    ):
+        return "B"
+    return "C"
+
+
+def _decision_state_text(grade: str, total_rows: int) -> str:
+    if grade == "A":
+        return "通常利用可能"
+    if grade == "B":
+        return "注意付きで利用可能"
+    if total_rows == 0:
+        return "データ不足"
+    return "見送り"
+
+
+def _decision_reason_text(
+    *,
+    grade: str,
+    fetch_status: str,
+    total_rows: int,
+    diff_missing_rate: float,
+    failed_machine_pages: int,
+) -> str:
+    if grade == "A":
+        return "通常どおり判断に使える"
+    if grade == "B":
+        return (
+            "一部機種ページの取得に失敗。ただし台番データは取得できているため注意付きで利用可能"
+        )
+    if fetch_status == "failed" or total_rows == 0:
+        return "データ不足。今日の判断には使わない"
+    if diff_missing_rate >= 0.5:
+        return "欠損率が高いため今日の判断には使わない"
+    if failed_machine_pages > 0:
+        return "取得失敗が混在しているため今日は見送り"
+    return "判断材料が足りないため今日は見送り"
+
+
+def _store_filter_key(grade: str, total_rows: int) -> str:
+    if total_rows == 0:
         return "shortage"
-    if status == "台番分析は信頼不可":
-        return "critical"
-    if status in {"台番分析は注意付き", "台番分析は参考程度"}:
-        return "caution"
-    return "ready"
+    return {"A": "grade_a", "B": "grade_b"}.get(grade, "grade_c")
+
+
+def _store_severity_key(grade: str, total_rows: int) -> str:
+    if total_rows == 0:
+        return "shortage"
+    return {"A": "grade_a", "B": "grade_b"}.get(grade, "grade_c")
 
 
 def _safe_text(value: object, empty: str = "データ不足") -> str:
@@ -899,6 +1028,7 @@ def _make_store_notes(
     quality: dict[str, object],
     failed_machine_pages: int = 0,
     status_note: str = "",
+    decision_reason: str = "",
 ) -> list[str]:
     notes: list[str] = []
 
@@ -906,14 +1036,18 @@ def _make_store_notes(
         if note and note not in notes:
             notes.append(note)
 
-    if fetch_status not in {"成功", "success"}:
-        add_note("取得状況は要確認")
+    if decision_reason:
+        add_note(decision_reason)
     if fetch_status == "partial_success":
         add_note(f"一部機種ページ取得失敗: {failed_machine_pages}件")
     if parse_status not in {"成功", "success"}:
         add_note("parse済み unit_results が不足")
     if int(quality["total_rows"]) == 0:
         add_note("unit_results サンプルが 0 のためデータ不足")
+    if int(quality["total_rows"]) > 0 and float(quality["diff_missing_rate"]) == 0.0:
+        add_note("台番差枚データ欠損なし")
+    elif int(quality["total_rows"]) > 0:
+        add_note(f"台番差枚データ欠損率 {quality['diff_missing_rate']}")
     if float(quality["diff_missing_rate"]) >= 0.5:
         add_note("欠損率50%以上のため台番・末尾・並び分析は信頼不可")
     if status_note:
@@ -929,23 +1063,61 @@ def _store_payload(
     parse_status: str,
     failed_machine_pages: int = 0,
     status_note: str = "",
+    daily_count: int = 0,
+    machine_count: int = 0,
+    failed_machine_urls: list[str] | None = None,
 ) -> dict[str, object]:
-    filter_key = _store_filter_key(str(quality["pattern_analysis_status"]))
-    severity_key = _store_severity_key(str(quality["pattern_analysis_status"]))
+    total_rows = int(quality["total_rows"])
+    diff_missing_rate = float(quality["diff_missing_rate"])
+    normalized_fetch_status = _normalize_fetch_status(fetch_status)
+    normalized_parse_status = _normalize_parse_status(parse_status)
+    decision_grade = _decision_grade(
+        fetch_status=normalized_fetch_status,
+        total_rows=total_rows,
+        diff_missing_rate=diff_missing_rate,
+        pattern_status=str(quality["pattern_analysis_status"]),
+    )
+    decision_state = _decision_state_text(decision_grade, total_rows)
+    decision_reason = _decision_reason_text(
+        grade=decision_grade,
+        fetch_status=normalized_fetch_status,
+        total_rows=total_rows,
+        diff_missing_rate=diff_missing_rate,
+        failed_machine_pages=failed_machine_pages,
+    )
+    filter_key = _store_filter_key(decision_grade, total_rows)
+    severity_key = _store_severity_key(decision_grade, total_rows)
     excluded_machines = [
         f"{row['machine_name']} ({row['reason']})" for row in quality["excluded_machines"][:10]
     ]
     return {
         "store_id": store.store_id,
         "display_name": store.display_name,
-        "fetch_status": fetch_status,
-        "parse_status": parse_status,
+        "fetch_status": normalized_fetch_status,
+        "parse_status": normalized_parse_status,
         "failed_machine_pages": failed_machine_pages,
+        "failed_machine_urls": failed_machine_urls or [],
+        "daily_count": daily_count,
+        "machine_count": machine_count,
+        "unit_count": total_rows,
+        "decision_grade": decision_grade,
+        "decision_state": decision_state,
+        "decision_reason": decision_reason,
+        "analysis_availability_text": (
+            "可能" if str(quality["pattern_analysis_status"]) == "台番分析可能" else "不可"
+        ),
         "unit_diff_missing_rate": quality["diff_missing_rate"],
         "unit_diff_missing_rate_text": (
             "データ不足"
-            if int(quality["total_rows"]) == 0
+            if total_rows == 0
             else str(quality["diff_missing_rate"])
+        ),
+        "diff_status_text": (
+            "データ不足"
+            if total_rows == 0
+            else "台番差枚データ欠損なし"
+            if diff_missing_rate == 0.0
+            else f"台番差枚データ欠損率 {quality['diff_missing_rate']}"
         ),
         "unit_results_total": quality["total_rows"],
         "unit_results_total_text": _safe_text(quality["total_rows"], "0"),
@@ -962,15 +1134,66 @@ def _store_payload(
         ),
         "excluded_machines": excluded_machines,
         "notes": _make_store_notes(
-            fetch_status=fetch_status,
-            parse_status=parse_status,
+            fetch_status=normalized_fetch_status,
+            parse_status=normalized_parse_status,
             quality=quality,
             failed_machine_pages=failed_machine_pages,
             status_note=status_note,
+            decision_reason=decision_reason,
         ),
         "filter_key": filter_key,
         "severity_key": severity_key,
     }
+
+
+def _query_store_counts(
+    database,
+    *,
+    store_id: str,
+    target_date: date,
+    lookback_days: int,
+    source: str | None,
+) -> dict[str, int]:
+    start_date = (target_date - timedelta(days=lookback_days)).isoformat()
+    end_date = target_date.isoformat()
+    counts: dict[str, int] = {}
+    for table_name, key in (
+        ("daily_store_results", "daily"),
+        ("machine_results", "machine"),
+        ("unit_results", "unit"),
+    ):
+        sql = f"""
+        SELECT COUNT(*) AS count
+        FROM {table_name}
+        WHERE store_id = ?
+          AND report_date >= ?
+          AND report_date < ?
+        """
+        params: list[str] = [store_id, start_date, end_date]
+        if source:
+            sql += "\n          AND source = ?"
+            params.append(source)
+        frame = database.query_dataframe(sql, params)
+        counts[key] = int(frame.iloc[0]["count"]) if not frame.empty else 0
+    return counts
+
+
+def _overall_conclusion_text(stores_payload: list[dict[str, object]]) -> str:
+    total = len(stores_payload)
+    analysis_ready = sum(
+        1 for store in stores_payload if store["pattern_analysis_status"] == "台番分析可能"
+    )
+    grade_b = sum(1 for store in stores_payload if store["decision_grade"] == "B")
+    shortage = sum(1 for store in stores_payload if int(store["unit_results_total"]) == 0)
+    parts = [f"{total}店舗中{analysis_ready}店舗で台番分析可能。"]
+    if grade_b:
+        parts.append(f"{grade_b}店舗は一部機種取得失敗あり。")
+    if shortage:
+        parts.append(f"{shortage}店舗はデータ不足。")
+        parts.append("全体として一部見送り。")
+    else:
+        parts.append("全体として利用可能。")
+    return "".join(parts)
 
 
 def load_validation_statuses(report_path: Path) -> dict[str, dict[str, str]]:
@@ -1046,6 +1269,13 @@ def _build_summary_payload(
             (status_overrides or {}).get(store.display_name, {}),
         )
         failed_machine_pages = int(override.get("failed_machine_pages", "0") or "0")
+        counts = _query_store_counts(
+            database,
+            store_id=store.store_id,
+            target_date=target_date,
+            lookback_days=lookback_days,
+            source=source,
+        )
         stores_payload.append(
             _store_payload(
                 store=store,
@@ -1054,6 +1284,9 @@ def _build_summary_payload(
                 parse_status=override.get("parse_status", parse_status),
                 failed_machine_pages=failed_machine_pages,
                 status_note=override.get("status_note", ""),
+                daily_count=counts["daily"],
+                machine_count=counts["machine"],
+                failed_machine_urls=override.get("failed_machine_urls", []),
             )
         )
 
@@ -1083,8 +1316,27 @@ def _build_summary_payload(
     summary_counts = {"ready": 0, "caution": 0, "unreliable": 0, "shortage": 0}
     for store in stores_payload:
         key = str(store["filter_key"])
-        if key in summary_counts:
-            summary_counts[key] += 1
+        if key == "grade_a":
+            summary_counts["ready"] += 1
+        elif key == "grade_b":
+            summary_counts["caution"] += 1
+        elif key == "shortage":
+            summary_counts["shortage"] += 1
+        else:
+            summary_counts["unreliable"] += 1
+
+    decision_counts = {
+        "A": sum(1 for store in stores_payload if store["decision_grade"] == "A"),
+        "B": sum(1 for store in stores_payload if store["decision_grade"] == "B"),
+        "C": sum(1 for store in stores_payload if store["decision_grade"] == "C"),
+        "partial_success": sum(
+            1 for store in stores_payload if store["fetch_status"] == "partial_success"
+        ),
+        "shortage": sum(1 for store in stores_payload if int(store["unit_results_total"]) == 0),
+        "analysis_ready": sum(
+            1 for store in stores_payload if store["pattern_analysis_status"] == "台番分析可能"
+        ),
+    }
 
     return {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -1096,14 +1348,14 @@ def _build_summary_payload(
             _coverage_window_text(target_date, lookback_days),
         ),
         "description": (
-            f"9店舗の unit coverage・取得状況・明日の狙い候補を 1 画面で確認できます。"
-            f" source={source or 'all'}"
+            "最初に今日の判断を出し、その下に店舗ごとの使い方を並べています。"
         ),
         "filters": [
             {"key": "all", "label": "全店舗"},
-            {"key": "ready", "label": "台番分析可能"},
-            {"key": "caution", "label": "注意付き"},
-            {"key": "unreliable", "label": "信頼不可"},
+            {"key": "grade_a", "label": "A 通常利用可能"},
+            {"key": "grade_b", "label": "B 注意付き"},
+            {"key": "grade_c", "label": "C 見送り"},
+            {"key": "partial_success", "label": "partial_success"},
             {"key": "shortage", "label": "データ不足"},
         ],
         "stores": stores_payload,
@@ -1112,6 +1364,8 @@ def _build_summary_payload(
         "skip_recommendations": skip_recommendations,
         "notes": notes,
         "summary_counts": summary_counts,
+        "decision_counts": decision_counts,
+        "today_conclusion": _overall_conclusion_text(stores_payload),
     }
 
 

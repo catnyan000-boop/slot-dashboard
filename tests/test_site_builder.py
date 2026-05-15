@@ -175,10 +175,22 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
         "unreliable": 1,
         "shortage": 8,
     }
+    assert payload["decision_counts"] == {
+        "A": 0,
+        "B": 0,
+        "C": 9,
+        "partial_success": 0,
+        "shortage": 8,
+        "analysis_ready": 0,
+    }
+    assert "9店舗中0店舗で台番分析可能。" in payload["today_conclusion"]
 
     stores = {store["store_id"]: store for store in payload["stores"]}
     assert stores["cosmo_obu"]["unit_diff_missing_rate"] == 0.5455
+    assert stores["cosmo_obu"]["decision_grade"] == "C"
     assert stores["cosmo_obu"]["pattern_analysis_status"] == "台番分析は信頼不可"
     assert stores["cosmo_obu"]["unit_diff_missing_rate_text"] == "0.5455"
+    assert stores["cosmo_obu"]["decision_state"] == "見送り"
     assert stores["kyoraku_tokai"]["pattern_analysis_status"] == "データ不足"
+    assert stores["kyoraku_tokai"]["decision_state"] == "データ不足"
     assert "KYORAKU東海" in payload["data_shortage_stores"]

@@ -1,9 +1,10 @@
 const FILTERS = {
   all: () => true,
-  ready: (store) => store.filter_key === "ready",
-  caution: (store) => store.filter_key === "caution" || store.filter_key === "reference",
-  unreliable: (store) => store.filter_key === "unreliable",
-  shortage: (store) => store.filter_key === "shortage",
+  grade_a: (store) => store.decision_grade === "A",
+  grade_b: (store) => store.decision_grade === "B",
+  grade_c: (store) => store.decision_grade === "C",
+  partial_success: (store) => store.fetch_status === "partial_success",
+  shortage: (store) => Number(store.unit_results_total || 0) === 0,
 };
 
 function escapeHtml(value) {
@@ -15,26 +16,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function badgeClass(status) {
-  if (status === "データ不足") return "empty";
-  if (status === "台番分析は信頼不可") return "danger";
-  if (status === "台番分析は注意付き" || status === "台番分析は参考程度") return "warn";
-  return "ok";
-}
-
-function fetchBadgeClass(status) {
-  if (status === "partial_success") return "warn";
-  if (status === "failed" || status === "失敗") return "danger";
-  return "ok";
-}
-
-function parseBadgeClass(status) {
-  if (status === "failed" || status === "失敗") return "empty";
-  return "ok";
-}
-
-function renderBadge(text, extraClass = "") {
-  return `<span class="badge ${extraClass}">${escapeHtml(text)}</span>`;
+function renderBadge(text, kind = "neutral") {
+  return `<span class="badge ${escapeHtml(kind)}">${escapeHtml(text)}</span>`;
 }
 
 function renderList(items, emptyLabel = "なし") {
@@ -44,99 +27,208 @@ function renderList(items, emptyLabel = "なし") {
   return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
-function renderSummaryCard(label, value, note, kind) {
+function gradeBadgeKind(grade) {
+  if (grade === "A") return "grade-a";
+  if (grade === "B") return "grade-b";
+  return "grade-c";
+}
+
+function stateBadgeKind(grade) {
+  if (grade === "A") return "ok";
+  if (grade === "B") return "warn";
+  return "danger";
+}
+
+function fetchStatusText(status) {
+  if (status === "success") return "success";
+  if (status === "partial_success") return "partial_success";
+  return "failed";
+}
+
+function groupedStores(stores) {
+  return {
+    A: stores.filter((store) => store.decision_grade === "A"),
+    B: stores.filter((store) => store.decision_grade === "B"),
+    C: stores.filter((store) => store.decision_grade === "C"),
+  };
+}
+
+function renderHeroCard(payload, stores) {
+  const counts = payload.decision_counts || {};
   return `
-    <div class="summary-card ${escapeHtml(kind)}">
-      <strong>${escapeHtml(label)}</strong>
-      <div class="big-number">${escapeHtml(value)}</div>
-      <div class="summary-note">${escapeHtml(note)}</div>
-    </div>
+    <section class="hero">
+      <p class="eyebrow">Source ${escapeHtml(payload.source || "-")}</p>
+      <h1 class="hero-title">今日どう判断するかを最初に見る画面</h1>
+      <p class="hero-copy">${escapeHtml(payload.description || "")}</p>
+      <div class="decision-card">
+        <p class="decision-kicker">今日の全体判定</p>
+        <h2 class="decision-title">
+          全体として ${counts.shortage ? "一部見送りあり" : "利用可能"}
+        </h2>
+        <p class="decision-copy">${escapeHtml(payload.today_conclusion || "")}</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-card">
+          <div class="meta-label">データソース</div>
+          <div class="meta-value">${escapeHtml(payload.source || "-")}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">最終更新日時</div>
+          <div class="meta-value">${escapeHtml(payload.generated_at || "-")}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">集計対象期間</div>
+          <div class="meta-value">${escapeHtml(payload.coverage_window || "-")}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">対象店舗数</div>
+          <div class="meta-value">${stores.length}店舗</div>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card a">
+          <div class="summary-label">台番分析可能店舗数</div>
+          <div class="summary-value">${escapeHtml(counts.analysis_ready || 0)}</div>
+          <div class="summary-note">今日の判断に使える店舗数</div>
+        </div>
+        <div class="summary-card b">
+          <div class="summary-label">注意付き店舗数</div>
+          <div class="summary-value">${escapeHtml(counts.B || 0)}</div>
+          <div class="summary-note">一部機種取得失敗あり</div>
+        </div>
+        <div class="summary-card c">
+          <div class="summary-label">データ不足店舗数</div>
+          <div class="summary-value">${escapeHtml(counts.shortage || 0)}</div>
+          <div class="summary-note">今日の判断には使わない</div>
+        </div>
+        <div class="summary-card a">
+          <div class="summary-label">A / B / C</div>
+          <div class="summary-value">
+            ${escapeHtml(`${counts.A || 0} / ${counts.B || 0} / ${counts.C || 0}`)}
+          </div>
+          <div class="summary-note">通常 / 注意付き / 見送り</div>
+        </div>
+      </div>
+    </section>
   `;
 }
 
 function cardTemplate(store) {
-  const fetchBadge = renderBadge(
-    `取得:${store.fetch_status}`,
-    fetchBadgeClass(store.fetch_status),
-  );
-  const parseBadge = renderBadge(
-    `parse:${store.parse_status}`,
-    parseBadgeClass(store.parse_status),
-  );
-  const statusBadge = renderBadge(
-    store.pattern_analysis_status,
-    badgeClass(store.pattern_analysis_status),
-  );
+  const failedText = Number(store.failed_machine_pages || 0) > 0
+    ? `${store.failed_machine_pages}件`
+    : "なし";
+  const failedUrls = store.failed_machine_urls || [];
   return `
-    <article class="store-card" data-severity="${escapeHtml(store.severity_key)}">
-      <div class="store-header">
+    <article class="store-card" data-grade="${escapeHtml(store.decision_grade)}">
+      <div class="store-top">
         <div>
           <h3 class="store-title">${escapeHtml(store.display_name)}</h3>
-          <p class="store-subtitle">${escapeHtml(store.store_id)}</p>
+          <p class="store-id">${escapeHtml(store.store_id)}</p>
         </div>
-        <div class="badge-group">
-          ${fetchBadge}
-          ${parseBadge}
-          ${statusBadge}
-        </div>
-      </div>
-      <div class="metric-grid">
-        <div class="metric">
-          <div class="metric-label">unit_diff_missing_rate</div>
-          <div class="metric-value">${escapeHtml(store.unit_diff_missing_rate_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">unit_results_total</div>
-          <div class="metric-value">${escapeHtml(store.unit_results_total_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">diff_null_count</div>
-          <div class="metric-value">${escapeHtml(store.diff_null_count_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">有効分析範囲</div>
-          <div class="metric-value">${escapeHtml(store.effective_analyses_text)}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">failed_machine_pages</div>
-          <div class="metric-value">${escapeHtml(store.failed_machine_pages || 0)}</div>
+        <div class="badge-row">
+          ${renderBadge(`判定 ${store.decision_grade}`, gradeBadgeKind(store.decision_grade))}
+          ${renderBadge(store.decision_state, stateBadgeKind(store.decision_grade))}
+          ${renderBadge(
+            `台番分析 ${store.analysis_availability_text}`,
+            stateBadgeKind(store.decision_grade),
+          )}
         </div>
       </div>
-      <div>
-        <strong>分析ステータス</strong>
-        <ul class="store-list">
-          <li>台番: ${escapeHtml(store.pattern_analysis_status)}</li>
-          <li>末尾: ${escapeHtml(store.tail_analysis_status)}</li>
-          <li>並び: ${escapeHtml(store.cluster_analysis_status)}</li>
-        </ul>
+      <div class="decision-state">
+        <div class="decision-mark">${escapeHtml(store.decision_grade)}</div>
+        <div class="decision-copy-short">${escapeHtml(store.decision_reason || "")}</div>
       </div>
-      <div>
-        <strong>注意点</strong>
-        <ul class="note-list">${renderList(store.notes, "追加注意なし")}</ul>
+      <div class="status-grid">
+        <div class="status-tile">
+          <div class="status-label">状態</div>
+          <div class="status-value">${escapeHtml(store.decision_state)}</div>
+        </div>
+        <div class="status-tile">
+          <div class="status-label">台番差枚</div>
+          <div class="status-value">${escapeHtml(store.diff_status_text)}</div>
+        </div>
+        <div class="status-tile">
+          <div class="status-label">unit_diff_missing_rate</div>
+          <div class="status-value">${escapeHtml(store.unit_diff_missing_rate_text)}</div>
+        </div>
+        <div class="status-tile">
+          <div class="status-label">failed_machine_pages</div>
+          <div class="status-value">${escapeHtml(failedText)}</div>
+        </div>
+      </div>
+      <div class="reason-box">
+        <strong>注意理由</strong>
+        <p>${escapeHtml((store.notes || [store.decision_reason])[0] || "追加注意なし")}</p>
+      </div>
+      <details class="detail-box">
+        <summary>詳細を開く</summary>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <strong>件数</strong>
+            <p>
+              daily ${escapeHtml(store.daily_count || 0)} /
+              machine ${escapeHtml(store.machine_count || 0)} /
+              unit ${escapeHtml(store.unit_count || 0)}
+            </p>
+          </div>
+          <div class="detail-item">
+            <strong>取得状態</strong>
+            <p>fetch_status: ${escapeHtml(fetchStatusText(store.fetch_status))}</p>
+            <p>parse_status: ${escapeHtml(store.parse_status)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>有効分析範囲</strong>
+            <p>${escapeHtml(store.effective_analyses_text)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>failed_machine_urls</strong>
+            ${
+              failedUrls.length
+                ? `<ul class="detail-list">${renderList(failedUrls)}</ul>`
+                : `<p>記録なし</p>`
+            }
+          </div>
+          <div class="detail-item">
+            <strong>注意点</strong>
+            <ul class="detail-list">${renderList(store.notes, "追加注意なし")}</ul>
+          </div>
+        </div>
+      </details>
+    </article>
+  `;
+}
+
+function groupSection(grade, title, copy, stores) {
+  return `
+    <section class="group-panel" data-grade="${escapeHtml(grade)}">
+      <div class="group-head">
+        <div>
+          <h2>${escapeHtml(title)}</h2>
+          <p class="group-copy">${escapeHtml(copy)}</p>
+        </div>
+        <div class="group-count">
+          <strong>${stores.length}</strong>
+          <span>店舗</span>
+        </div>
       </div>
       ${
-        store.severity_key === "critical"
-          ? `<div class="warning-strip">現時点では店舗別・機種別・カテゴリ別分析のみ有効</div>`
-          : ""
+        stores.length
+          ? `<div class="group-grid">${stores.map(cardTemplate).join("")}</div>`
+          : `<div class="empty-note">該当店舗はありません。</div>`
       }
-    </article>
+    </section>
   `;
 }
 
 function tableRowTemplate(store) {
   return `
-    <tr data-severity="${escapeHtml(store.severity_key)}">
+    <tr>
       <td>${escapeHtml(store.display_name)}</td>
-      <td>${escapeHtml(store.fetch_status)}</td>
-      <td>${escapeHtml(store.parse_status)}</td>
-      <td>${escapeHtml(store.failed_machine_pages || 0)}</td>
+      <td>${escapeHtml(store.decision_grade)}</td>
+      <td>${escapeHtml(fetchStatusText(store.fetch_status))}</td>
+      <td>${escapeHtml(store.unit_count || 0)}</td>
       <td>${escapeHtml(store.unit_diff_missing_rate_text)}</td>
-      <td>${escapeHtml(store.unit_results_total_text)}</td>
-      <td>${escapeHtml(store.diff_null_count_text)}</td>
-      <td>${escapeHtml(store.pattern_analysis_status)}</td>
-      <td>${escapeHtml(store.tail_analysis_status)}</td>
-      <td>${escapeHtml(store.cluster_analysis_status)}</td>
-      <td>${escapeHtml(store.effective_analyses_text)}</td>
+      <td>${escapeHtml((store.notes || [store.decision_reason])[0] || "追加注意なし")}</td>
     </tr>
   `;
 }
@@ -154,70 +246,17 @@ function mountDashboard(payload) {
 
   function render() {
     const visibleStores = filteredStores();
-    const visibleShortageStores = visibleStores.filter(
-      (store) => store.severity_key === "shortage",
-    );
-    const visibleActiveStores = visibleStores.filter(
-      (store) => store.severity_key !== "shortage",
-    );
+    const groups = groupedStores(visibleStores);
+
     root.innerHTML = `
       <main class="page">
-        <section class="hero">
-          <p class="eyebrow">Slot Analyzer Dashboard</p>
-          <h1>9店舗の unit coverage を一覧できる静的ダッシュボード</h1>
-          <p>${escapeHtml(payload.description || "")}</p>
-          <div class="hero-alert">
-            <strong>現時点では店舗別・機種別・カテゴリ別分析のみ有効</strong>
-            <p>欠損率が高い店舗では、台番・末尾・並び分析を有効に見せないよう固定しています。</p>
-          </div>
-          <div class="meta-grid">
-            <div class="stat">
-              <div class="stat-label">source</div>
-              <div class="stat-value">${escapeHtml(payload.source || "-")}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">最終更新日時</div>
-              <div class="stat-value">${escapeHtml(payload.generated_at || "-")}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">集計対象期間</div>
-              <div class="stat-value">${escapeHtml(payload.coverage_window || "-")}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">表示店舗数</div>
-              <div class="stat-value">${visibleStores.length} / ${stores.length}</div>
-            </div>
-          </div>
-          <div class="summary-hero-grid">
-            ${renderSummaryCard(
-              "台番分析可能店舗数",
-              payload.summary_counts.ready,
-              "いまは 0 店舗でも一目で確認",
-              "ready",
-            )}
-            ${renderSummaryCard(
-              "注意付き店舗数",
-              payload.summary_counts.caution,
-              "注意付き・参考程度",
-              "caution",
-            )}
-            ${renderSummaryCard(
-              "信頼不可店舗数",
-              payload.summary_counts.unreliable,
-              "欠損率50%以上は赤系で強調",
-              "unreliable",
-            )}
-            ${renderSummaryCard(
-              "データ不足店舗数",
-              payload.summary_counts.shortage,
-              "別枠で確認が必要",
-              "shortage",
-            )}
-          </div>
-        </section>
+        ${renderHeroCard(payload, stores)}
 
-        <section class="filters panel">
-          <h2>フィルタ</h2>
+        <section class="panel">
+          <h2>店舗フィルタ</h2>
+          <p class="panel-copy">
+            まずは A / B / C で見て、必要なときだけ partial_success やデータ不足を確認します。
+          </p>
           <div class="filter-row">
             ${filters
               .map(
@@ -229,93 +268,57 @@ function mountDashboard(payload) {
                   >
                     ${escapeHtml(filter.label)}
                   </button>
-                `
+                `,
               )
               .join("")}
           </div>
         </section>
 
-        <section class="summary-grid">
-          <div class="panel">
-            <h2>データ不足店舗</h2>
-            <div class="list-grid">
-              <ol class="plain-list">${renderList(payload.data_shortage_stores, "なし")}</ol>
+        ${groupSection(
+          "A",
+          "A 通常利用可能",
+          "fetch 成功、欠損率が低く、そのまま判断に使える店舗です。",
+          groups.A,
+        )}
+        ${groupSection(
+          "B",
+          "B 注意付きで利用可能",
+          "一部機種ページ取得失敗はあるものの、台番判断には使える店舗です。",
+          groups.B,
+        )}
+        ${groupSection(
+          "C",
+          "C 見送り / データ不足",
+          "欠損率や取得状態の都合で、今日の判断材料としては弱い店舗です。",
+          groups.C,
+        )}
+
+        <section class="table-panel">
+          <h2>比較テーブル</h2>
+          <p class="table-copy">カードで判断したあとに、必要なら比較だけ確認します。</p>
+          <details>
+            <summary>比較テーブルを開く</summary>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>店舗</th>
+                    <th>判定</th>
+                    <th>fetch_status</th>
+                    <th>unit件数</th>
+                    <th>欠損率</th>
+                    <th>注意点</th>
+                  </tr>
+                </thead>
+                <tbody>${visibleStores.map(tableRowTemplate).join("")}</tbody>
+              </table>
             </div>
-          </div>
-          <div class="panel">
-            <h2>明日の狙い候補</h2>
-            <div class="list-grid">
-              <ol class="plain-list">${renderList(payload.tomorrow_candidates, "候補なし")}</ol>
-            </div>
-          </div>
-          <div class="panel">
-            <h2>見送り推奨店舗</h2>
-            <div class="list-grid">
-              <ol class="plain-list">${renderList(payload.skip_recommendations, "該当なし")}</ol>
-            </div>
-          </div>
-          <div class="panel">
-            <h2>注意点</h2>
-            <div class="list-grid">
-              <ul class="plain-list">${renderList(payload.notes, "追加注意なし")}</ul>
-            </div>
-          </div>
+          </details>
         </section>
 
-        ${
-          visibleShortageStores.length
-            ? `
-              <section class="empty-zone">
-                <h2>データ不足店舗</h2>
-                <p>
-                  この店舗群は unit_results サンプルが不足しているため、
-                  台番・末尾・並び分析の対象外です。
-                </p>
-                <div class="card-grid">
-                  ${visibleShortageStores.map(cardTemplate).join("")}
-                </div>
-              </section>
-            `
-            : ""
-        }
-
-        <section>
-          <div class="section-title-row">
-            <div>
-              <h2>店舗カード</h2>
-              <p class="section-kicker">信頼不可は赤系、データ不足は別枠で表示しています。</p>
-            </div>
-          </div>
-          <div class="card-grid">
-            ${visibleActiveStores.map(cardTemplate).join("")}
-          </div>
-        </section>
-
-        <section class="table-wrap">
-          <h2>9店舗比較テーブル</h2>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>店舗</th>
-                  <th>取得</th>
-                  <th>parse</th>
-                  <th>machine失敗</th>
-                  <th>欠損率</th>
-                  <th>unit件数</th>
-                  <th>diff NULL</th>
-                  <th>台番</th>
-                  <th>末尾</th>
-                  <th>並び</th>
-                  <th>有効分析範囲</th>
-                </tr>
-              </thead>
-              <tbody>${visibleStores.map(tableRowTemplate).join("")}</tbody>
-            </table>
-          </div>
-        </section>
-
-        <p class="footer">raw HTML や SQLite DB は公開せず、summary JSON のみを出力しています。</p>
+        <p class="footer">
+          source=${escapeHtml(payload.source || "-")} / raw HTML や SQLite DB は公開していません。
+        </p>
       </main>
     `;
 
