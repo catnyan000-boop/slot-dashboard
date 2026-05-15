@@ -165,16 +165,34 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
     assert "Slot Analyzer Dashboard" in index_text
     assert "./assets/app.js" in index_text
     assert "window.__SITE_DATA__" not in index_text
-    assert "今日見る店" in app_js_text
-    assert "今日は全店舗を候補として見てよい。" in app_js_text
-    assert "今日の狙い候補" in app_js_text
-    assert "最優先チェック" in app_js_text
+    assert "今日の狙い" in app_js_text
+    assert "今日はメイン2店舗を優先。" in app_js_text
+    assert "今日の最優先候補" in app_js_text
+    assert "今日見るべき店" in app_js_text
     assert "サブ候補" in app_js_text
-    assert "監視枠" in app_js_text
-    assert "main → sub → watch の順で並べています。" in app_js_text
-    assert "priority " in app_js_text
-    assert "analysis_anchor_date:" in app_js_text
-    assert "注意:" in app_js_text
+    assert "監視枠" not in app_js_text
+    assert "データ基準日:" in app_js_text
+    assert "メイン店" in app_js_text
+    assert "サブ店" in app_js_text
+    assert "詳細と注意点を開く" in app_js_text
+    assert "コスモジャパン大府" in app_js_text
+    assert "マルシン777" in app_js_text
+    assert "APANCLUB弘法通り" in app_js_text
+    assert "KEIZギャラリエアピタ" in app_js_text
+    assert "上げ狙い台" in app_js_text
+    assert "並び候補" in app_js_text
+    assert "狙い機種" in app_js_text
+    assert "末尾候補" in app_js_text
+    assert "raw " in app_js_text
+    assert "adjusted " in app_js_text
+    assert "前回" in app_js_text
+    assert "連続凹み" in app_js_text
+    assert "同機種平均" in app_js_text
+    assert "reason_text" in app_js_text
+    assert "信頼度 " in app_js_text
+    assert "メイン" in app_js_text
+    assert "サブ" in app_js_text
+    assert "理由あり" not in app_js_text
     assert "据え置き候補" not in app_js_text
     assert "keep_candidate" not in app_js_text
     assert "targets.json" in app_js_text
@@ -185,28 +203,40 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
     assert "raw_path" not in latest_text
     assert "db_path" not in latest_text
     assert payload["coverage_window"] == "2026-05-08 〜 2026-05-13"
+    assert payload["target_store_count"] == 4
+    assert payload["target_store_ids"] == [
+        "cosmo_obu",
+        "marushin_777",
+        "apan_kobo",
+        "keiz_galerie_apita",
+    ]
     assert payload["summary_counts"] == {
         "ready": 0,
         "caution": 0,
         "unreliable": 1,
-        "shortage": 8,
+        "shortage": 3,
     }
     assert payload["decision_counts"] == {
         "A": 0,
         "B": 0,
-        "C": 9,
+        "C": 4,
         "partial_success": 0,
-        "shortage": 8,
+        "shortage": 3,
         "analysis_ready": 0,
     }
-    assert "9店舗中0店舗で台番分析可能。" in payload["today_conclusion"]
+    assert "4店舗中0店舗で台番分析可能。" in payload["today_conclusion"]
 
     stores = {store["store_id"]: store for store in payload["stores"]}
+    assert set(stores) == {
+        "cosmo_obu",
+        "marushin_777",
+        "apan_kobo",
+        "keiz_galerie_apita",
+    }
     assert stores["cosmo_obu"]["unit_diff_missing_rate"] == 0.5455
     assert stores["cosmo_obu"]["decision_grade"] == "C"
     assert stores["cosmo_obu"]["pattern_analysis_status"] == "台番分析は信頼不可"
     assert stores["cosmo_obu"]["unit_diff_missing_rate_text"] == "0.5455"
     assert stores["cosmo_obu"]["decision_state"] == "見送り"
-    assert stores["kyoraku_tokai"]["pattern_analysis_status"] == "データ不足"
-    assert stores["kyoraku_tokai"]["decision_state"] == "データ不足"
-    assert "KYORAKU東海" in payload["data_shortage_stores"]
+    assert "KYORAKU東海" not in json.dumps(payload, ensure_ascii=False)
+    assert "dashboard の標準表示対象は main/sub の4店舗です。" in payload["notes"]

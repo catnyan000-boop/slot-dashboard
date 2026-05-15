@@ -34,14 +34,17 @@ summary {
 }
 
 .page {
-  width: min(1180px, calc(100% - 28px));
+  width: min(960px, calc(100% - 20px));
   margin: 0 auto;
-  padding: 18px 0 40px;
+  padding: 14px 0 32px;
 }
 
 .hero,
 .group-panel,
-.store-card {
+.store-card,
+.note-card,
+.target-panel,
+.target-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 26px;
@@ -49,9 +52,8 @@ summary {
 }
 
 .hero {
-  padding: 24px;
-  background:
-    linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(245, 236, 224, 0.92));
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 241, 232, 0.94));
 }
 
 .eyebrow {
@@ -64,21 +66,21 @@ summary {
 }
 
 .hero-title {
-  margin: 10px 0 0;
-  font-size: clamp(2rem, 4vw, 3.6rem);
-  line-height: 1.02;
+  margin: 8px 0 0;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.08;
 }
 
 .hero-copy {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   color: var(--muted);
-  font-size: 1rem;
-  max-width: 72ch;
+  font-size: 0.98rem;
+  line-height: 1.6;
 }
 
 .summary-card {
-  margin-top: 20px;
-  padding: 22px;
+  margin-top: 16px;
+  padding: 20px;
   border-radius: 24px;
   background: linear-gradient(135deg, rgba(22, 95, 85, 0.95), rgba(27, 43, 40, 0.92));
   color: #f8f5ef;
@@ -92,12 +94,12 @@ summary {
 
 .summary-title {
   margin: 8px 0 0;
-  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-size: clamp(1.35rem, 3vw, 2rem);
   line-height: 1.2;
 }
 
 .summary-lines {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   padding-left: 18px;
 }
 
@@ -105,39 +107,17 @@ summary {
   margin-top: 6px;
 }
 
-.watch-panel {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid var(--line);
-}
-
-.watch-panel h2,
-.group-head h2 {
+.group-head h2,
+.note-card h2 {
   margin: 0;
   font-size: 1.24rem;
 }
 
-.watch-copy,
 .group-copy,
 .detail-grid p {
   margin: 8px 0 0;
   color: var(--muted);
   line-height: 1.5;
-}
-
-.watch-list {
-  margin: 14px 0 0;
-  padding-left: 18px;
-  columns: 2;
-  column-gap: 24px;
-}
-
-.watch-list li {
-  break-inside: avoid;
-  margin-bottom: 8px;
-  font-weight: 700;
 }
 
 .meta-row,
@@ -149,8 +129,8 @@ summary {
 }
 
 .meta-row {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  margin-top: 18px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 14px;
 }
 
 .meta-chip {
@@ -173,12 +153,8 @@ summary {
 }
 
 .target-panel {
-  margin-top: 22px;
-  padding: 20px;
-  background: rgba(255, 252, 247, 0.94);
-  border: 1px solid var(--line);
-  border-radius: 26px;
-  box-shadow: var(--shadow);
+  margin-top: 18px;
+  padding: 18px;
 }
 
 .target-panel h2,
@@ -193,22 +169,84 @@ summary {
 }
 
 .target-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  margin-top: 16px;
+  grid-template-columns: 1fr;
+  margin-top: 14px;
 }
 
 .target-card {
   padding: 16px;
   border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.focus-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.focus-card {
+  padding: 15px;
+  border-radius: 20px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.82);
+  background: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.focus-card.main {
+  border-color: rgba(22, 95, 85, 0.24);
+}
+
+.focus-card.sub {
+  border-color: rgba(161, 91, 0, 0.24);
+}
+
+.focus-title {
+  margin: 8px 0 0;
+  font-size: 1.08rem;
+  line-height: 1.4;
+}
+
+.focus-detail {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.focus-kicker {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.focus-scoreline {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.target-section-title {
+  margin: 18px 0 0;
+  font-size: 1.08rem;
+}
+
+.section-title {
+  margin: 20px 0 0;
+  font-size: 1.22rem;
+}
+
+.section-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .priority-overview {
-  margin-top: 16px;
+  margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .priority-card {
@@ -232,7 +270,7 @@ summary {
 
 .tier-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 12px;
 }
@@ -270,6 +308,55 @@ summary {
   display: block;
   margin-top: 4px;
   font-size: 0.9rem;
+}
+
+.focus-details {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.focus-details summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+  font-size: 0.96rem;
+}
+
+.focus-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.focus-details summary::after {
+  content: "＋";
+  margin-left: 8px;
+}
+
+.focus-details[open] summary::after {
+  content: "−";
+}
+
+.focus-details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.metric-negative {
+  color: var(--grade-c);
+  font-weight: 800;
+}
+
+.metric-strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.note-card {
+  margin-top: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .group-panel {
@@ -465,23 +552,25 @@ summary {
 
 @media (max-width: 720px) {
   .page {
-    width: min(100% - 18px, 1180px);
-    padding-top: 14px;
+    width: min(100% - 14px, 960px);
+    padding-top: 10px;
   }
 
   .hero,
   .group-panel,
-  .store-card {
+  .store-card,
+  .target-panel,
+  .note-card {
     border-radius: 20px;
   }
 
   .hero,
-  .group-panel {
+  .group-panel,
+  .target-panel {
     padding: 16px;
   }
 
-  .summary-card,
-  .watch-panel {
+  .summary-card {
     padding: 18px;
   }
 
@@ -500,12 +589,18 @@ summary {
   .group-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .watch-list {
-    columns: 1;
+@media (min-width: 900px) {
+  .target-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .tier-row {
+  .focus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .priority-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

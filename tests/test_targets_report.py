@@ -367,6 +367,11 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     assert raise_candidate["priority_group"] == "main"
     assert raise_candidate["unit_number"] == "101"
     assert raise_candidate["evidence"]["previous_day_diff"] == -1200.0
+    assert raise_candidate["evidence"]["previous_day_games"] == 2500.0
+    assert raise_candidate["evidence"]["negative_streak_days"] >= 2
+    assert "理由あり" not in raise_candidate["reason_text"]
+    assert "前回" in raise_candidate["reason_text"]
+    assert "同機種平均" in raise_candidate["reason_text"]
 
     tail_candidate = next(
         row for row in payload["candidates"] if row["target_type"] == "tail_candidate"
@@ -380,35 +385,64 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     assert cluster_candidate["unit_number"] == "201-202"
     assert cluster_candidate["evidence"]["sample_count"] >= 1
 
-    low_sample_candidate = next(
-        row
-        for row in payload["candidates"]
-        if row["store_id"] == "winglet" and row["target_type"] == "machine_candidate"
-    )
-    assert low_sample_candidate["confidence"] == "C"
-
     assert payload["source"] == "slorepo"
     assert payload["analysis_anchor_date"] == "2026-05-15"
     assert payload["analysis_anchor_notice"] == ""
-    assert payload["priority_groups"]["main"] == ["コスモジャパン大府", "マルシン777"]
-    assert payload["priority_groups"]["sub"] == ["KEIZギャラリエアピタ", "APANCLUB弘法通り"]
-    assert payload["priority_groups"]["watch"] == [
-        "KYORAKU東海",
-        "KEIZ大高",
-        "KYORAKU豊明",
-        "ウイングレット",
-        "オーギヤ安城",
+    assert payload["target_store_count"] == 4
+    assert payload["target_store_ids"] == [
+        "cosmo_obu",
+        "marushin_777",
+        "apan_kobo",
+        "keiz_galerie_apita",
     ]
+    assert payload["priority_groups"]["main"] == ["コスモジャパン大府", "マルシン777"]
+    assert payload["priority_groups"]["sub"] == ["APANCLUB弘法通り", "KEIZギャラリエアピタ"]
     assert payload["summary"]["priority_candidate_counts"]["main"] >= 1
-    assert payload["summary"]["priority_candidate_counts"]["watch"] >= 1
+    assert payload["summary"]["highlight_counts"]["top_candidates"] <= 5
+    assert payload["summary"]["highlight_counts"]["main_candidates"] >= 1
     assert payload["candidates"][0]["priority_group"] == "main"
     assert all(row["machine_name"] != "ノイズ機種" for row in payload["candidates"])
+    assert all(row["priority_group"] in {"main", "sub"} for row in payload["candidates"])
+    assert len(payload["highlights"]["top_candidates"]) <= 5
+    top_candidates = payload["highlights"]["top_candidates"]
+    top_type_counts: dict[str, int] = {}
+    for row in top_candidates:
+        top_type_counts[row["target_type"]] = top_type_counts.get(row["target_type"], 0) + 1
+        assert row["confidence"] in {"A", "B"}
+        assert "adjusted_score" in row
+    assert top_type_counts.get("tail_candidate", 0) <= 1
+    assert top_type_counts.get("cluster_candidate", 0) <= 2
+    assert top_type_counts.get("machine_candidate", 0) <= 2
+    assert any(row["target_type"] == "raise_candidate" for row in top_candidates)
+    assert all(
+        row["priority_group"] in {"main", "sub", "watch"}
+        for row in top_candidates
+    )
+    main_store_sections = payload["main_store_sections"]
+    assert set(main_store_sections) == {"cosmo_obu", "marushin_777"}
+    assert set(payload["sub_store_sections"]) == {"apan_kobo", "keiz_galerie_apita"}
+    assert len(main_store_sections["cosmo_obu"]["candidates"]) <= 10
+    assert len(main_store_sections["marushin_777"]["candidates"]) <= 10
+    assert len(main_store_sections["cosmo_obu"]["tail_candidates"]) <= 2
+    assert len(main_store_sections["marushin_777"]["tail_candidates"]) <= 2
+    assert any(
+        row["target_type"] == "raise_candidate"
+        for row in main_store_sections["cosmo_obu"]["candidates"]
+    )
+    per_main_store: dict[str, int] = {}
+    for row in payload["highlights"]["main_candidates"]:
+        per_main_store[row["store_id"]] = per_main_store.get(row["store_id"], 0) + 1
+    assert per_main_store
+    assert all(count <= 5 for count in per_main_store.values())
+    per_sub_store: dict[str, int] = {}
+    for row in payload["highlights"]["sub_candidates"]:
+        per_sub_store[row["store_id"]] = per_sub_store.get(row["store_id"], 0) + 1
+    assert all(count <= 3 for count in per_sub_store.values())
 
     store_scores = {row["store_id"]: row for row in payload["store_scores"]}
     assert store_scores["cosmo_obu"]["priority_group"] == "main"
     assert store_scores["cosmo_obu"]["priority_multiplier"] == 1.2
-    assert store_scores["winglet"]["priority_group"] == "watch"
-    assert store_scores["winglet"]["priority_multiplier"] == 0.85
+    assert "winglet" not in store_scores
 
 
 def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
@@ -438,7 +472,17 @@ def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
     assert "data/raw" not in text
     assert "priority_group" in text
     assert "keep_candidate" not in text
+    assert "理由あり" not in text
     assert data["analysis_anchor_date"] == "2026-05-15"
+    assert data["target_store_count"] == 4
+    assert len(data["highlights"]["top_candidates"]) <= 5
+    assert len(data["main_store_sections"]["cosmo_obu"]["candidates"]) <= 10
+    assert len(data["main_store_sections"]["marushin_777"]["candidates"]) <= 10
+    assert sum(
+        1
+        for row in data["highlights"]["top_candidates"]
+        if row["target_type"] == "tail_candidate"
+    ) <= 1
     assert any(row["target_type"] == "raise_candidate" for row in data["candidates"])
     assert payload["summary"]["target_counts"]["raise_candidate"] >= 1
     report_text = report_path.read_text(encoding="utf-8")

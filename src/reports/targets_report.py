@@ -18,10 +18,56 @@ PRIORITY_MULTIPLIERS = {
     "watch": 0.85,
 }
 
+CANDIDATE_TYPE_WEIGHTS = {
+    "raise_candidate": 1.30,
+    "cluster_candidate": 1.20,
+    "machine_candidate": 1.05,
+    "tail_candidate": 0.85,
+}
+
+TOP_CANDIDATE_TYPE_LIMITS = {
+    "raise_candidate": 5,
+    "cluster_candidate": 2,
+    "machine_candidate": 2,
+    "tail_candidate": 1,
+}
+
+MAIN_STORE_TYPE_LIMITS = {
+    "raise_candidate": 10,
+    "cluster_candidate": 10,
+    "machine_candidate": 10,
+    "tail_candidate": 2,
+}
+
+TOP_CANDIDATE_TYPE_ORDER = (
+    "raise_candidate",
+    "cluster_candidate",
+    "machine_candidate",
+    "tail_candidate",
+)
+
 PRIORITY_ORDER = {
     "main": 0,
     "sub": 1,
     "watch": 2,
+}
+
+TARGET_PRIORITY_GROUPS = {"main", "sub"}
+MAIN_STORE_IDS = ("cosmo_obu", "marushin_777")
+SUB_STORE_IDS = ("apan_kobo", "keiz_galerie_apita")
+TARGET_STORE_ORDER = MAIN_STORE_IDS + SUB_STORE_IDS
+
+TIER_ORDER = {
+    "S": 0,
+    "A": 1,
+    "B": 2,
+    "見送り": 3,
+}
+
+CONFIDENCE_ORDER = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
 }
 
 
@@ -91,11 +137,43 @@ def _apply_priority_score(score: float, priority_group: str, quality_good: bool)
     return round(float(score) * _priority_multiplier(priority_group, quality_good), 2)
 
 
+def _target_stores(stores) -> list:
+    store_map = {store.store_id: store for store in stores}
+    return [
+        store_map[store_id]
+        for store_id in TARGET_STORE_ORDER
+        if store_id in store_map
+        and _priority_group(getattr(store_map[store_id], "priority_group", "watch"))
+        in TARGET_PRIORITY_GROUPS
+    ]
+
+
 def _candidate_sort_key(candidate: dict[str, object]) -> tuple[int, float, str]:
     return (
         PRIORITY_ORDER.get(str(candidate.get("priority_group", "watch")), 9),
         -float(candidate.get("score", 0.0)),
         str(candidate.get("store_id", "")),
+    )
+
+
+def _candidate_adjusted_score(candidate: dict[str, object]) -> float:
+    priority_group = _priority_group(str(candidate.get("priority_group", "watch")))
+    priority_multiplier = PRIORITY_MULTIPLIERS.get(priority_group, 1.0)
+    type_weight = CANDIDATE_TYPE_WEIGHTS.get(str(candidate.get("target_type", "")), 1.0)
+    adjusted = float(candidate.get("score", 0.0)) * priority_multiplier * type_weight
+    return round(adjusted, 2)
+
+
+def _focus_candidate_sort_key(
+    candidate: dict[str, object],
+) -> tuple[int, int, int, float, str, str]:
+    return (
+        PRIORITY_ORDER.get(str(candidate.get("priority_group", "watch")), 9),
+        TIER_ORDER.get(str(candidate.get("tier", "見送り")), 9),
+        CONFIDENCE_ORDER.get(str(candidate.get("confidence", "C")), 9),
+        -_candidate_adjusted_score(candidate),
+        str(candidate.get("store_id", "")),
+        str(candidate.get("machine_name", "")),
     )
 
 
@@ -238,6 +316,65 @@ def _tier_label(score: float, confidence: str) -> str:
     return "見送り"
 
 
+def _format_reason_number(value: object) -> str:
+    if value is None:
+        return "-"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    if math.isnan(number):
+        return "-"
+    rounded = int(round(number))
+    return f"{rounded:,}"
+
+
+def _candidate_reason_text(
+    *,
+    target_type: str,
+    machine_name: str,
+    unit_number: str,
+    reason: str,
+    evidence: dict[str, object],
+) -> str:
+    existing = str(reason or "").strip()
+    looks_like_placeholder = existing.startswith("理由") and len(existing) <= 4
+    prev_diff = _format_reason_number(evidence.get("previous_day_diff"))
+    prev_games = _format_reason_number(evidence.get("previous_day_games"))
+    recent_avg_diff = _format_reason_number(evidence.get("recent_avg_diff"))
+    recent_avg_games = _format_reason_number(evidence.get("recent_avg_games"))
+    streak = evidence.get("negative_streak_days")
+    streak_text = (
+        f"{_format_reason_number(streak)}日連続凹み"
+        if streak is not None
+        else "連続凹み情報なし"
+    )
+
+    if target_type == "raise_candidate":
+        return (
+            f"前回 {prev_diff}枚 / {prev_games}G、{streak_text}。"
+            f" 同機種平均は {recent_avg_diff}枚 / {recent_avg_games}Gで、凹み上げ候補。"
+        )
+    if target_type == "cluster_candidate":
+        return (
+            f"{machine_name} の {unit_number} が並びでプラス。"
+            f" 基準値は {prev_diff}枚 / {prev_games}G、同機種平均 {recent_avg_diff}枚。"
+        )
+    if target_type == "tail_candidate":
+        return (
+            f"{unit_number} は直近でプラス傾向。"
+            f" 直近平均 {recent_avg_diff}枚 / {recent_avg_games}G。"
+        )
+    if target_type == "machine_candidate":
+        return (
+            f"{machine_name} は同機種平均 {recent_avg_diff}枚 / {recent_avg_games}G。"
+            " 稼働が続いており確認候補。"
+        )
+    if existing and not looks_like_placeholder:
+        return existing
+    return "根拠付き候補"
+
+
 def _candidate_dict(
     *,
     store_id: str,
@@ -252,6 +389,13 @@ def _candidate_dict(
     evidence: dict[str, object],
     caution: str,
 ) -> dict[str, object]:
+    reason_text = _candidate_reason_text(
+        target_type=target_type,
+        machine_name=machine_name,
+        unit_number=unit_number,
+        reason=reason,
+        evidence=evidence,
+    )
     return {
         "rank": 0,
         "store_id": store_id,
@@ -263,7 +407,8 @@ def _candidate_dict(
         "score": round(float(score), 2),
         "confidence": confidence,
         "tier": _tier_label(float(score), confidence),
-        "reason": reason,
+        "reason": reason_text,
+        "reason_text": reason_text,
         "evidence": evidence,
         "caution": caution,
     }
@@ -485,6 +630,7 @@ def _build_machine_payloads(
                     evidence={
                         "previous_day_diff": None,
                         "previous_day_games": None,
+                        "negative_streak_days": None,
                         "recent_avg_diff": stats["avg_diff"],
                         "recent_avg_games": stats["avg_game"],
                         "win_rate": stats["win_rate"],
@@ -558,6 +704,7 @@ def _build_unit_candidates(
             base_evidence = {
                 "previous_day_diff": round(_safe_float(anchor_row["diff"]), 2),
                 "previous_day_games": round(_safe_float(anchor_row["games"]), 2),
+                "negative_streak_days": streak,
                 "recent_avg_diff": machine_stats["avg_diff"],
                 "recent_avg_games": machine_stats["avg_game"],
                 "win_rate": machine_stats["win_rate"],
@@ -665,6 +812,7 @@ def _build_unit_candidates(
                             evidence={
                                 "previous_day_diff": None,
                                 "previous_day_games": None,
+                                "negative_streak_days": None,
                                 "recent_avg_diff": round(recent_avg_diff, 2),
                                 "recent_avg_games": round(recent_avg_games, 2),
                                 "win_rate": round(win_rate, 4),
@@ -720,6 +868,7 @@ def _build_unit_candidates(
                         evidence={
                             "previous_day_diff": cluster["avg_diff"],
                             "previous_day_games": cluster["avg_games"],
+                            "negative_streak_days": None,
                             "recent_avg_diff": machine_stats["avg_diff"],
                             "recent_avg_games": machine_stats["avg_game"],
                             "win_rate": machine_stats["win_rate"],
@@ -1024,6 +1173,222 @@ def _candidate_counts(candidates: list[dict[str, object]]) -> dict[str, int]:
     return counts
 
 
+def _candidate_type_sections(
+    candidates: list[dict[str, object]],
+) -> dict[str, list[dict[str, object]]]:
+    return {
+        "machine_candidates": [
+            row for row in candidates if row["target_type"] == "machine_candidate"
+        ],
+        "raise_candidates": [
+            row for row in candidates if row["target_type"] == "raise_candidate"
+        ],
+        "tail_candidates": [
+            row for row in candidates if row["target_type"] == "tail_candidate"
+        ],
+        "cluster_candidates": [
+            row for row in candidates if row["target_type"] == "cluster_candidate"
+        ],
+    }
+
+
+def _limited_candidates_by_store(
+    candidates: list[dict[str, object]],
+    *,
+    per_store_limit: int,
+) -> list[dict[str, object]]:
+    result: list[dict[str, object]] = []
+    per_store: dict[str, int] = {}
+    for candidate in sorted(candidates, key=_focus_candidate_sort_key):
+        store_id = str(candidate["store_id"])
+        count = per_store.get(store_id, 0)
+        if count >= per_store_limit:
+            continue
+        result.append(candidate)
+        per_store[store_id] = count + 1
+    return result
+
+
+def _watch_candidates_focus(
+    candidates: list[dict[str, object]],
+    *,
+    total_limit: int,
+) -> list[dict[str, object]]:
+    filtered = [
+        candidate
+        for candidate in candidates
+        if candidate["priority_group"] == "watch"
+        and (
+            str(candidate["tier"]) == "S"
+            or (
+                float(candidate["score"]) >= 85.0
+                and str(candidate["confidence"]) in {"A", "B"}
+            )
+        )
+    ]
+    return sorted(filtered, key=_focus_candidate_sort_key)[:total_limit]
+
+
+def _highlight_candidate(candidate: dict[str, object]) -> dict[str, object]:
+    highlighted = dict(candidate)
+    highlighted["adjusted_score"] = _candidate_adjusted_score(candidate)
+    return highlighted
+
+
+def _top_candidates(candidates: list[dict[str, object]]) -> list[dict[str, object]]:
+    return _curated_candidates(
+        candidates,
+        total_limit=5,
+        type_limits=TOP_CANDIDATE_TYPE_LIMITS,
+    )
+
+
+def _curated_candidates(
+    candidates: list[dict[str, object]],
+    *,
+    total_limit: int,
+    type_limits: dict[str, int],
+) -> list[dict[str, object]]:
+    selected: list[dict[str, object]] = []
+    counts_by_type = {target_type: 0 for target_type in type_limits}
+    seen_keys: set[tuple[str, str, str, str]] = set()
+
+    def _append_from_pool(pool: list[dict[str, object]]) -> None:
+        if len(selected) >= total_limit:
+            return
+        for target_type in TOP_CANDIDATE_TYPE_ORDER:
+            eligible = [
+                row
+                for row in pool
+                if row["target_type"] == target_type
+                and counts_by_type[target_type] < type_limits[target_type]
+            ]
+            for candidate in sorted(eligible, key=_focus_candidate_sort_key):
+                if len(selected) >= total_limit:
+                    return
+                target_key = (
+                    str(candidate.get("store_id", "")),
+                    str(candidate.get("target_type", "")),
+                    str(candidate.get("machine_name", "")),
+                    str(candidate.get("unit_number", "")),
+                )
+                if target_key in seen_keys:
+                    continue
+                selected.append(_highlight_candidate(candidate))
+                seen_keys.add(target_key)
+                counts_by_type[target_type] += 1
+                if counts_by_type[target_type] >= type_limits[target_type]:
+                    break
+
+    preferred_pool = [
+        row for row in candidates if str(row.get("confidence", "C")) in {"A", "B"}
+    ]
+    fallback_pool = [
+        row for row in candidates if str(row.get("confidence", "C")) == "C"
+    ]
+    _append_from_pool(preferred_pool)
+    if len(selected) < total_limit:
+        _append_from_pool(fallback_pool)
+    return selected[:total_limit]
+
+
+def _main_store_sections(
+    candidates: list[dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    sections: dict[str, dict[str, object]] = {}
+    for store_id in MAIN_STORE_IDS:
+        store_candidates = [
+            row
+            for row in candidates
+            if row["store_id"] == store_id and row["priority_group"] == "main"
+        ]
+        curated = _curated_candidates(
+            store_candidates,
+            total_limit=10,
+            type_limits=MAIN_STORE_TYPE_LIMITS,
+        )
+        if curated:
+            store_name = str(curated[0]["store_name"])
+        else:
+            store_name = store_id
+        sections[store_id] = {
+            "store_id": store_id,
+            "store_name": store_name,
+            "candidates": curated,
+            "raise_candidates": [
+                row for row in curated if row["target_type"] == "raise_candidate"
+            ],
+            "cluster_candidates": [
+                row for row in curated if row["target_type"] == "cluster_candidate"
+            ],
+            "machine_candidates": [
+                row for row in curated if row["target_type"] == "machine_candidate"
+            ],
+            "tail_candidates": [
+                row for row in curated if row["target_type"] == "tail_candidate"
+            ],
+        }
+    return sections
+
+
+def _sub_store_sections(
+    candidates: list[dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    sections: dict[str, dict[str, object]] = {}
+    for store_id in SUB_STORE_IDS:
+        store_candidates = [
+            row
+            for row in candidates
+            if row["store_id"] == store_id and row["priority_group"] == "sub"
+        ]
+        curated = _curated_candidates(
+            store_candidates,
+            total_limit=5,
+            type_limits=MAIN_STORE_TYPE_LIMITS,
+        )
+        if curated:
+            store_name = str(curated[0]["store_name"])
+        else:
+            store_name = store_id
+        sections[store_id] = {
+            "store_id": store_id,
+            "store_name": store_name,
+            "candidates": curated,
+            "raise_candidates": [
+                row for row in curated if row["target_type"] == "raise_candidate"
+            ],
+            "cluster_candidates": [
+                row for row in curated if row["target_type"] == "cluster_candidate"
+            ],
+            "machine_candidates": [
+                row for row in curated if row["target_type"] == "machine_candidate"
+            ],
+            "tail_candidates": [
+                row for row in curated if row["target_type"] == "tail_candidate"
+            ],
+        }
+    return sections
+
+
+def _highlight_sections(candidates: list[dict[str, object]]) -> dict[str, list[dict[str, object]]]:
+    main_candidates = _limited_candidates_by_store(
+        [row for row in candidates if row["priority_group"] == "main"],
+        per_store_limit=5,
+    )
+    sub_candidates = _limited_candidates_by_store(
+        [row for row in candidates if row["priority_group"] == "sub"],
+        per_store_limit=3,
+    )
+    prioritized_pool = main_candidates + sub_candidates
+    top_candidates = _top_candidates(prioritized_pool)
+    return {
+        "top_candidates": top_candidates,
+        "main_candidates": main_candidates,
+        "sub_candidates": sub_candidates,
+        "watch_candidates": [],
+    }
+
+
 def analyze_targets(
     *,
     database,
@@ -1033,7 +1398,7 @@ def analyze_targets(
     source: str | None = None,
     status_overrides: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, object]:
-    stores = store_normalizer.list_stores()
+    stores = _target_stores(store_normalizer.list_stores())
     daily_df, machine_df, unit_df = _query_lookback_frames(
         database,
         target_date,
@@ -1071,6 +1436,10 @@ def analyze_targets(
         + cluster_candidates
     )
     counts = _candidate_counts(all_candidates)
+    sections = _candidate_type_sections(all_candidates)
+    highlights = _highlight_sections(all_candidates)
+    main_store_sections = _main_store_sections(all_candidates)
+    sub_store_sections = _sub_store_sections(all_candidates)
     coverage_window = _coverage_window_text(unit_df, target_date, lookback_days)
     priority_groups = {
         key: [
@@ -1078,13 +1447,15 @@ def analyze_targets(
             for store in stores
             if _priority_group(store.priority_group) == key
         ]
-        for key in ("main", "sub", "watch")
+        for key in ("main", "sub")
     }
     return {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "target_date": target_date.isoformat(),
         "source": source or "all",
         "lookback_days": lookback_days,
+        "target_store_ids": [store.store_id for store in stores],
+        "target_store_count": len(stores),
         "coverage_window": coverage_window,
         "analysis_anchor_date": (
             analysis_anchor_date.isoformat() if analysis_anchor_date else None
@@ -1111,28 +1482,30 @@ def analyze_targets(
             "priority_candidate_counts": {
                 "main": sum(1 for row in all_candidates if row["priority_group"] == "main"),
                 "sub": sum(1 for row in all_candidates if row["priority_group"] == "sub"),
-                "watch": sum(1 for row in all_candidates if row["priority_group"] == "watch"),
             },
             "target_counts": counts,
+            "highlight_counts": {
+                "top_candidates": len(highlights["top_candidates"]),
+                "main_candidates": len(highlights["main_candidates"]),
+                "sub_candidates": len(highlights["sub_candidates"]),
+            },
+            "main_store_section_counts": {
+                store_id: len(section["candidates"])
+                for store_id, section in main_store_sections.items()
+            },
+            "sub_store_section_counts": {
+                store_id: len(section["candidates"])
+                for store_id, section in sub_store_sections.items()
+            },
         },
         "priority_groups": priority_groups,
         "store_scores": store_scores,
         "machine_scores": machine_scores[:50],
         "candidates": all_candidates,
-        "sections": {
-            "machine_candidates": [
-                row for row in all_candidates if row["target_type"] == "machine_candidate"
-            ][:12],
-            "raise_candidates": [
-                row for row in all_candidates if row["target_type"] == "raise_candidate"
-            ][:20],
-            "tail_candidates": [
-                row for row in all_candidates if row["target_type"] == "tail_candidate"
-            ][:20],
-            "cluster_candidates": [
-                row for row in all_candidates if row["target_type"] == "cluster_candidate"
-            ][:20],
-        },
+        "highlights": highlights,
+        "main_store_sections": main_store_sections,
+        "sub_store_sections": sub_store_sections,
+        "sections": sections,
     }
 
 
@@ -1195,6 +1568,9 @@ def write_targets_outputs(
         f"# Targets {target_date.isoformat()}",
         "",
         f"- source: {payload['source']}",
+        f"- target_store_count: {payload['target_store_count']}",
+        f"- target_store_ids: {', '.join(payload['target_store_ids'])}",
+        "- note: 標準対象は main/sub の4店舗です。",
         f"- coverage_window: {payload['coverage_window']}",
         f"- lookback_days: {payload['lookback_days']}",
         f"- analysis_anchor_date: {payload['analysis_anchor_date']}",
@@ -1208,7 +1584,6 @@ def write_targets_outputs(
         ),
         f"- main: {', '.join(payload['priority_groups']['main'])}",
         f"- sub: {', '.join(payload['priority_groups']['sub'])}",
-        f"- watch: {', '.join(payload['priority_groups']['watch'])}",
         "",
         "## 店舗スコア",
     ]

@@ -6,6 +6,11 @@ from pathlib import Path
 
 from src.reports.tomorrow_report import run_analysis
 
+TARGET_PRIORITY_GROUPS = {"main", "sub"}
+MAIN_STORE_IDS = ("cosmo_obu", "marushin_777")
+SUB_STORE_IDS = ("apan_kobo", "keiz_galerie_apita")
+TARGET_STORE_ORDER = MAIN_STORE_IDS + SUB_STORE_IDS
+
 SITE_CSS = """\
 :root {
   --bg: #f6f1e8;
@@ -43,14 +48,17 @@ summary {
 }
 
 .page {
-  width: min(1180px, calc(100% - 28px));
+  width: min(960px, calc(100% - 20px));
   margin: 0 auto;
-  padding: 18px 0 40px;
+  padding: 14px 0 32px;
 }
 
 .hero,
 .group-panel,
-.store-card {
+.store-card,
+.note-card,
+.target-panel,
+.target-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 26px;
@@ -58,9 +66,8 @@ summary {
 }
 
 .hero {
-  padding: 24px;
-  background:
-    linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(245, 236, 224, 0.92));
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 241, 232, 0.94));
 }
 
 .eyebrow {
@@ -73,21 +80,21 @@ summary {
 }
 
 .hero-title {
-  margin: 10px 0 0;
-  font-size: clamp(2rem, 4vw, 3.6rem);
-  line-height: 1.02;
+  margin: 8px 0 0;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.08;
 }
 
 .hero-copy {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   color: var(--muted);
-  font-size: 1rem;
-  max-width: 72ch;
+  font-size: 0.98rem;
+  line-height: 1.6;
 }
 
 .summary-card {
-  margin-top: 20px;
-  padding: 22px;
+  margin-top: 16px;
+  padding: 20px;
   border-radius: 24px;
   background: linear-gradient(135deg, rgba(22, 95, 85, 0.95), rgba(27, 43, 40, 0.92));
   color: #f8f5ef;
@@ -101,12 +108,12 @@ summary {
 
 .summary-title {
   margin: 8px 0 0;
-  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-size: clamp(1.35rem, 3vw, 2rem);
   line-height: 1.2;
 }
 
 .summary-lines {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   padding-left: 18px;
 }
 
@@ -114,39 +121,17 @@ summary {
   margin-top: 6px;
 }
 
-.watch-panel {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid var(--line);
-}
-
-.watch-panel h2,
-.group-head h2 {
+.group-head h2,
+.note-card h2 {
   margin: 0;
   font-size: 1.24rem;
 }
 
-.watch-copy,
 .group-copy,
 .detail-grid p {
   margin: 8px 0 0;
   color: var(--muted);
   line-height: 1.5;
-}
-
-.watch-list {
-  margin: 14px 0 0;
-  padding-left: 18px;
-  columns: 2;
-  column-gap: 24px;
-}
-
-.watch-list li {
-  break-inside: avoid;
-  margin-bottom: 8px;
-  font-weight: 700;
 }
 
 .meta-row,
@@ -158,8 +143,8 @@ summary {
 }
 
 .meta-row {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  margin-top: 18px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 14px;
 }
 
 .meta-chip {
@@ -182,12 +167,8 @@ summary {
 }
 
 .target-panel {
-  margin-top: 22px;
-  padding: 20px;
-  background: rgba(255, 252, 247, 0.94);
-  border: 1px solid var(--line);
-  border-radius: 26px;
-  box-shadow: var(--shadow);
+  margin-top: 18px;
+  padding: 18px;
 }
 
 .target-panel h2,
@@ -202,22 +183,84 @@ summary {
 }
 
 .target-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  margin-top: 16px;
+  grid-template-columns: 1fr;
+  margin-top: 14px;
 }
 
 .target-card {
   padding: 16px;
   border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.focus-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.focus-card {
+  padding: 15px;
+  border-radius: 20px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.82);
+  background: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.focus-card.main {
+  border-color: rgba(22, 95, 85, 0.24);
+}
+
+.focus-card.sub {
+  border-color: rgba(161, 91, 0, 0.24);
+}
+
+.focus-title {
+  margin: 8px 0 0;
+  font-size: 1.08rem;
+  line-height: 1.4;
+}
+
+.focus-detail {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.focus-kicker {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.focus-scoreline {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.target-section-title {
+  margin: 18px 0 0;
+  font-size: 1.08rem;
+}
+
+.section-title {
+  margin: 20px 0 0;
+  font-size: 1.22rem;
+}
+
+.section-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 .priority-overview {
-  margin-top: 16px;
+  margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .priority-card {
@@ -241,7 +284,7 @@ summary {
 
 .tier-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 12px;
 }
@@ -279,6 +322,55 @@ summary {
   display: block;
   margin-top: 4px;
   font-size: 0.9rem;
+}
+
+.focus-details {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.focus-details summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+  font-size: 0.96rem;
+}
+
+.focus-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.focus-details summary::after {
+  content: "＋";
+  margin-left: 8px;
+}
+
+.focus-details[open] summary::after {
+  content: "−";
+}
+
+.focus-details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.metric-negative {
+  color: var(--grade-c);
+  font-weight: 800;
+}
+
+.metric-strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.note-card {
+  margin-top: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .group-panel {
@@ -474,23 +566,25 @@ summary {
 
 @media (max-width: 720px) {
   .page {
-    width: min(100% - 18px, 1180px);
-    padding-top: 14px;
+    width: min(100% - 14px, 960px);
+    padding-top: 10px;
   }
 
   .hero,
   .group-panel,
-  .store-card {
+  .store-card,
+  .target-panel,
+  .note-card {
     border-radius: 20px;
   }
 
   .hero,
-  .group-panel {
+  .group-panel,
+  .target-panel {
     padding: 16px;
   }
 
-  .summary-card,
-  .watch-panel {
+  .summary-card {
     padding: 18px;
   }
 
@@ -509,12 +603,18 @@ summary {
   .group-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .watch-list {
-    columns: 1;
+@media (min-width: 900px) {
+  .target-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .tier-row {
+  .focus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .priority-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -593,12 +693,33 @@ function priorityLabel(priorityGroup) {
   return "watch";
 }
 
+function priorityDisplayLabel(priorityGroup) {
+  if (priorityGroup === "main") return "メイン";
+  if (priorityGroup === "sub") return "サブ";
+  return "監視";
+}
+
 function targetTypeLabel(targetType) {
   if (targetType === "machine_candidate") return "狙い機種";
   if (targetType === "raise_candidate") return "上げ狙い";
-  if (targetType === "tail_candidate") return "末尾";
-  if (targetType === "cluster_candidate") return "並び";
+  if (targetType === "tail_candidate") return "末尾候補";
+  if (targetType === "cluster_candidate") return "並び候補";
   return targetType;
+}
+
+function formatSignedNumber(value, suffix = "") {
+  if (value === null || value === undefined || value === "") return "-";
+  const number = Number(value);
+  if (Number.isNaN(number)) return "-";
+  const prefix = number > 0 ? "+" : "";
+  return `${prefix}${number.toLocaleString("ja-JP")}${suffix}`;
+}
+
+function formatPlainNumber(value, suffix = "") {
+  if (value === null || value === undefined || value === "") return "-";
+  const number = Number(value);
+  if (Number.isNaN(number)) return "-";
+  return `${number.toLocaleString("ja-JP")}${suffix}`;
 }
 
 function candidatePrimaryLabel(candidate) {
@@ -608,8 +729,9 @@ function candidatePrimaryLabel(candidate) {
   return candidate.machine_name || candidate.unit_number || "-";
 }
 
-function candidateItem(candidate) {
+function candidateItem(candidate, analysisAnchorDate = "-") {
   const evidence = candidate.evidence || {};
+  const reasonText = candidate.reason_text || candidate.reason || "";
   return `
     <li>
       <strong>${escapeHtml(candidate.store_name)}</strong>
@@ -620,12 +742,13 @@ function candidateItem(candidate) {
         score ${escapeHtml(candidate.score)} /
         confidence ${escapeHtml(candidate.confidence)}
       </span>
-      <span class="candidate-meta">${escapeHtml(candidate.reason || "")}</span>
+      <span class="candidate-meta">${escapeHtml(reasonText)}</span>
       <span class="candidate-meta">
         根拠:
         prev_diff=${escapeHtml(evidence.previous_day_diff ?? "-")} /
         prev_games=${escapeHtml(evidence.previous_day_games ?? "-")} /
-        sample=${escapeHtml(evidence.sample_count ?? "-")}
+        sample=${escapeHtml(evidence.sample_count ?? "-")} /
+        anchor=${escapeHtml(analysisAnchorDate)}
       </span>
       ${
         candidate.caution
@@ -636,14 +759,16 @@ function candidateItem(candidate) {
   `;
 }
 
-function renderCandidateList(title, copy, candidates, emptyLabel) {
+function renderCandidateList(title, copy, candidates, emptyLabel, analysisAnchorDate = "-") {
   return `
     <div class="target-card">
       <h3>${escapeHtml(title)}</h3>
       <p class="target-copy">${escapeHtml(copy)}</p>
       ${
         candidates && candidates.length
-          ? `<ul class="candidate-list">${candidates.map(candidateItem).join("")}</ul>`
+          ? `<ul class="candidate-list">${candidates
+              .map((candidate) => candidateItem(candidate, analysisAnchorDate))
+              .join("")}</ul>`
           : `<p class="target-copy">${escapeHtml(emptyLabel)}</p>`
       }
     </div>
@@ -674,42 +799,168 @@ function renderPriorityStoreList(title, className, stores) {
   `;
 }
 
-function renderHeroCard(payload, groups) {
-  const counts = payload.decision_counts || {};
-  const total = (payload.stores || []).length;
-  const watchStores = groups.A;
+function renderFocusCard(candidate, analysisAnchorDate, storeMeta = {}) {
+  const label = candidatePrimaryLabel(candidate);
+  const evidence = candidate.evidence || {};
+  const reasonText = candidate.reason_text || candidate.reason || "";
+  const priorityGrade =
+    candidate.priority_group === "main"
+      ? "A"
+      : candidate.priority_group === "sub"
+        ? "B"
+        : "C";
+  const confidenceGrade =
+    candidate.confidence === "A" ? "A" : candidate.confidence === "B" ? "B" : "C";
+  const negativeStreakDays = evidence.negative_streak_days;
+  const diffText = formatSignedNumber(evidence.previous_day_diff, "枚");
+  const gamesText = formatPlainNumber(evidence.previous_day_games, "G");
+  const avgDiffText = formatSignedNumber(evidence.recent_avg_diff, "枚");
+  const avgGamesText = formatPlainNumber(evidence.recent_avg_games, "G");
+  const missingRateText = storeMeta.unit_diff_missing_rate_text || "-";
+  const failedMachinePages = storeMeta.failed_machine_pages || 0;
+  const sampleCount = evidence.sample_count ?? "-";
+  return `
+    <article class="focus-card ${escapeHtml(priorityLabel(candidate.priority_group))}">
+      <div class="badge-row">
+        ${renderBadge(
+          priorityDisplayLabel(candidate.priority_group),
+          stateBadgeKind(priorityGrade),
+        )}
+        ${renderBadge(targetTypeLabel(candidate.target_type), gradeBadgeKind(confidenceGrade))}
+        ${renderBadge(`信頼度 ${candidate.confidence}`, gradeBadgeKind(confidenceGrade))}
+      </div>
+      <h3 class="focus-title">${escapeHtml(candidate.store_name)}</h3>
+      <p class="focus-kicker">${escapeHtml(label)}</p>
+      <p class="focus-detail">
+        ${escapeHtml(targetTypeLabel(candidate.target_type))}
+      </p>
+      <p class="focus-detail">
+        前回
+        <span class="${
+          diffText.startsWith("-") ? "metric-negative" : "metric-strong"
+        }">${escapeHtml(diffText)}</span>
+        /
+        <span class="metric-strong">${escapeHtml(gamesText)}</span>
+      </p>
+      <p class="focus-detail">
+        ${
+          negativeStreakDays
+            ? `${escapeHtml(formatPlainNumber(negativeStreakDays, "日"))}連続凹み`
+            : "連続凹み情報なし"
+        }
+      </p>
+      <p class="focus-detail">
+        同機種平均 ${escapeHtml(avgDiffText)} / ${escapeHtml(avgGamesText)}
+      </p>
+      <p class="target-copy">${escapeHtml(reasonText)}</p>
+      <p class="focus-kicker">データ基準日: ${escapeHtml(analysisAnchorDate || "-")}</p>
+      <details class="focus-details">
+        <summary>詳細を開く</summary>
+        <div class="focus-details-grid">
+          <div class="detail-item">
+            <strong>score</strong>
+            <p class="focus-scoreline">
+              raw ${escapeHtml(candidate.score)} /
+              adjusted ${escapeHtml(candidate.adjusted_score ?? candidate.score)}
+            </p>
+          </div>
+          <div class="detail-item">
+            <strong>sample_count</strong>
+            <p>${escapeHtml(String(sampleCount))}</p>
+          </div>
+          <div class="detail-item">
+            <strong>unit_diff_missing_rate</strong>
+            <p>${escapeHtml(missingRateText)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>failed_machine_pages</strong>
+            <p>${escapeHtml(String(failedMachinePages))}</p>
+          </div>
+          <div class="detail-item">
+            <strong>machine平均</strong>
+            <p>${escapeHtml(avgDiffText)} / ${escapeHtml(avgGamesText)}</p>
+          </div>
+          ${
+            candidate.caution
+              ? `<div class="detail-item">
+                  <strong>注意</strong>
+                  <p>${escapeHtml(candidate.caution)}</p>
+                </div>`
+              : ""
+          }
+        </div>
+      </details>
+    </article>
+  `;
+}
+
+function renderMainStoreSection(section, analysisAnchorDate, copy, storeMeta = {}) {
+  const raiseCandidates = section.raise_candidates || [];
+  const clusterCandidates = section.cluster_candidates || [];
+  const machineCandidates = section.machine_candidates || [];
+  const tailCandidates = section.tail_candidates || [];
+  return `
+    <div class="target-card">
+      <h3>${escapeHtml(section.store_name || section.store_id || "-")}</h3>
+      <p class="target-copy">${escapeHtml(copy)}</p>
+      <h4 class="target-section-title">上げ狙い台</h4>
+      ${
+        raiseCandidates.length
+          ? `<div class="focus-grid">${raiseCandidates
+              .map((candidate) => renderFocusCard(candidate, analysisAnchorDate, storeMeta))
+              .join("")}</div>`
+          : `<p class="target-copy">候補なし</p>`
+      }
+      <h4 class="target-section-title">並び候補</h4>
+      ${
+        clusterCandidates.length
+          ? `<div class="focus-grid">${clusterCandidates
+              .map((candidate) => renderFocusCard(candidate, analysisAnchorDate, storeMeta))
+              .join("")}</div>`
+          : `<p class="target-copy">候補なし</p>`
+      }
+      <h4 class="target-section-title">狙い機種</h4>
+      ${
+        machineCandidates.length
+          ? `<div class="focus-grid">${machineCandidates
+              .map((candidate) => renderFocusCard(candidate, analysisAnchorDate, storeMeta))
+              .join("")}</div>`
+          : `<p class="target-copy">候補なし</p>`
+      }
+      <h4 class="target-section-title">末尾候補</h4>
+      ${
+        tailCandidates.length
+          ? `<div class="focus-grid">${tailCandidates
+              .map((candidate) => renderFocusCard(candidate, analysisAnchorDate, storeMeta))
+              .join("")}</div>`
+          : `<p class="target-copy">候補なし</p>`
+      }
+    </div>
+  `;
+}
+
+function renderHeroCard(payload, targets) {
+  const targetStoreCount = payload.target_store_count || (payload.stores || []).length;
+  const mainStores = (targets && targets.priority_groups && targets.priority_groups.main) || [];
+  const subStores = (targets && targets.priority_groups && targets.priority_groups.sub) || [];
+  const anchorDate = (targets && targets.analysis_anchor_date) || payload.target_date || "-";
+  const anchorNotice = (targets && targets.analysis_anchor_notice) || "";
   return `
     <section class="hero">
-      <p class="eyebrow">Source ${escapeHtml(payload.source || "-")}</p>
-      <h1 class="hero-title">今日はどの店を見るべきか</h1>
-      <p class="hero-copy">
-        利用可能な店舗を上から順に見て、内部指標は必要なときだけ詳細で確認します。
-      </p>
+      <p class="eyebrow">slorepo / 対象${escapeHtml(String(targetStoreCount))}店舗</p>
+      <h1 class="hero-title">今日の狙い</h1>
+      <p class="hero-copy">データ基準日: ${escapeHtml(anchorDate)}</p>
+      ${anchorNotice ? `<p class="hero-copy">${escapeHtml(anchorNotice)}</p>` : ""}
       <div class="summary-card">
         <p class="summary-kicker">今日の結論</p>
         <h2 class="summary-title">
-          ${escapeHtml(payload.today_conclusion || "")}
+          今日はメイン2店舗を優先。
         </h2>
         <ul class="summary-lines">
-          <li>${
-            escapeHtml(
-              `${total}店舗中${Number(counts.A || 0) + Number(counts.B || 0)}店舗が利用可能。`,
-            )
-          }</li>
-          <li>${escapeHtml(`注意付き店舗は${counts.B || 0}店舗。`)}</li>
-          <li>${escapeHtml(overallActionText(counts, total))}</li>
+          <li>${escapeHtml(`まずは${mainStores.join("、")}を確認。`)}</li>
+          <li>${escapeHtml(`サブは${subStores.join("、")}。`)}</li>
+          <li>${escapeHtml(payload.today_conclusion || "")}</li>
         </ul>
-      </div>
-      <div class="watch-panel">
-        <h2>今日見る店</h2>
-        <p class="watch-copy">まずは A 判定の店舗だけを上から見ます。</p>
-        ${
-          watchStores.length
-            ? `<ul class="watch-list">${watchStores
-                .map((store) => `<li>${escapeHtml(store.display_name)}</li>`)
-                .join("")}</ul>`
-            : `<p class="watch-copy">A 判定の店舗はありません。</p>`
-        }
       </div>
       <div class="meta-row">
         <div class="meta-chip">
@@ -719,16 +970,6 @@ function renderHeroCard(payload, groups) {
         <div class="meta-chip">
           <div class="meta-label">最終更新日時</div>
           <div class="meta-value">${escapeHtml(payload.generated_at || "-")}</div>
-        </div>
-        <div class="meta-chip">
-          <div class="meta-label">集計対象期間</div>
-          <div class="meta-value">${escapeHtml(payload.coverage_window || "-")}</div>
-        </div>
-        <div class="meta-chip">
-          <div class="summary-label">A / B / C</div>
-          <div class="meta-value">
-            ${escapeHtml(`${counts.A || 0} / ${counts.B || 0} / ${counts.C || 0}`)}
-          </div>
         </div>
       </div>
     </section>
@@ -745,72 +986,122 @@ function renderTargetsPanel(targets) {
     `;
   }
   const counts = targets.summary.target_counts || {};
+  const highlightCounts = targets.summary.highlight_counts || {};
   const priorityGroups = targets.priority_groups || {};
   const anchorNotice = targets.analysis_anchor_notice || "";
+  const analysisAnchorDate = targets.analysis_anchor_date || "-";
+  const highlights = targets.highlights || {};
+  const mainStoreSections = targets.main_store_sections || {};
+  const subStoreSections = targets.sub_store_sections || {};
+  const storeMetaMap = Object.fromEntries(
+    (targets.store_scores || []).map((row) => [row.store_id, row]),
+  );
+  const topCandidates = highlights.top_candidates || [];
   const machineCandidates = sortedCandidatesByPriority(targets.sections.machine_candidates || []);
   const raiseCandidates = sortedCandidatesByPriority(targets.sections.raise_candidates || []);
   const patternCandidates = sortedCandidatesByPriority([
     ...(targets.sections.tail_candidates || []),
     ...(targets.sections.cluster_candidates || []),
-  ]).slice(0, 12);
+  ]);
   return `
     <section class="target-panel">
-      <h2>今日の狙い候補</h2>
-      <p class="target-copy">
-        候補であって断定ではありません。sample_count が少ないものは参考程度として扱います。
-      </p>
-      <p class="target-copy">
-        target_date: ${escapeHtml(targets.target_date || "-")} /
-        analysis_anchor_date: ${escapeHtml(targets.analysis_anchor_date || "-")}
-      </p>
+      <h2>今日の最優先候補</h2>
+      <p class="target-copy">まずこの5件を見ます。scoreより理由を優先して並べています。</p>
       ${
-        anchorNotice
-          ? `<p class="target-copy">注意: ${escapeHtml(anchorNotice)}</p>`
-          : ""
+        topCandidates.length
+          ? `<div class="focus-grid">${topCandidates
+              .map((candidate) =>
+                renderFocusCard(
+                  candidate,
+                  analysisAnchorDate,
+                  storeMetaMap[candidate.store_id] || {},
+                ),
+              )
+              .join("")}</div>`
+          : `<p class="target-copy">最優先候補はありません。</p>`
       }
-      <div class="tier-row">
-        <div class="tier-chip">
-          <div class="tier-label">S候補</div>
-          <div class="tier-value">${escapeHtml(counts.S || 0)}</div>
-        </div>
-        <div class="tier-chip">
-          <div class="tier-label">A候補</div>
-          <div class="tier-value">${escapeHtml(counts.A || 0)}</div>
-        </div>
-        <div class="tier-chip">
-          <div class="tier-label">B候補</div>
-          <div class="tier-value">${escapeHtml(counts.B || 0)}</div>
-        </div>
-        <div class="tier-chip">
-          <div class="tier-label">見送り</div>
-          <div class="tier-value">${escapeHtml(counts["見送り"] || 0)}</div>
-        </div>
-      </div>
       <div class="priority-overview">
-        ${renderPriorityStoreList("最優先チェック", "main", priorityGroups.main || [])}
+        ${renderPriorityStoreList("今日見るべき店", "main", priorityGroups.main || [])}
         ${renderPriorityStoreList("サブ候補", "sub", priorityGroups.sub || [])}
-        ${renderPriorityStoreList("監視枠", "watch", priorityGroups.watch || [])}
       </div>
+      <h3 class="section-title">メイン店</h3>
+      <p class="section-copy">コスモジャパン大府とマルシン777を深く見ます。</p>
       <div class="target-grid">
-        ${renderCandidateList(
-          "狙い機種",
-          "main → sub → watch の順で並べています。",
-          machineCandidates,
-          "候補なし",
+        ${renderMainStoreSection(
+          mainStoreSections.cosmo_obu || { store_id: "cosmo_obu" },
+          analysisAnchorDate,
+          "メイン店を深く見るための curated list です。最大10件、tail は最大2件までです。",
+          storeMetaMap.cosmo_obu || {},
         )}
-        ${renderCandidateList(
-          "上げ狙い台",
-          "main 店舗を最優先に確認し、watch は高スコア時のみ残します。",
-          raiseCandidates,
-          "候補なし",
-        )}
-        ${renderCandidateList(
-          "末尾・並び候補",
-          "sample_count が少ない場合は参考程度です。",
-          patternCandidates,
-          "候補なし",
+        ${renderMainStoreSection(
+          mainStoreSections.marushin_777 || { store_id: "marushin_777" },
+          analysisAnchorDate,
+          "メイン店を深く見るための curated list です。最大10件、tail は最大2件までです。",
+          storeMetaMap.marushin_777 || {},
         )}
       </div>
+      <h3 class="section-title">サブ店</h3>
+      <p class="section-copy">APANCLUB弘法通りとKEIZギャラリエアピタを次に見ます。</p>
+      <div class="target-grid">
+        ${renderMainStoreSection(
+          subStoreSections.apan_kobo || { store_id: "apan_kobo" },
+          analysisAnchorDate,
+          "サブ店の curated list です。最大5件まで表示します。",
+          storeMetaMap.apan_kobo || {},
+        )}
+        ${renderMainStoreSection(
+          subStoreSections.keiz_galerie_apita || { store_id: "keiz_galerie_apita" },
+          analysisAnchorDate,
+          "サブ店の curated list です。最大5件まで表示します。",
+          storeMetaMap.keiz_galerie_apita || {},
+        )}
+      </div>
+      <details class="note-card">
+        <summary>詳細と注意点を開く</summary>
+        <p class="target-copy">候補の一覧と内部指標です。初見ではここまで見なくて構いません。</p>
+        ${anchorNotice ? `<p class="target-copy">注意: ${escapeHtml(anchorNotice)}</p>` : ""}
+        <div class="tier-row">
+          <div class="tier-chip">
+            <div class="tier-label">S候補</div>
+            <div class="tier-value">${escapeHtml(counts.S || 0)}</div>
+          </div>
+          <div class="tier-chip">
+            <div class="tier-label">A候補</div>
+            <div class="tier-value">${escapeHtml(counts.A || 0)}</div>
+          </div>
+          <div class="tier-chip">
+            <div class="tier-label">B候補</div>
+            <div class="tier-value">${escapeHtml(counts.B || 0)}</div>
+          </div>
+          <div class="tier-chip">
+            <div class="tier-label">見送り</div>
+            <div class="tier-value">${escapeHtml(counts["見送り"] || 0)}</div>
+          </div>
+        </div>
+        <div class="target-grid">
+          ${renderCandidateList(
+            "狙い機種",
+            "main → sub の4店舗だけを並べています。",
+            machineCandidates,
+            "候補なし",
+            analysisAnchorDate,
+          )}
+          ${renderCandidateList(
+            "上げ狙い台",
+            "main 店舗を最優先に確認し、次に sub 店舗を見ます。",
+            raiseCandidates,
+            "候補なし",
+            analysisAnchorDate,
+          )}
+          ${renderCandidateList(
+            "末尾・並び候補",
+            "sample_count が少ない場合は参考程度です。",
+            patternCandidates,
+            "候補なし",
+            analysisAnchorDate,
+          )}
+        </div>
+      </details>
     </section>
   `;
 }
@@ -900,36 +1191,17 @@ function groupSection(grade, title, copy, stores, compact = false) {
 
 function mountDashboard(payload, targets) {
   const root = document.getElementById("app");
-  const stores = payload.stores || [];
+  const notes = payload.notes || [];
 
   function render() {
-    const groups = groupedStores(stores);
-
     root.innerHTML = `
       <main class="page">
-        ${renderHeroCard(payload, groups)}
+        ${renderHeroCard(payload, targets)}
         ${renderTargetsPanel(targets)}
-
-        ${groupSection(
-          "A",
-          "A 通常利用可能",
-          "まず最初に見る店舗です。初期表示は判断理由だけに絞っています。",
-          groups.A,
-        )}
-        ${groupSection(
-          "B",
-          "B 注意付きで利用可能",
-          "一部取得失敗はありますが、候補からは外さず次に確認します。",
-          groups.B,
-        )}
-        ${groupSection(
-          "C",
-          "C 見送り / データ不足",
-          "最後に小さく確認する枠です。今日の主候補にはしません。",
-          groups.C,
-          true,
-        )}
-
+        <section class="note-card">
+          <h2>注意点</h2>
+          <ul class="candidate-list">${renderList(notes, "追加注意なし")}</ul>
+        </section>
         <p class="footer">
           source=${escapeHtml(payload.source || "-")} / raw HTML や SQLite DB は公開していません。
         </p>
@@ -1305,6 +1577,17 @@ def load_validation_statuses(report_path: Path) -> dict[str, dict[str, str]]:
     return statuses
 
 
+def _target_stores(store_normalizer) -> list:
+    store_map = {store.store_id: store for store in store_normalizer.list_stores()}
+    return [
+        store_map[store_id]
+        for store_id in TARGET_STORE_ORDER
+        if store_id in store_map
+        and str(getattr(store_map[store_id], "priority_group", "watch")).strip().lower()
+        in TARGET_PRIORITY_GROUPS
+    ]
+
+
 def _build_summary_payload(
     *,
     database,
@@ -1323,8 +1606,10 @@ def _build_summary_payload(
     )
     rows_by_store = {row["store_id"]: row for row in analysis["rows"]}
     stores_payload: list[dict[str, object]] = []
+    target_stores = _target_stores(store_normalizer)
+    target_store_ids = {store.store_id for store in target_stores}
 
-    for store in store_normalizer.list_stores():
+    for store in target_stores:
         row = rows_by_store[store.store_id]
         quality = row["unit_quality"]
         fetch_status = (
@@ -1367,15 +1652,17 @@ def _build_summary_payload(
             f"{row['display_name']} (score={row['score']}, "
             f"信頼度={row['confidence']}, sample={row['sample_size']})"
         )
-        for row in analysis["rows"][:5]
-    ]
+        for row in analysis["rows"]
+        if row["store_id"] in target_store_ids
+    ][:5]
     skip_recommendations = [
         f"{row['display_name']} ({row['avoid_reason'] or '明確な根拠不足'})"
         for row in analysis["rows"]
-        if row["confidence"] == "D"
+        if row["confidence"] == "D" and row["store_id"] in target_store_ids
     ]
     notes = [
         f"表示 source は {source or 'all'} です。",
+        "dashboard の標準表示対象は main/sub の4店舗です。",
         "machine_results から unit_results を推定で補完していません。",
         "差枚 '-' は 0 として扱わず、NULL と 0 を区別しています。",
         "欠損率が高い店舗では台番・末尾・並び分析を有効表示していません。",
@@ -1410,6 +1697,8 @@ def _build_summary_payload(
         "target_date": target_date.isoformat(),
         "source": source or "all",
         "lookback_days": lookback_days,
+        "target_store_count": len(target_stores),
+        "target_store_ids": [store.store_id for store in target_stores],
         "coverage_window": analysis.get(
             "coverage_window",
             _coverage_window_text(target_date, lookback_days),
@@ -1418,11 +1707,10 @@ def _build_summary_payload(
             "最初に今日の判断を出し、その下に店舗ごとの使い方を並べています。"
         ),
         "filters": [
-            {"key": "all", "label": "全店舗"},
+            {"key": "all", "label": "対象4店舗"},
             {"key": "grade_a", "label": "A 通常利用可能"},
             {"key": "grade_b", "label": "B 注意付き"},
             {"key": "grade_c", "label": "C 見送り"},
-            {"key": "partial_success", "label": "partial_success"},
             {"key": "shortage", "label": "データ不足"},
         ],
         "stores": stores_payload,
