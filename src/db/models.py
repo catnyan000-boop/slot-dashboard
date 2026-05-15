@@ -16,6 +16,7 @@ class StoreDefinition(BaseModel):
     canonical_name: str
     aliases: list[str] = Field(default_factory=list)
     slorepo_slug: str = ""
+    priority_group: str = "watch"
     event_days: list[str] = Field(default_factory=list)
     prefecture: str = ""
     city: str = ""

@@ -2,6 +2,7 @@ stores:
   - store_id: cosmo_obu
     display_name: コスモジャパン大府
     canonical_name: コスモジャパン大府店
+    priority_group: main
     aliases:
       - コスモジャパン大府
       - コスモジャパン大府店
@@ -10,6 +11,7 @@ stores:
   - store_id: kyoraku_tokai
     display_name: KYORAKU東海
     canonical_name: KYORAKU東海店
+    priority_group: watch
     aliases:
       - KYORAKU東海
       - KYORAKU東海店
@@ -19,6 +21,7 @@ stores:
   - store_id: keiz_odaka
     display_name: KEIZ大高
     canonical_name: KEIZ大高店
+    priority_group: watch
     aliases:
       - KEIZ大高
       - KEIZ大高店
@@ -28,6 +31,7 @@ stores:
   - store_id: kyoraku_toyoake
     display_name: KYORAKU豊明
     canonical_name: 京楽会館豊明店
+    priority_group: watch
     aliases:
       - KYORAKU豊明
       - KYORAKU豊明店
@@ -39,6 +43,7 @@ stores:
   - store_id: winglet
     display_name: ウイングレット
     canonical_name: ウイングレット
+    priority_group: watch
     aliases:
       - ウイングレット
     event_days: ["3", "4"]
@@ -46,6 +51,7 @@ stores:
   - store_id: ogiya_anjo
     display_name: オーギヤ安城
     canonical_name: オーギヤ安城店
+    priority_group: watch
     aliases:
       - オーギヤ安城
       - オーギヤ安城店
@@ -54,6 +60,7 @@ stores:
   - store_id: keiz_galerie_apita
     display_name: KEIZギャラリエアピタ
     canonical_name: KEIZギャラリエアピタ知立店
+    priority_group: sub
     aliases:
       - KEIZギャラリエアピタ
       - KEIZギャラリエアピタ知立店
@@ -63,6 +70,7 @@ stores:
   - store_id: marushin_777
     display_name: マルシン777
     canonical_name: マルシン777
+    priority_group: main
     aliases:
       - マルシン777
       - マルシン７７７
@@ -71,6 +79,7 @@ stores:
   - store_id: apan_kobo
     display_name: APANCLUB弘法通り
     canonical_name: APANCLUB弘法通り店
+    priority_group: sub
     aliases:
       - APANCLUB弘法通り
       - APANCLUB弘法通り店

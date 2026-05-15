@@ -58,6 +58,18 @@ function overallActionText(counts, total) {
   return "今日は見送り店舗が多いため慎重に判断。";
 }
 
+function priorityRank(priorityGroup) {
+  if (priorityGroup === "main") return 0;
+  if (priorityGroup === "sub") return 1;
+  return 2;
+}
+
+function priorityLabel(priorityGroup) {
+  if (priorityGroup === "main") return "main";
+  if (priorityGroup === "sub") return "sub";
+  return "watch";
+}
+
 function targetTypeLabel(targetType) {
   if (targetType === "machine_candidate") return "狙い機種";
   if (targetType === "raise_candidate") return "上げ狙い";
@@ -80,6 +92,7 @@ function candidateItem(candidate) {
     <li>
       <strong>${escapeHtml(candidate.store_name)}</strong>
       <span class="candidate-meta">
+        priority ${escapeHtml(priorityLabel(candidate.priority_group))} /
         ${escapeHtml(candidatePrimaryLabel(candidate))} /
         ${escapeHtml(targetTypeLabel(candidate.target_type))} /
         score ${escapeHtml(candidate.score)} /
@@ -110,6 +123,30 @@ function renderCandidateList(title, copy, candidates, emptyLabel) {
         candidates && candidates.length
           ? `<ul class="candidate-list">${candidates.map(candidateItem).join("")}</ul>`
           : `<p class="target-copy">${escapeHtml(emptyLabel)}</p>`
+      }
+    </div>
+  `;
+}
+
+function sortedCandidatesByPriority(candidates) {
+  return [...(candidates || [])].sort((left, right) => {
+    const leftRank = priorityRank(left.priority_group);
+    const rightRank = priorityRank(right.priority_group);
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return Number(right.score || 0) - Number(left.score || 0);
+  });
+}
+
+function renderPriorityStoreList(title, className, stores) {
+  return `
+    <div class="priority-card ${escapeHtml(className)}">
+      <h3>${escapeHtml(title)}</h3>
+      ${
+        stores && stores.length
+          ? `<ul class="candidate-list">${stores
+              .map((store) => `<li><strong>${escapeHtml(store)}</strong></li>`)
+              .join("")}</ul>`
+          : `<p class="target-copy">該当店舗なし</p>`
       }
     </div>
   `;
@@ -186,13 +223,14 @@ function renderTargetsPanel(targets) {
     `;
   }
   const counts = targets.summary.target_counts || {};
-  const machineCandidates = targets.sections.machine_candidates || [];
-  const raiseCandidates = targets.sections.raise_candidates || [];
-  const keepCandidates = targets.sections.keep_candidates || [];
-  const patternCandidates = [
+  const priorityGroups = targets.priority_groups || {};
+  const machineCandidates = sortedCandidatesByPriority(targets.sections.machine_candidates || []);
+  const raiseCandidates = sortedCandidatesByPriority(targets.sections.raise_candidates || []);
+  const keepCandidates = sortedCandidatesByPriority(targets.sections.keep_candidates || []);
+  const patternCandidates = sortedCandidatesByPriority([
     ...(targets.sections.tail_candidates || []),
     ...(targets.sections.cluster_candidates || []),
-  ].slice(0, 12);
+  ]).slice(0, 12);
   return `
     <section class="target-panel">
       <h2>今日の狙い候補</h2>
@@ -217,16 +255,21 @@ function renderTargetsPanel(targets) {
           <div class="tier-value">${escapeHtml(counts["見送り"] || 0)}</div>
         </div>
       </div>
+      <div class="priority-overview">
+        ${renderPriorityStoreList("最優先チェック", "main", priorityGroups.main || [])}
+        ${renderPriorityStoreList("サブ候補", "sub", priorityGroups.sub || [])}
+        ${renderPriorityStoreList("監視枠", "watch", priorityGroups.watch || [])}
+      </div>
       <div class="target-grid">
         ${renderCandidateList(
           "狙い機種",
-          "店舗と機種の直近傾向から見る候補です。",
+          "main → sub → watch の順で並べています。",
           machineCandidates,
           "候補なし",
         )}
         ${renderCandidateList(
           "上げ狙い台",
-          "前日凹みと稼働量から見る候補です。",
+          "main 店舗を最優先に確認し、watch は高スコア時のみ残します。",
           raiseCandidates,
           "候補なし",
         )}

@@ -360,6 +360,7 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     raise_candidate = next(
         row for row in payload["candidates"] if row["target_type"] == "raise_candidate"
     )
+    assert raise_candidate["priority_group"] == "main"
     assert raise_candidate["unit_number"] == "101"
     assert raise_candidate["evidence"]["previous_day_diff"] == -1200.0
 
@@ -389,7 +390,25 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     assert low_sample_candidate["confidence"] == "C"
 
     assert payload["source"] == "slorepo"
+    assert payload["priority_groups"]["main"] == ["コスモジャパン大府", "マルシン777"]
+    assert payload["priority_groups"]["sub"] == ["KEIZギャラリエアピタ", "APANCLUB弘法通り"]
+    assert payload["priority_groups"]["watch"] == [
+        "KYORAKU東海",
+        "KEIZ大高",
+        "KYORAKU豊明",
+        "ウイングレット",
+        "オーギヤ安城",
+    ]
+    assert payload["summary"]["priority_candidate_counts"]["main"] >= 1
+    assert payload["summary"]["priority_candidate_counts"]["watch"] >= 1
+    assert payload["candidates"][0]["priority_group"] == "main"
     assert all(row["machine_name"] != "ノイズ機種" for row in payload["candidates"])
+
+    store_scores = {row["store_id"]: row for row in payload["store_scores"]}
+    assert store_scores["cosmo_obu"]["priority_group"] == "main"
+    assert store_scores["cosmo_obu"]["priority_multiplier"] == 1.2
+    assert store_scores["winglet"]["priority_group"] == "watch"
+    assert store_scores["winglet"]["priority_multiplier"] == 0.85
 
 
 def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
@@ -417,8 +436,12 @@ def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
     assert "raw_path" not in text
     assert "db_path" not in text
     assert "data/raw" not in text
+    assert "priority_group" in text
     assert any(row["target_type"] == "raise_candidate" for row in data["candidates"])
     assert payload["summary"]["target_counts"]["raise_candidate"] >= 1
+    report_text = report_path.read_text(encoding="utf-8")
+    assert "- main: コスモジャパン大府, マルシン777" in report_text
+    assert "priority_group=main" in report_text
 
 
 def test_cmd_analyze_targets_writes_report_and_json(monkeypatch, tmp_path: Path, capsys) -> None:

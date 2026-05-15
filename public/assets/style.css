@@ -204,6 +204,32 @@ summary {
   background: rgba(255, 255, 255, 0.82);
 }
 
+.priority-overview {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.priority-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.priority-card.main {
+  border-color: rgba(22, 95, 85, 0.24);
+}
+
+.priority-card.sub {
+  border-color: rgba(161, 91, 0, 0.24);
+}
+
+.priority-card.watch {
+  border-color: rgba(122, 108, 90, 0.22);
+}
+
 .tier-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

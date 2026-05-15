@@ -12,6 +12,18 @@ from src.analysis.store_score import score_stores
 from src.analysis.unit_data_quality import summarize_unit_data_quality
 from src.normalizers.store_normalizer import StoreNormalizer
 
+PRIORITY_MULTIPLIERS = {
+    "main": 1.20,
+    "sub": 1.05,
+    "watch": 0.85,
+}
+
+PRIORITY_ORDER = {
+    "main": 0,
+    "sub": 1,
+    "watch": 2,
+}
+
 
 def _safe_float(value: object) -> float:
     if value is None:
@@ -59,6 +71,32 @@ def _normalize_fetch_status(status: str) -> str:
     if value == "失敗":
         return "failed"
     return value or "failed"
+
+
+def _priority_group(value: str) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in PRIORITY_ORDER:
+        return normalized
+    return "watch"
+
+
+def _priority_multiplier(priority_group: str, quality_good: bool) -> float:
+    multiplier = PRIORITY_MULTIPLIERS.get(_priority_group(priority_group), 1.0)
+    if quality_good:
+        return multiplier
+    return min(multiplier, 1.0)
+
+
+def _apply_priority_score(score: float, priority_group: str, quality_good: bool) -> float:
+    return round(float(score) * _priority_multiplier(priority_group, quality_good), 2)
+
+
+def _candidate_sort_key(candidate: dict[str, object]) -> tuple[int, float, str]:
+    return (
+        PRIORITY_ORDER.get(str(candidate.get("priority_group", "watch")), 9),
+        -float(candidate.get("score", 0.0)),
+        str(candidate.get("store_id", "")),
+    )
 
 
 def _query_lookback_frames(
@@ -192,6 +230,7 @@ def _candidate_dict(
     *,
     store_id: str,
     store_name: str,
+    priority_group: str,
     machine_name: str,
     unit_number: str,
     target_type: str,
@@ -205,6 +244,7 @@ def _candidate_dict(
         "rank": 0,
         "store_id": store_id,
         "store_name": store_name,
+        "priority_group": priority_group,
         "machine_name": machine_name,
         "unit_number": unit_number,
         "target_type": target_type,
@@ -302,6 +342,8 @@ def _build_store_payloads(
         store_units = unit_df[unit_df["store_id"] == store.store_id].copy()
         quality = summarize_unit_data_quality(unit_df, store.store_id)
         quality_map[store.store_id] = quality
+        priority_group = _priority_group(getattr(store, "priority_group", "watch"))
+        quality_good = float(quality["diff_missing_rate"]) < 0.1
         score_row = scored[store.store_id]
         override = overrides.get(store.store_id, overrides.get(store.display_name, {}))
         fetch_status = _normalize_fetch_status(
@@ -316,6 +358,7 @@ def _build_store_payloads(
             {
                 "store_id": store.store_id,
                 "store_name": store.display_name,
+                "priority_group": priority_group,
                 "days": int(store_daily["report_date"].nunique()) if not store_daily.empty else 0,
                 "total_diff": round(_safe_float(store_daily["total_diff"].sum()), 2),
                 "avg_diff": round(_safe_float(store_daily["avg_diff"].mean()), 2),
@@ -325,12 +368,14 @@ def _build_store_payloads(
                 "unit_diff_missing_rate": quality["diff_missing_rate"],
                 "fetch_status": fetch_status,
                 "failed_machine_pages": failed_machine_pages,
-                "store_score": score_row.score,
+                "base_store_score": score_row.score,
+                "priority_multiplier": _priority_multiplier(priority_group, quality_good),
+                "store_score": _apply_priority_score(score_row.score, priority_group, quality_good),
                 "confidence": score_row.confidence,
                 "confidence_letter": _confidence_letter(
-                    score=score_row.score,
+                    score=_apply_priority_score(score_row.score, priority_group, quality_good),
                     sample_count=score_row.sample_size,
-                    quality_good=float(quality["diff_missing_rate"]) < 0.1,
+                    quality_good=quality_good,
                     caution_penalty=1 if fetch_status == "partial_success" else 0,
                 ),
                 "reason": score_row.reason,
@@ -357,7 +402,9 @@ def _build_machine_payloads(
             stats = _recent_machine_stats(group)
             unit_count = round(_safe_float(group["unit_count"].mean()), 2)
             store_score = float(store_score_map[store.store_id]["store_score"])
-            score = round(
+            priority_group = _priority_group(getattr(store, "priority_group", "watch"))
+            quality_good = float(quality_map[store.store_id]["diff_missing_rate"]) < 0.1
+            base_score = round(
                 max(
                     0.0,
                     45.0
@@ -370,9 +417,11 @@ def _build_machine_payloads(
                 ),
                 2,
             )
+            score = _apply_priority_score(base_score, priority_group, quality_good)
             row = {
                 "store_id": store.store_id,
                 "store_name": store.display_name,
+                "priority_group": priority_group,
                 "machine_name": machine_name,
                 "active_days": int(group["report_date"].nunique()),
                 "unit_count": unit_count,
@@ -380,10 +429,10 @@ def _build_machine_payloads(
                 "avg_game": stats["avg_game"],
                 "win_rate": stats["win_rate"],
                 "recent_trend": stats["recent_trend"],
+                "base_machine_score": base_score,
                 "machine_score": score,
             }
             machine_rows.append(row)
-            quality_good = float(quality_map[store.store_id]["diff_missing_rate"]) < 0.1
             if row["active_days"] < 2 or stats["avg_game"] < 1000:
                 continue
             confidence = _confidence_letter(
@@ -399,6 +448,7 @@ def _build_machine_payloads(
                 _candidate_dict(
                     store_id=store.store_id,
                     store_name=store.display_name,
+                    priority_group=priority_group,
                     machine_name=machine_name,
                     unit_number="",
                     target_type="machine_candidate",
@@ -457,6 +507,7 @@ def _build_unit_candidates(
         store_units = unit_df[unit_df["store_id"] == store.store_id].copy()
         store_daily = daily_df[daily_df["store_id"] == store.store_id].copy()
         store_machines = machine_df[machine_df["store_id"] == store.store_id].copy()
+        priority_group = _priority_group(getattr(store, "priority_group", "watch"))
         quality = quality_map[store.store_id]
         quality_good = (
             float(quality["diff_missing_rate"]) < 0.1
@@ -505,6 +556,7 @@ def _build_unit_candidates(
                     + min(max(_safe_float(machine_stats["avg_diff"]), 0.0) / 300.0, 10.0)
                     + min(max(recent_store_avg_diff, 0.0) / 500.0, 8.0)
                 )
+                score = _apply_priority_score(score, priority_group, quality_good)
                 confidence = _confidence_letter(
                     score=score,
                     sample_count=int(machine_stats["sample_count"]),
@@ -518,6 +570,7 @@ def _build_unit_candidates(
                     _candidate_dict(
                         store_id=store.store_id,
                         store_name=store.display_name,
+                        priority_group=priority_group,
                         machine_name=machine_name,
                         unit_number=str(prev_row["unit_number"]),
                         target_type="raise_candidate",
@@ -552,6 +605,7 @@ def _build_unit_candidates(
                     + min(_safe_float(machine_stats["win_rate"]) * 18.0, 10.0)
                     + min(max(recent_store_avg_diff, 0.0) / 500.0, 8.0)
                 )
+                score = _apply_priority_score(score, priority_group, quality_good)
                 confidence = _confidence_letter(
                     score=score,
                     sample_count=int(machine_stats["sample_count"]),
@@ -565,6 +619,7 @@ def _build_unit_candidates(
                     _candidate_dict(
                         store_id=store.store_id,
                         store_name=store.display_name,
+                        priority_group=priority_group,
                         machine_name=machine_name,
                         unit_number=str(prev_row["unit_number"]),
                         target_type="keep_candidate",
@@ -609,6 +664,7 @@ def _build_unit_candidates(
                         + win_rate * 16.0
                         + min(sample_count, 30) * 0.5
                     )
+                    score = _apply_priority_score(score, priority_group, quality_good)
                     confidence = _confidence_letter(
                         score=score,
                         sample_count=sample_count,
@@ -622,6 +678,7 @@ def _build_unit_candidates(
                         _candidate_dict(
                             store_id=store.store_id,
                             store_name=store.display_name,
+                            priority_group=priority_group,
                             machine_name="",
                             unit_number=f"末尾{tail}",
                             target_type="tail_candidate",
@@ -662,6 +719,7 @@ def _build_unit_candidates(
                     + min(history_days * 4.0, 12.0)
                     + min(max(_safe_float(machine_stats["avg_diff"]), 0.0) / 350.0, 8.0)
                 )
+                score = _apply_priority_score(score, priority_group, quality_good)
                 confidence = _confidence_letter(
                     score=score,
                     sample_count=max(history_days, cluster["length"]),
@@ -675,6 +733,7 @@ def _build_unit_candidates(
                     _candidate_dict(
                         store_id=store.store_id,
                         store_name=store.display_name,
+                        priority_group=priority_group,
                         machine_name=str(machine_name),
                         unit_number=str(cluster["pattern"]),
                         target_type="cluster_candidate",
@@ -699,7 +758,7 @@ def _build_unit_candidates(
     def _trim(candidates: list[dict[str, object]], per_store_limit: int) -> list[dict[str, object]]:
         result: list[dict[str, object]] = []
         counts: dict[str, int] = {}
-        for candidate in sorted(candidates, key=lambda row: float(row["score"]), reverse=True):
+        for candidate in sorted(candidates, key=_candidate_sort_key):
             count = counts.get(candidate["store_id"], 0)
             if count >= per_store_limit:
                 continue
@@ -718,7 +777,7 @@ def _build_unit_candidates(
 def _rank_candidates(candidates: list[dict[str, object]]) -> list[dict[str, object]]:
     ranked: list[dict[str, object]] = []
     for index, candidate in enumerate(
-        sorted(candidates, key=lambda row: float(row["score"]), reverse=True),
+        sorted(candidates, key=_candidate_sort_key),
         start=1,
     ):
         updated = dict(candidate)
@@ -793,6 +852,14 @@ def analyze_targets(
     )
     counts = _candidate_counts(all_candidates)
     coverage_window = _coverage_window_text(unit_df, target_date, lookback_days)
+    priority_groups = {
+        key: [
+            store.display_name
+            for store in stores
+            if _priority_group(store.priority_group) == key
+        ]
+        for key in ("main", "sub", "watch")
+    }
     return {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "target_date": target_date.isoformat(),
@@ -807,8 +874,14 @@ def analyze_targets(
             "partial_success_stores": sum(
                 1 for row in store_scores if row["fetch_status"] == "partial_success"
             ),
+            "priority_candidate_counts": {
+                "main": sum(1 for row in all_candidates if row["priority_group"] == "main"),
+                "sub": sum(1 for row in all_candidates if row["priority_group"] == "sub"),
+                "watch": sum(1 for row in all_candidates if row["priority_group"] == "watch"),
+            },
             "target_counts": counts,
         },
+        "priority_groups": priority_groups,
         "store_scores": store_scores,
         "machine_scores": machine_scores[:50],
         "candidates": all_candidates,
@@ -845,7 +918,8 @@ def _markdown_candidate_lines(
         label = row["machine_name"] or row["unit_number"] or "-"
         lines.append(
             f"- {row['rank']}. {row['store_name']} | {label} | "
-            f"type={row['target_type']} | score={row['score']} | confidence={row['confidence']}"
+            f"type={row['target_type']} | priority_group={row['priority_group']} | "
+            f"score={row['score']} | confidence={row['confidence']}"
         )
         lines.append(f"  - reason: {row['reason']}")
         lines.append(
@@ -900,12 +974,16 @@ def write_targets_outputs(
             f"{counts['tail_candidate']} / {counts['cluster_candidate']} / "
             f"{counts['machine_candidate']}"
         ),
+        f"- main: {', '.join(payload['priority_groups']['main'])}",
+        f"- sub: {', '.join(payload['priority_groups']['sub'])}",
+        f"- watch: {', '.join(payload['priority_groups']['watch'])}",
         "",
         "## 店舗スコア",
     ]
     for row in payload["store_scores"]:
         lines.append(
-            f"- {row['store_name']} | days={row['days']} | total_diff={row['total_diff']} | "
+            f"- {row['store_name']} | priority_group={row['priority_group']} | "
+            f"days={row['days']} | total_diff={row['total_diff']} | "
             f"avg_diff={row['avg_diff']} | avg_game={row['avg_game']} | "
             f"win_rate={row['win_rate']} | unit_rows={row['unit_results_total']} | "
             f"fetch_status={row['fetch_status']} | "
