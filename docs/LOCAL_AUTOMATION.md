@@ -32,6 +32,15 @@
 - スクリプト直接実行: `bash scripts/daily_update.sh`
 - 朝の更新確認時は `logs/daily_update.out.log` に `02:30`、`04:00`、`05:30` 前後の記録があるかを見る。
 
+## 4.5 90日バックフィル
+
+- `bash scripts/backfill_90days.sh` で、`slorepo` の4店舗だけを対象に過去 `90日` の fetch / parse を手動実行できます。
+- 対象店舗は `cosmo_obu`、`marushin_777`、`apan_kobo`、`keiz_galerie_apita` です。
+- この処理は通常の毎朝更新より重いため、`launchd` に登録せず手動実行専用とします。
+- 実行後は `analyze-targets --days 90 --source slorepo` と `build-site --source slorepo` まで続けて実行します。
+- fetch は店舗ごとの keep-going で、1店舗失敗しても他店舗は継続します。
+- ログは `logs/backfill_90days.out.log` と `logs/backfill_90days.err.log` に出力します。
+
 ## 5. ログ確認方法
 
 - 標準出力: `tail -f logs/daily_update.out.log`
