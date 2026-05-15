@@ -28,4 +28,6 @@ launchctl load "$TARGET_PLIST"
 
 echo "installed: $TARGET_PLIST"
 echo "loaded label: com.slot-dashboard.daily"
+echo "scheduled runs: 02:30 / 04:00 / 05:30"
+echo "goal: dashboard refresh completed by 06:00 when the Mac is awake"
 echo "manual run: launchctl kickstart -k gui/$(id -u)/com.slot-dashboard.daily"
