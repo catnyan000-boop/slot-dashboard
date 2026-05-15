@@ -223,6 +223,7 @@ function renderTargetsPanel(targets) {
   }
   const counts = targets.summary.target_counts || {};
   const priorityGroups = targets.priority_groups || {};
+  const anchorNotice = targets.analysis_anchor_notice || "";
   const machineCandidates = sortedCandidatesByPriority(targets.sections.machine_candidates || []);
   const raiseCandidates = sortedCandidatesByPriority(targets.sections.raise_candidates || []);
   const patternCandidates = sortedCandidatesByPriority([
@@ -235,6 +236,15 @@ function renderTargetsPanel(targets) {
       <p class="target-copy">
         候補であって断定ではありません。sample_count が少ないものは参考程度として扱います。
       </p>
+      <p class="target-copy">
+        target_date: ${escapeHtml(targets.target_date || "-")} /
+        analysis_anchor_date: ${escapeHtml(targets.analysis_anchor_date || "-")}
+      </p>
+      ${
+        anchorNotice
+          ? `<p class="target-copy">注意: ${escapeHtml(anchorNotice)}</p>`
+          : ""
+      }
       <div class="tier-row">
         <div class="tier-chip">
           <div class="tier-label">S候補</div>

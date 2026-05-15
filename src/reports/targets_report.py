@@ -177,6 +177,18 @@ def _coverage_window_text(unit_df: pd.DataFrame, target_date: date, lookback_day
     return f"{str(report_dates.min())} 〜 {str(report_dates.max())}"
 
 
+def _latest_available_unit_date(unit_df: pd.DataFrame, target_date: date) -> date | None:
+    if unit_df.empty or "report_date" not in unit_df.columns:
+        return None
+    report_dates = unit_df["report_date"].dropna()
+    if report_dates.empty:
+        return None
+    eligible = report_dates[report_dates < target_date]
+    if eligible.empty:
+        return None
+    return eligible.max()
+
+
 def _recent_machine_stats(machine_frame: pd.DataFrame) -> dict[str, object]:
     if machine_frame.empty:
         return {
@@ -257,15 +269,19 @@ def _candidate_dict(
     }
 
 
-def _cluster_ranges(day_frame: pd.DataFrame, min_games: int = 2000) -> list[dict[str, object]]:
+def _cluster_ranges_filtered(
+    day_frame: pd.DataFrame,
+    *,
+    require_positive_diff: bool,
+    min_games: int | None,
+) -> list[dict[str, object]]:
     frame = day_frame.copy()
-    frame = frame[
-        frame["unit_int"].notna()
-        & frame["diff"].notna()
-        & frame["games"].notna()
-        & (frame["games"] >= min_games)
-        & (frame["diff"] > 0)
-    ].sort_values("unit_int")
+    frame = frame[frame["unit_int"].notna()]
+    if require_positive_diff:
+        frame = frame[frame["diff"].notna() & (frame["diff"] > 0)]
+    if min_games is not None:
+        frame = frame[frame["games"].notna() & (frame["games"] >= min_games)]
+    frame = frame.sort_values("unit_int")
     if frame.empty:
         return []
     rows = frame.to_dict(orient="records")
@@ -299,6 +315,14 @@ def _cluster_ranges(day_frame: pd.DataFrame, min_games: int = 2000) -> list[dict
             }
         )
     return results
+
+
+def _cluster_ranges(day_frame: pd.DataFrame, min_games: int = 2000) -> list[dict[str, object]]:
+    return _cluster_ranges_filtered(
+        day_frame,
+        require_positive_diff=True,
+        min_games=min_games,
+    )
 
 
 def _cluster_history_days(machine_units: pd.DataFrame, min_games: int = 2000) -> int:
@@ -489,15 +513,18 @@ def _build_unit_candidates(
     machine_df: pd.DataFrame,
     unit_df: pd.DataFrame,
     quality_map: dict[str, dict[str, object]],
+    analysis_anchor_date: date | None,
 ) -> tuple[
     list[dict[str, object]],
     list[dict[str, object]],
     list[dict[str, object]],
 ]:
-    previous_day = target_date - timedelta(days=1)
     raise_candidates: list[dict[str, object]] = []
     tail_candidates: list[dict[str, object]] = []
     cluster_candidates: list[dict[str, object]] = []
+
+    if analysis_anchor_date is None:
+        return raise_candidates, tail_candidates, cluster_candidates
 
     for store in stores:
         store_units = unit_df[unit_df["store_id"] == store.store_id].copy()
@@ -513,24 +540,24 @@ def _build_unit_candidates(
             continue
 
         recent_store_avg_diff = round(_safe_float(store_daily["avg_diff"].tail(7).mean()), 2)
-        prev_units = store_units[store_units["report_date"] == previous_day].copy()
-        prev_units = prev_units[prev_units["diff"].notna() & prev_units["games"].notna()]
+        anchor_units = store_units[store_units["report_date"] == analysis_anchor_date].copy()
+        anchor_units = anchor_units[anchor_units["diff"].notna() & anchor_units["games"].notna()]
 
-        for _, prev_row in prev_units.iterrows():
-            machine_name = str(prev_row["machine_name_normalized"])
+        for _, anchor_row in anchor_units.iterrows():
+            machine_name = str(anchor_row["machine_name_normalized"])
             machine_history = store_machines[
                 store_machines["machine_name_normalized"] == machine_name
             ].copy()
             machine_stats = _recent_machine_stats(machine_history)
             unit_history = store_units[
-                (store_units["unit_number"] == prev_row["unit_number"])
-                & (store_units["report_date"] < target_date)
+                (store_units["unit_number"] == anchor_row["unit_number"])
+                & (store_units["report_date"] <= analysis_anchor_date)
                 & store_units["diff"].notna()
             ].copy()
             streak = _unit_negative_streak(unit_history)
             base_evidence = {
-                "previous_day_diff": round(_safe_float(prev_row["diff"]), 2),
-                "previous_day_games": round(_safe_float(prev_row["games"]), 2),
+                "previous_day_diff": round(_safe_float(anchor_row["diff"]), 2),
+                "previous_day_games": round(_safe_float(anchor_row["games"]), 2),
                 "recent_avg_diff": machine_stats["avg_diff"],
                 "recent_avg_games": machine_stats["avg_game"],
                 "win_rate": machine_stats["win_rate"],
@@ -539,14 +566,14 @@ def _build_unit_candidates(
 
             if (
                 quality_good
-                and _safe_float(prev_row["diff"]) <= -1000
-                and _safe_float(prev_row["games"]) >= 2000
+                and _safe_float(anchor_row["diff"]) <= -1000
+                and _safe_float(anchor_row["games"]) >= 2000
                 and _safe_float(machine_stats["avg_game"]) >= 1500
             ):
                 score = (
                     48.0
-                    + min(abs(_safe_float(prev_row["diff"])) / 150.0, 14.0)
-                    + min(_safe_float(prev_row["games"]) / 450.0, 12.0)
+                    + min(abs(_safe_float(anchor_row["diff"])) / 150.0, 14.0)
+                    + min(_safe_float(anchor_row["games"]) / 450.0, 12.0)
                     + (8.0 if streak >= 2 else 0.0)
                     + (10.0 if streak >= 3 else 0.0)
                     + min(max(_safe_float(machine_stats["avg_diff"]), 0.0) / 300.0, 10.0)
@@ -568,13 +595,13 @@ def _build_unit_candidates(
                         store_name=store.display_name,
                         priority_group=priority_group,
                         machine_name=machine_name,
-                        unit_number=str(prev_row["unit_number"]),
+                        unit_number=str(anchor_row["unit_number"]),
                         target_type="raise_candidate",
                         score=score,
                         confidence=confidence,
                         reason=(
-                            f"前日マイナス差枚 {round(_safe_float(prev_row['diff']), 2)}、"
-                            f" {round(_safe_float(prev_row['games']), 2)}G。"
+                            f"基準日マイナス差枚 {round(_safe_float(anchor_row['diff']), 2)}、"
+                            f" {round(_safe_float(anchor_row['games']), 2)}G。"
                             f" {streak}日連続凹み。"
                         ),
                         evidence=base_evidence,
@@ -647,8 +674,8 @@ def _build_unit_candidates(
                         )
                     )
 
-        prev_machine_units = prev_units[prev_units["unit_int"].notna()].copy()
-        for machine_name, group in prev_machine_units.groupby("machine_name_normalized"):
+        anchor_machine_units = anchor_units[anchor_units["unit_int"].notna()].copy()
+        for machine_name, group in anchor_machine_units.groupby("machine_name_normalized"):
             machine_history_units = store_units[
                 store_units["machine_name_normalized"] == machine_name
             ].copy()
@@ -687,7 +714,7 @@ def _build_unit_candidates(
                         score=score,
                         confidence=confidence,
                         reason=(
-                            f"前日に {cluster['pattern']} の並びで"
+                            f"基準日に {cluster['pattern']} の並びで"
                             f" {cluster['length']}台プラス。高G数を伴う。"
                         ),
                         evidence={
@@ -718,6 +745,254 @@ def _build_unit_candidates(
         _trim(tail_candidates, 2),
         _trim(cluster_candidates, 2),
     )
+
+
+def _count_cluster_matches(
+    frame: pd.DataFrame,
+    *,
+    require_positive_diff: bool,
+    min_games: int | None,
+    min_length: int,
+) -> int:
+    if frame.empty:
+        return 0
+    total = 0
+    for _, group in frame.groupby("machine_name_normalized"):
+        clusters = _cluster_ranges_filtered(
+            group,
+            require_positive_diff=require_positive_diff,
+            min_games=min_games,
+        )
+        total += sum(1 for cluster in clusters if int(cluster["length"]) >= min_length)
+    return total
+
+
+def debug_target_conditions(
+    *,
+    database,
+    store_normalizer: StoreNormalizer,
+    target_date: date,
+    lookback_days: int,
+    source: str | None = None,
+) -> dict[str, object]:
+    stores = store_normalizer.list_stores()
+    daily_df, machine_df, unit_df = _query_lookback_frames(
+        database,
+        target_date,
+        lookback_days,
+        source=source,
+    )
+    daily_df, machine_df, unit_df = _prepare_frames(daily_df, machine_df, unit_df)
+    _, quality_map = _build_store_payloads(
+        stores=stores,
+        daily_df=daily_df,
+        unit_df=unit_df,
+        target_date=target_date,
+        status_overrides=None,
+    )
+
+    previous_day = target_date - timedelta(days=1)
+    latest_unit_date = None if unit_df.empty else unit_df["report_date"].dropna().max()
+
+    def _snapshot_for_day(snapshot_date: date | None) -> dict[str, object]:
+        if snapshot_date is None:
+            return {
+                "date": None,
+                "unit_rows": 0,
+                "unit_rows_complete": 0,
+                "store_rows": 0,
+                "raise": {
+                    "diff_le_neg500": 0,
+                    "diff_le_neg1000": 0,
+                    "games_ge_1000": 0,
+                    "games_ge_2000": 0,
+                    "diff_le_neg500_and_games_ge_1000": 0,
+                    "diff_le_neg1000_and_games_ge_2000": 0,
+                    "negative_streak_ge_2": 0,
+                    "negative_streak_ge_3": 0,
+                    "machine_avg_games_ge_1500": 0,
+                    "quality_good": 0,
+                    "final_candidates": 0,
+                },
+                "cluster": {
+                    "consecutive2plus_same_day_machine": 0,
+                    "positive_diff_consecutive2plus": 0,
+                    "positive_diff_games_ge_1000_consecutive2plus": 0,
+                    "positive_diff_games_ge_2000_consecutive2plus": 0,
+                    "positive_diff_games_ge_2000_consecutive3plus": 0,
+                    "final_candidates": 0,
+                },
+            }
+
+        day_units = unit_df[unit_df["report_date"] == snapshot_date].copy()
+        day_complete = day_units[day_units["diff"].notna() & day_units["games"].notna()].copy()
+        raise_counts = {
+            "diff_le_neg500": 0,
+            "diff_le_neg1000": 0,
+            "games_ge_1000": 0,
+            "games_ge_2000": 0,
+            "diff_le_neg500_and_games_ge_1000": 0,
+            "diff_le_neg1000_and_games_ge_2000": 0,
+            "negative_streak_ge_2": 0,
+            "negative_streak_ge_3": 0,
+            "machine_avg_games_ge_1500": 0,
+            "quality_good": 0,
+            "final_candidates": 0,
+        }
+        cluster_counts = {
+            "consecutive2plus_same_day_machine": 0,
+            "positive_diff_consecutive2plus": 0,
+            "positive_diff_games_ge_1000_consecutive2plus": 0,
+            "positive_diff_games_ge_2000_consecutive2plus": 0,
+            "positive_diff_games_ge_2000_consecutive3plus": 0,
+            "final_candidates": 0,
+        }
+
+        for store in stores:
+            store_day_units = day_units[day_units["store_id"] == store.store_id].copy()
+            store_complete = day_complete[day_complete["store_id"] == store.store_id].copy()
+            if store_day_units.empty:
+                continue
+
+            quality = quality_map[store.store_id]
+            quality_good = (
+                float(quality["diff_missing_rate"]) < 0.1
+                and str(quality["pattern_analysis_status"]) == "台番分析可能"
+            )
+            store_machines = machine_df[machine_df["store_id"] == store.store_id].copy()
+
+            cluster_counts["consecutive2plus_same_day_machine"] += _count_cluster_matches(
+                store_day_units,
+                require_positive_diff=False,
+                min_games=None,
+                min_length=2,
+            )
+            cluster_counts["positive_diff_consecutive2plus"] += _count_cluster_matches(
+                store_day_units,
+                require_positive_diff=True,
+                min_games=None,
+                min_length=2,
+            )
+            cluster_counts["positive_diff_games_ge_1000_consecutive2plus"] += (
+                _count_cluster_matches(
+                    store_day_units,
+                    require_positive_diff=True,
+                    min_games=1000,
+                    min_length=2,
+                )
+            )
+            cluster_counts["positive_diff_games_ge_2000_consecutive2plus"] += (
+                _count_cluster_matches(
+                    store_day_units,
+                    require_positive_diff=True,
+                    min_games=2000,
+                    min_length=2,
+                )
+            )
+            cluster_counts["positive_diff_games_ge_2000_consecutive3plus"] += (
+                _count_cluster_matches(
+                    store_day_units,
+                    require_positive_diff=True,
+                    min_games=2000,
+                    min_length=3,
+                )
+            )
+            cluster_counts["final_candidates"] += _count_cluster_matches(
+                store_day_units,
+                require_positive_diff=True,
+                min_games=2000,
+                min_length=2,
+            )
+
+            for _, prev_row in store_complete.iterrows():
+                diff = _safe_float(prev_row["diff"])
+                games = _safe_float(prev_row["games"])
+                machine_name = str(prev_row["machine_name_normalized"])
+                machine_history = store_machines[
+                    store_machines["machine_name_normalized"] == machine_name
+                ].copy()
+                machine_stats = _recent_machine_stats(machine_history)
+                unit_history = unit_df[
+                    (unit_df["store_id"] == store.store_id)
+                    & (unit_df["unit_number"] == prev_row["unit_number"])
+                    & (unit_df["report_date"] < target_date)
+                    & unit_df["diff"].notna()
+                ].copy()
+                streak = _unit_negative_streak(unit_history)
+
+                if diff <= -500:
+                    raise_counts["diff_le_neg500"] += 1
+                if diff <= -1000:
+                    raise_counts["diff_le_neg1000"] += 1
+                if games >= 1000:
+                    raise_counts["games_ge_1000"] += 1
+                if games >= 2000:
+                    raise_counts["games_ge_2000"] += 1
+                if diff <= -500 and games >= 1000:
+                    raise_counts["diff_le_neg500_and_games_ge_1000"] += 1
+                if diff <= -1000 and games >= 2000:
+                    raise_counts["diff_le_neg1000_and_games_ge_2000"] += 1
+                if streak >= 2:
+                    raise_counts["negative_streak_ge_2"] += 1
+                if streak >= 3:
+                    raise_counts["negative_streak_ge_3"] += 1
+                if _safe_float(machine_stats["avg_game"]) >= 1500:
+                    raise_counts["machine_avg_games_ge_1500"] += 1
+                if quality_good:
+                    raise_counts["quality_good"] += 1
+                if (
+                    quality_good
+                    and diff <= -1000
+                    and games >= 2000
+                    and _safe_float(machine_stats["avg_game"]) >= 1500
+                ):
+                    raise_counts["final_candidates"] += 1
+
+        return {
+            "date": snapshot_date.isoformat(),
+            "unit_rows": int(len(day_units)),
+            "unit_rows_complete": int(len(day_complete)),
+            "store_rows": int(day_units["store_id"].nunique()) if not day_units.empty else 0,
+            "raise": raise_counts,
+            "cluster": cluster_counts,
+        }
+
+    previous_day_snapshot = _snapshot_for_day(previous_day)
+    analysis_anchor_snapshot = _snapshot_for_day(latest_unit_date)
+    anchor_notice = ""
+    if latest_unit_date and latest_unit_date != previous_day:
+        anchor_notice = (
+            f"最新取得データは {latest_unit_date.isoformat()} のため、"
+            "この日を基準に候補抽出しています。"
+        )
+    raise_reason = (
+        "前日 unit データが 0 件のため、上げ狙い候補は条件判定まで進んでいません。"
+        if previous_day_snapshot["unit_rows"] == 0
+        else (
+            "前日 unit データは存在します。"
+            "最終ゲートは quality / diff / games / machine_avg_games です。"
+        )
+    )
+    cluster_reason = (
+        "前日 unit データが 0 件のため、並び候補は同日・同機種・連番判定まで進んでいません。"
+        if previous_day_snapshot["unit_rows"] == 0
+        else "前日 unit データは存在します。最終ゲートは diff > 0 と games >= 2000 の連番です。"
+    )
+    return {
+        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "target_date": target_date.isoformat(),
+        "source": source or "all",
+        "lookback_days": lookback_days,
+        "coverage_window": _coverage_window_text(unit_df, target_date, lookback_days),
+        "calendar_previous_day": previous_day.isoformat(),
+        "latest_available_unit_date": latest_unit_date.isoformat() if latest_unit_date else None,
+        "analysis_anchor_date": latest_unit_date.isoformat() if latest_unit_date else None,
+        "analysis_anchor_notice": anchor_notice,
+        "previous_day_snapshot": previous_day_snapshot,
+        "analysis_anchor_snapshot": analysis_anchor_snapshot,
+        "raise_reason": raise_reason,
+        "cluster_reason": cluster_reason,
+    }
 
 
 def _rank_candidates(candidates: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -766,6 +1041,7 @@ def analyze_targets(
         source=source,
     )
     daily_df, machine_df, unit_df = _prepare_frames(daily_df, machine_df, unit_df)
+    analysis_anchor_date = _latest_available_unit_date(unit_df, target_date)
     store_scores, quality_map = _build_store_payloads(
         stores=stores,
         daily_df=daily_df,
@@ -786,6 +1062,7 @@ def analyze_targets(
         machine_df=machine_df,
         unit_df=unit_df,
         quality_map=quality_map,
+        analysis_anchor_date=analysis_anchor_date,
     )
     all_candidates = _rank_candidates(
         machine_candidates
@@ -809,6 +1086,20 @@ def analyze_targets(
         "source": source or "all",
         "lookback_days": lookback_days,
         "coverage_window": coverage_window,
+        "analysis_anchor_date": (
+            analysis_anchor_date.isoformat() if analysis_anchor_date else None
+        ),
+        "analysis_anchor_notice": (
+            ""
+            if (
+                analysis_anchor_date is None
+                or analysis_anchor_date == target_date - timedelta(days=1)
+            )
+            else (
+                f"最新取得データは {analysis_anchor_date.isoformat()} のため、"
+                "この日を基準に候補抽出しています。"
+            )
+        ),
         "summary": {
             "store_count": len(stores),
             "available_store_count": sum(
@@ -906,6 +1197,7 @@ def write_targets_outputs(
         f"- source: {payload['source']}",
         f"- coverage_window: {payload['coverage_window']}",
         f"- lookback_days: {payload['lookback_days']}",
+        f"- analysis_anchor_date: {payload['analysis_anchor_date']}",
         f"- generated_at: {payload['generated_at']}",
         f"- S/A/B/見送り: {counts['S']} / {counts['A']} / {counts['B']} / {counts['見送り']}",
         (
@@ -920,6 +1212,8 @@ def write_targets_outputs(
         "",
         "## 店舗スコア",
     ]
+    if payload["analysis_anchor_notice"]:
+        lines.insert(7, f"- note: {payload['analysis_anchor_notice']}")
     for row in payload["store_scores"]:
         lines.append(
             f"- {row['store_name']} | priority_group={row['priority_group']} | "

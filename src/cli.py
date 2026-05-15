@@ -22,7 +22,7 @@ from src.db.database import Database
 from src.normalizers.store_normalizer import StoreNormalizer
 from src.parsers.minrepo_parser import MinrepoParser
 from src.reports.site_builder import build_static_site, load_validation_statuses
-from src.reports.targets_report import write_targets_outputs
+from src.reports.targets_report import debug_target_conditions, write_targets_outputs
 from src.reports.tomorrow_report import generate_tomorrow_report, run_analysis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -1174,6 +1174,90 @@ def cmd_analyze_targets(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_target_condition_snapshot(label: str, snapshot: dict[str, object]) -> None:
+    raise_counts = snapshot["raise"]
+    cluster_counts = snapshot["cluster"]
+    print(f"{label}: {snapshot['date']}")
+    print(f"unit_rows: {snapshot['unit_rows']}")
+    print(f"unit_rows_complete: {snapshot['unit_rows_complete']}")
+    print(f"store_rows: {snapshot['store_rows']}")
+    print("raise_conditions:")
+    print(f"- diff <= -500: {raise_counts['diff_le_neg500']}")
+    print(f"- diff <= -1000: {raise_counts['diff_le_neg1000']}")
+    print(f"- games >= 1000: {raise_counts['games_ge_1000']}")
+    print(f"- games >= 2000: {raise_counts['games_ge_2000']}")
+    print(
+        "- diff <= -500 and games >= 1000: "
+        f"{raise_counts['diff_le_neg500_and_games_ge_1000']}"
+    )
+    print(
+        "- diff <= -1000 and games >= 2000: "
+        f"{raise_counts['diff_le_neg1000_and_games_ge_2000']}"
+    )
+    print(f"- negative_streak >= 2: {raise_counts['negative_streak_ge_2']}")
+    print(f"- negative_streak >= 3: {raise_counts['negative_streak_ge_3']}")
+    print(f"- machine avg_game >= 1500: {raise_counts['machine_avg_games_ge_1500']}")
+    print(f"- quality_good stores: {raise_counts['quality_good']}")
+    print(f"- final raise candidates: {raise_counts['final_candidates']}")
+    print("cluster_conditions:")
+    print(
+        "- same day / same machine / consecutive >=2: "
+        f"{cluster_counts['consecutive2plus_same_day_machine']}"
+    )
+    print(
+        "- diff > 0 consecutive >=2: "
+        f"{cluster_counts['positive_diff_consecutive2plus']}"
+    )
+    print(
+        "- diff > 0 and games >= 1000 consecutive >=2: "
+        f"{cluster_counts['positive_diff_games_ge_1000_consecutive2plus']}"
+    )
+    print(
+        "- diff > 0 and games >= 2000 consecutive >=2: "
+        f"{cluster_counts['positive_diff_games_ge_2000_consecutive2plus']}"
+    )
+    print(
+        "- diff > 0 and games >= 2000 consecutive >=3: "
+        f"{cluster_counts['positive_diff_games_ge_2000_consecutive3plus']}"
+    )
+    print(f"- final cluster candidates: {cluster_counts['final_candidates']}")
+
+
+def cmd_debug_target_conditions(args: argparse.Namespace) -> int:
+    database = _database()
+    database.initialize(SCHEMA_PATH)
+    database.seed_stores(_store_normalizer().catalog)
+    target_date = date.fromisoformat(args.date) if args.date else date.today() + timedelta(days=1)
+    source = getattr(args, "source", None)
+    payload = debug_target_conditions(
+        database=database,
+        store_normalizer=_store_normalizer(),
+        target_date=target_date,
+        lookback_days=args.days,
+        source=source,
+    )
+    print(f"target_date: {payload['target_date']}")
+    print(f"source: {payload['source']}")
+    print(f"lookback_days: {payload['lookback_days']}")
+    print(f"coverage_window: {payload['coverage_window']}")
+    print(f"calendar_previous_day: {payload['calendar_previous_day']}")
+    print(f"latest_available_unit_date: {payload['latest_available_unit_date']}")
+    print(f"analysis_anchor_date: {payload['analysis_anchor_date']}")
+    _print_target_condition_snapshot("previous_day_snapshot", payload["previous_day_snapshot"])
+    if payload["analysis_anchor_snapshot"]["date"] != payload["previous_day_snapshot"]["date"]:
+        print("")
+        _print_target_condition_snapshot(
+            "analysis_anchor_snapshot",
+            payload["analysis_anchor_snapshot"],
+        )
+    print("")
+    if payload["analysis_anchor_notice"]:
+        print(f"analysis_anchor_notice: {payload['analysis_anchor_notice']}")
+    print(f"raise_reason: {payload['raise_reason']}")
+    print(f"cluster_reason: {payload['cluster_reason']}")
+    return 0
+
+
 def cmd_db_stats(_: argparse.Namespace) -> int:
     counts = _database().table_counts()
     for key, value in counts.items():
@@ -1605,6 +1689,15 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_targets.add_argument("--days", type=int, default=30)
     analyze_targets.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
     analyze_targets.set_defaults(func=cmd_analyze_targets)
+
+    debug_target = subparsers.add_parser(
+        "debug-target-conditions",
+        help="Diagnose why raise and cluster target candidates are filtered out",
+    )
+    debug_target.add_argument("--date")
+    debug_target.add_argument("--days", type=int, default=30)
+    debug_target.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
+    debug_target.set_defaults(func=cmd_debug_target_conditions)
 
     db_stats = subparsers.add_parser("db-stats", help="Show DB row counts")
     db_stats.set_defaults(func=cmd_db_stats)

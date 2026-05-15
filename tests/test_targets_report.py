@@ -4,11 +4,15 @@ import json
 from datetime import date
 from pathlib import Path
 
-from src.cli import cmd_analyze_targets
+from src.cli import cmd_analyze_targets, cmd_debug_target_conditions
 from src.db.database import Database, utc_now_iso
 from src.db.models import DailyStoreResultRecord, MachineResultRecord, UnitResultRecord
 from src.normalizers.store_normalizer import StoreNormalizer
-from src.reports.targets_report import analyze_targets, write_targets_outputs
+from src.reports.targets_report import (
+    analyze_targets,
+    debug_target_conditions,
+    write_targets_outputs,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -384,6 +388,8 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     assert low_sample_candidate["confidence"] == "C"
 
     assert payload["source"] == "slorepo"
+    assert payload["analysis_anchor_date"] == "2026-05-15"
+    assert payload["analysis_anchor_notice"] == ""
     assert payload["priority_groups"]["main"] == ["コスモジャパン大府", "マルシン777"]
     assert payload["priority_groups"]["sub"] == ["KEIZギャラリエアピタ", "APANCLUB弘法通り"]
     assert payload["priority_groups"]["watch"] == [
@@ -432,10 +438,12 @@ def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
     assert "data/raw" not in text
     assert "priority_group" in text
     assert "keep_candidate" not in text
+    assert data["analysis_anchor_date"] == "2026-05-15"
     assert any(row["target_type"] == "raise_candidate" for row in data["candidates"])
     assert payload["summary"]["target_counts"]["raise_candidate"] >= 1
     report_text = report_path.read_text(encoding="utf-8")
     assert "- main: コスモジャパン大府, マルシン777" in report_text
+    assert "- analysis_anchor_date: 2026-05-15" in report_text
     assert "priority_group=main" in report_text
     assert "据え置き候補" not in report_text
 
@@ -464,3 +472,83 @@ def test_cmd_analyze_targets_writes_report_and_json(monkeypatch, tmp_path: Path,
     assert "json:" in captured.out
     assert (tmp_path / "reports" / "targets_2026-05-16.md").exists()
     assert (tmp_path / "public" / "data" / "targets.json").exists()
+
+
+def test_debug_target_conditions_counts_fixture_conditions(tmp_path: Path) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+    _seed_slorepo_targets_fixture(database)
+
+    payload = debug_target_conditions(
+        database=database,
+        store_normalizer=store_normalizer,
+        target_date=date(2026, 5, 16),
+        lookback_days=30,
+        source="slorepo",
+    )
+
+    assert payload["calendar_previous_day"] == "2026-05-15"
+    assert payload["latest_available_unit_date"] == "2026-05-15"
+    assert payload["analysis_anchor_date"] == "2026-05-15"
+    assert payload["previous_day_snapshot"]["unit_rows"] >= 1
+    assert payload["previous_day_snapshot"]["raise"]["diff_le_neg1000"] >= 1
+    assert payload["previous_day_snapshot"]["raise"]["games_ge_2000"] >= 1
+    assert payload["previous_day_snapshot"]["raise"]["machine_avg_games_ge_1500"] >= 1
+    assert payload["previous_day_snapshot"]["raise"]["final_candidates"] >= 1
+    assert payload["previous_day_snapshot"]["cluster"]["consecutive2plus_same_day_machine"] >= 1
+    assert payload["previous_day_snapshot"]["cluster"]["final_candidates"] >= 1
+
+
+def test_cmd_debug_target_conditions_prints_summary(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+    _seed_slorepo_targets_fixture(database)
+
+    monkeypatch.setattr("src.cli._database", lambda: database)
+    monkeypatch.setattr("src.cli._store_normalizer", lambda: store_normalizer)
+
+    class Args:
+        date = "2026-05-16"
+        days = 30
+        source = "slorepo"
+
+    result = cmd_debug_target_conditions(Args())
+    captured = capsys.readouterr()
+    assert result == 0
+    assert "calendar_previous_day: 2026-05-15" in captured.out
+    assert "analysis_anchor_date: 2026-05-15" in captured.out
+    assert "raise_conditions:" in captured.out
+    assert "cluster_conditions:" in captured.out
+    assert "final raise candidates:" in captured.out
+    assert "final cluster candidates:" in captured.out
+
+
+def test_analyze_targets_uses_latest_available_anchor_when_target_date_is_later(
+    tmp_path: Path,
+) -> None:
+    database = Database(tmp_path / "slot.db")
+    database.initialize(PROJECT_ROOT / "sql" / "schema.sql")
+    store_normalizer = StoreNormalizer.from_yaml(PROJECT_ROOT / "stores.yaml")
+    database.seed_stores(store_normalizer.catalog)
+    _seed_slorepo_targets_fixture(database)
+
+    payload = analyze_targets(
+        database=database,
+        store_normalizer=store_normalizer,
+        target_date=date(2026, 5, 18),
+        lookback_days=30,
+        source="slorepo",
+    )
+
+    assert payload["analysis_anchor_date"] == "2026-05-15"
+    assert "2026-05-15" in payload["analysis_anchor_notice"]
+    assert payload["summary"]["target_counts"]["raise_candidate"] >= 1
+    assert payload["summary"]["target_counts"]["cluster_candidate"] >= 1
