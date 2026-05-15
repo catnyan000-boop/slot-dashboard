@@ -49,10 +49,8 @@ summary {
 }
 
 .hero,
-.panel,
 .group-panel,
-.store-card,
-.table-panel {
+.store-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 26px;
@@ -87,7 +85,7 @@ summary {
   max-width: 72ch;
 }
 
-.decision-card {
+.summary-card {
   margin-top: 20px;
   padding: 22px;
   border-radius: 24px;
@@ -95,48 +93,77 @@ summary {
   color: #f8f5ef;
 }
 
-.decision-kicker {
+.summary-kicker {
   margin: 0;
   font-size: 0.9rem;
   opacity: 0.85;
 }
 
-.decision-title {
+.summary-title {
   margin: 8px 0 0;
   font-size: clamp(1.4rem, 3vw, 2.2rem);
   line-height: 1.2;
 }
 
-.decision-copy {
-  margin: 12px 0 0;
-  font-size: 1.02rem;
-  line-height: 1.6;
-  max-width: 68ch;
+.summary-lines {
+  margin: 14px 0 0;
+  padding-left: 18px;
 }
 
-.meta-grid,
-.summary-grid,
-.filter-row,
+.summary-lines li + li {
+  margin-top: 6px;
+}
+
+.watch-panel {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--line);
+}
+
+.watch-panel h2,
+.group-head h2 {
+  margin: 0;
+  font-size: 1.24rem;
+}
+
+.watch-copy,
+.group-copy,
+.detail-grid p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.watch-list {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  columns: 2;
+  column-gap: 24px;
+}
+
+.watch-list li {
+  break-inside: avoid;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.meta-row,
 .group-grid,
 .detail-grid {
   display: grid;
   gap: 14px;
 }
 
-.meta-grid {
+.meta-row {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   margin-top: 18px;
 }
 
-.summary-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  margin-top: 18px;
-}
-
-.meta-card,
-.summary-card {
-  padding: 16px 18px;
-  border-radius: 20px;
+.meta-chip {
+  padding: 14px 16px;
+  border-radius: 18px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.82);
 }
@@ -147,85 +174,27 @@ summary {
   font-size: 0.82rem;
 }
 
-.meta-value,
-.summary-value {
-  margin-top: 8px;
-  font-size: 1.2rem;
+.meta-value {
+  margin-top: 6px;
+  font-size: 1.05rem;
   font-weight: 800;
 }
 
-.summary-note {
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.4;
+.group-panel {
+  margin-top: 22px;
+  padding: 20px;
 }
 
-.summary-card.a .summary-value,
-.badge.grade-a,
-.store-card[data-grade="A"] .decision-mark {
-  color: var(--grade-a);
+.group-panel.compact {
+  padding: 16px;
+  opacity: 0.92;
 }
 
-.summary-card.b .summary-value,
-.badge.grade-b,
-.store-card[data-grade="B"] .decision-mark {
-  color: var(--grade-b);
-}
-
-.summary-card.c .summary-value,
-.badge.grade-c,
-.store-card[data-grade="C"] .decision-mark {
-  color: var(--grade-c);
-}
-
-.panel,
-.group-panel,
-.table-panel {
-  margin-top: 20px;
-  padding: 18px;
-}
-
-.panel h2,
-.group-head h2,
-.table-panel h2 {
-  margin: 0;
-  font-size: 1.24rem;
-}
-
-.panel-copy,
-.group-copy,
-.table-copy {
-  margin: 8px 0 0;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.filter-row {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  margin-top: 14px;
-}
-
-.filter-button {
-  appearance: none;
-  border: 1px solid var(--line);
-  background: var(--surface-strong);
-  color: var(--ink);
-  padding: 12px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 800;
-  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
-}
-
-.filter-button.active {
-  border-color: transparent;
-  background: var(--ink);
-  color: #fff;
-}
-
-.filter-button:hover {
-  transform: translateY(-1px);
+.group-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
 }
 
 .group-panel[data-grade="A"] {
@@ -242,15 +211,8 @@ summary {
   background: linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(255, 235, 232, 0.94));
 }
 
-.group-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
-}
-
 .group-count {
-  min-width: 70px;
+  min-width: 82px;
   padding: 10px 12px;
   border-radius: 18px;
   text-align: center;
@@ -264,7 +226,7 @@ summary {
 }
 
 .group-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   margin-top: 18px;
 }
 
@@ -280,7 +242,7 @@ summary {
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .store-card[data-grade="A"] {
@@ -306,13 +268,7 @@ summary {
 
 .store-title {
   margin: 0;
-  font-size: 1.15rem;
-}
-
-.store-id {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 1.12rem;
 }
 
 .badge-row {
@@ -335,81 +291,26 @@ summary {
 .badge.grade-a,
 .badge.ok {
   background: var(--grade-a-soft);
+  color: var(--grade-a);
 }
 
 .badge.grade-b,
 .badge.warn {
   background: var(--grade-b-soft);
+  color: var(--grade-b);
 }
 
 .badge.grade-c,
 .badge.danger {
   background: var(--grade-c-soft);
+  color: var(--grade-c);
 }
 
-.badge.neutral {
-  background: #f1ece5;
-  color: #5a5249;
-}
-
-.decision-mark {
-  font-size: 2.2rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.decision-state {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.decision-copy-short {
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.status-tile {
-  padding: 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid var(--line);
-}
-
-.status-label {
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-.status-value {
-  margin-top: 6px;
-  font-weight: 800;
-  line-height: 1.4;
-}
-
-.reason-box {
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--line);
-}
-
-.reason-box strong {
-  display: block;
-  margin-bottom: 8px;
-}
-
-.reason-box p,
-.detail-grid p {
+.store-reason {
   margin: 0;
-  line-height: 1.5;
   color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
 }
 
 .detail-box {
@@ -444,8 +345,8 @@ summary {
 .detail-item {
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.78);
   border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .detail-item strong {
@@ -463,40 +364,6 @@ summary {
   margin-top: 4px;
 }
 
-.table-panel details {
-  margin-top: 12px;
-}
-
-.table-panel summary {
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.table-scroll {
-  overflow: auto;
-  margin-top: 12px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 760px;
-}
-
-thead th {
-  text-align: left;
-  padding: 12px;
-  color: var(--muted);
-  font-size: 0.82rem;
-  border-bottom: 1px solid var(--line);
-}
-
-tbody td {
-  padding: 12px;
-  border-bottom: 1px solid rgba(122, 108, 90, 0.14);
-  vertical-align: top;
-}
-
 .footer {
   margin-top: 24px;
   color: var(--muted);
@@ -511,27 +378,23 @@ tbody td {
   }
 
   .hero,
-  .panel,
   .group-panel,
-  .store-card,
-  .table-panel {
+  .store-card {
     border-radius: 20px;
   }
 
   .hero,
-  .panel,
-  .group-panel,
-  .table-panel {
+  .group-panel {
     padding: 16px;
   }
 
-  .decision-card {
+  .summary-card,
+  .watch-panel {
     padding: 18px;
   }
 
   .group-head,
-  .store-top,
-  .decision-state {
+  .store-top {
     flex-direction: column;
   }
 
@@ -539,26 +402,19 @@ tbody td {
     justify-content: flex-start;
   }
 
-  .status-grid,
   .detail-grid,
-  .summary-grid,
-  .meta-grid,
+  .meta-row,
   .group-grid {
     grid-template-columns: 1fr;
+  }
+
+  .watch-list {
+    columns: 1;
   }
 }
 """
 
 SITE_JS = """\
-const FILTERS = {
-  all: () => true,
-  grade_a: (store) => store.decision_grade === "A",
-  grade_b: (store) => store.decision_grade === "B",
-  grade_c: (store) => store.decision_grade === "C",
-  partial_success: (store) => store.fetch_status === "partial_success",
-  shortage: (store) => Number(store.unit_results_total || 0) === 0,
-};
-
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -579,18 +435,6 @@ function renderList(items, emptyLabel = "なし") {
   return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
-function gradeBadgeKind(grade) {
-  if (grade === "A") return "grade-a";
-  if (grade === "B") return "grade-b";
-  return "grade-c";
-}
-
-function stateBadgeKind(grade) {
-  if (grade === "A") return "ok";
-  if (grade === "B") return "warn";
-  return "danger";
-}
-
 function fetchStatusText(status) {
   if (status === "success") return "success";
   if (status === "partial_success") return "partial_success";
@@ -605,60 +449,87 @@ function groupedStores(stores) {
   };
 }
 
-function renderHeroCard(payload, stores) {
+function gradeBadgeKind(grade) {
+  if (grade === "A") return "grade-a";
+  if (grade === "B") return "grade-b";
+  return "grade-c";
+}
+
+function stateBadgeKind(grade) {
+  if (grade === "A") return "ok";
+  if (grade === "B") return "warn";
+  return "danger";
+}
+
+function overallActionText(counts, total) {
+  const available = Number(counts.A || 0) + Number(counts.B || 0);
+  if (available === total && total > 0) {
+    return "今日は全店舗を候補として見てよい。";
+  }
+  if (Number(counts.A || 0) > 0) {
+    return "まず A 店舗を見て、B 店舗は注意付きで確認。";
+  }
+  if (Number(counts.B || 0) > 0) {
+    return "A 判定なし。B 店舗だけ注意付きで確認。";
+  }
+  return "今日は見送り店舗が多いため慎重に判断。";
+}
+
+function renderHeroCard(payload, groups) {
   const counts = payload.decision_counts || {};
+  const total = (payload.stores || []).length;
+  const watchStores = groups.A;
   return `
     <section class="hero">
       <p class="eyebrow">Source ${escapeHtml(payload.source || "-")}</p>
-      <h1 class="hero-title">今日どう判断するかを最初に見る画面</h1>
-      <p class="hero-copy">${escapeHtml(payload.description || "")}</p>
-      <div class="decision-card">
-        <p class="decision-kicker">今日の全体判定</p>
-        <h2 class="decision-title">
-          全体として ${counts.shortage ? "一部見送りあり" : "利用可能"}
+      <h1 class="hero-title">今日はどの店を見るべきか</h1>
+      <p class="hero-copy">
+        利用可能な店舗を上から順に見て、内部指標は必要なときだけ詳細で確認します。
+      </p>
+      <div class="summary-card">
+        <p class="summary-kicker">今日の結論</p>
+        <h2 class="summary-title">
+          ${escapeHtml(payload.today_conclusion || "")}
         </h2>
-        <p class="decision-copy">${escapeHtml(payload.today_conclusion || "")}</p>
+        <ul class="summary-lines">
+          <li>${
+            escapeHtml(
+              `${total}店舗中${Number(counts.A || 0) + Number(counts.B || 0)}店舗が利用可能。`,
+            )
+          }</li>
+          <li>${escapeHtml(`注意付き店舗は${counts.B || 0}店舗。`)}</li>
+          <li>${escapeHtml(overallActionText(counts, total))}</li>
+        </ul>
       </div>
-      <div class="meta-grid">
-        <div class="meta-card">
+      <div class="watch-panel">
+        <h2>今日見る店</h2>
+        <p class="watch-copy">まずは A 判定の店舗だけを上から見ます。</p>
+        ${
+          watchStores.length
+            ? `<ul class="watch-list">${watchStores
+                .map((store) => `<li>${escapeHtml(store.display_name)}</li>`)
+                .join("")}</ul>`
+            : `<p class="watch-copy">A 判定の店舗はありません。</p>`
+        }
+      </div>
+      <div class="meta-row">
+        <div class="meta-chip">
           <div class="meta-label">データソース</div>
           <div class="meta-value">${escapeHtml(payload.source || "-")}</div>
         </div>
-        <div class="meta-card">
+        <div class="meta-chip">
           <div class="meta-label">最終更新日時</div>
           <div class="meta-value">${escapeHtml(payload.generated_at || "-")}</div>
         </div>
-        <div class="meta-card">
+        <div class="meta-chip">
           <div class="meta-label">集計対象期間</div>
           <div class="meta-value">${escapeHtml(payload.coverage_window || "-")}</div>
         </div>
-        <div class="meta-card">
-          <div class="meta-label">対象店舗数</div>
-          <div class="meta-value">${stores.length}店舗</div>
-        </div>
-      </div>
-      <div class="summary-grid">
-        <div class="summary-card a">
-          <div class="summary-label">台番分析可能店舗数</div>
-          <div class="summary-value">${escapeHtml(counts.analysis_ready || 0)}</div>
-          <div class="summary-note">今日の判断に使える店舗数</div>
-        </div>
-        <div class="summary-card b">
-          <div class="summary-label">注意付き店舗数</div>
-          <div class="summary-value">${escapeHtml(counts.B || 0)}</div>
-          <div class="summary-note">一部機種取得失敗あり</div>
-        </div>
-        <div class="summary-card c">
-          <div class="summary-label">データ不足店舗数</div>
-          <div class="summary-value">${escapeHtml(counts.shortage || 0)}</div>
-          <div class="summary-note">今日の判断には使わない</div>
-        </div>
-        <div class="summary-card a">
+        <div class="meta-chip">
           <div class="summary-label">A / B / C</div>
-          <div class="summary-value">
+          <div class="meta-value">
             ${escapeHtml(`${counts.A || 0} / ${counts.B || 0} / ${counts.C || 0}`)}
           </div>
-          <div class="summary-note">通常 / 注意付き / 見送り</div>
         </div>
       </div>
     </section>
@@ -666,79 +537,55 @@ function renderHeroCard(payload, stores) {
 }
 
 function cardTemplate(store) {
-  const failedText = Number(store.failed_machine_pages || 0) > 0
-    ? `${store.failed_machine_pages}件`
-    : "なし";
   const failedUrls = store.failed_machine_urls || [];
   return `
     <article class="store-card" data-grade="${escapeHtml(store.decision_grade)}">
       <div class="store-top">
         <div>
           <h3 class="store-title">${escapeHtml(store.display_name)}</h3>
-          <p class="store-id">${escapeHtml(store.store_id)}</p>
         </div>
         <div class="badge-row">
           ${renderBadge(`判定 ${store.decision_grade}`, gradeBadgeKind(store.decision_grade))}
           ${renderBadge(store.decision_state, stateBadgeKind(store.decision_grade))}
-          ${renderBadge(
-            `台番分析 ${store.analysis_availability_text}`,
-            stateBadgeKind(store.decision_grade),
-          )}
         </div>
       </div>
-      <div class="decision-state">
-        <div class="decision-mark">${escapeHtml(store.decision_grade)}</div>
-        <div class="decision-copy-short">${escapeHtml(store.decision_reason || "")}</div>
-      </div>
-      <div class="status-grid">
-        <div class="status-tile">
-          <div class="status-label">状態</div>
-          <div class="status-value">${escapeHtml(store.decision_state)}</div>
-        </div>
-        <div class="status-tile">
-          <div class="status-label">台番差枚</div>
-          <div class="status-value">${escapeHtml(store.diff_status_text)}</div>
-        </div>
-        <div class="status-tile">
-          <div class="status-label">unit_diff_missing_rate</div>
-          <div class="status-value">${escapeHtml(store.unit_diff_missing_rate_text)}</div>
-        </div>
-        <div class="status-tile">
-          <div class="status-label">failed_machine_pages</div>
-          <div class="status-value">${escapeHtml(failedText)}</div>
-        </div>
-      </div>
-      <div class="reason-box">
-        <strong>注意理由</strong>
-        <p>${escapeHtml((store.notes || [store.decision_reason])[0] || "追加注意なし")}</p>
-      </div>
+      <p class="store-reason">${escapeHtml(store.decision_reason || "")}</p>
       <details class="detail-box">
         <summary>詳細を開く</summary>
         <div class="detail-grid">
           <div class="detail-item">
-            <strong>件数</strong>
-            <p>
-              daily ${escapeHtml(store.daily_count || 0)} /
-              machine ${escapeHtml(store.machine_count || 0)} /
-              unit ${escapeHtml(store.unit_count || 0)}
-            </p>
+            <strong>fetch_status</strong>
+            <p>${escapeHtml(fetchStatusText(store.fetch_status))}</p>
           </div>
           <div class="detail-item">
-            <strong>取得状態</strong>
-            <p>fetch_status: ${escapeHtml(fetchStatusText(store.fetch_status))}</p>
-            <p>parse_status: ${escapeHtml(store.parse_status)}</p>
+            <strong>parse_status</strong>
+            <p>${escapeHtml(store.parse_status)}</p>
           </div>
           <div class="detail-item">
-            <strong>有効分析範囲</strong>
-            <p>${escapeHtml(store.effective_analyses_text)}</p>
+            <strong>daily数</strong>
+            <p>${escapeHtml(store.daily_count || 0)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>machine数</strong>
+            <p>${escapeHtml(store.machine_count || 0)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>unit数</strong>
+            <p>${escapeHtml(store.unit_count || 0)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>unit_diff_missing_rate</strong>
+            <p>${escapeHtml(store.unit_diff_missing_rate_text)}</p>
+          </div>
+          <div class="detail-item">
+            <strong>failed_machine_pages</strong>
+            <p>${escapeHtml(store.failed_machine_pages || 0)}</p>
           </div>
           <div class="detail-item">
             <strong>failed_machine_urls</strong>
-            ${
-              failedUrls.length
-                ? `<ul class="detail-list">${renderList(failedUrls)}</ul>`
-                : `<p>記録なし</p>`
-            }
+            ${failedUrls.length
+              ? `<ul class="detail-list">${renderList(failedUrls)}</ul>`
+              : `<p>記録なし</p>`}
           </div>
           <div class="detail-item">
             <strong>注意点</strong>
@@ -750,9 +597,9 @@ function cardTemplate(store) {
   `;
 }
 
-function groupSection(grade, title, copy, stores) {
+function groupSection(grade, title, copy, stores, compact = false) {
   return `
-    <section class="group-panel" data-grade="${escapeHtml(grade)}">
+    <section class="group-panel ${compact ? "compact" : ""}" data-grade="${escapeHtml(grade)}">
       <div class="group-head">
         <div>
           <h2>${escapeHtml(title)}</h2>
@@ -772,114 +619,42 @@ function groupSection(grade, title, copy, stores) {
   `;
 }
 
-function tableRowTemplate(store) {
-  return `
-    <tr>
-      <td>${escapeHtml(store.display_name)}</td>
-      <td>${escapeHtml(store.decision_grade)}</td>
-      <td>${escapeHtml(fetchStatusText(store.fetch_status))}</td>
-      <td>${escapeHtml(store.unit_count || 0)}</td>
-      <td>${escapeHtml(store.unit_diff_missing_rate_text)}</td>
-      <td>${escapeHtml((store.notes || [store.decision_reason])[0] || "追加注意なし")}</td>
-    </tr>
-  `;
-}
-
 function mountDashboard(payload) {
   const root = document.getElementById("app");
-  const filters = payload.filters || [];
   const stores = payload.stores || [];
-  let activeFilter = "all";
-
-  function filteredStores() {
-    const predicate = FILTERS[activeFilter] || FILTERS.all;
-    return stores.filter(predicate);
-  }
 
   function render() {
-    const visibleStores = filteredStores();
-    const groups = groupedStores(visibleStores);
+    const groups = groupedStores(stores);
 
     root.innerHTML = `
       <main class="page">
-        ${renderHeroCard(payload, stores)}
-
-        <section class="panel">
-          <h2>店舗フィルタ</h2>
-          <p class="panel-copy">
-            まずは A / B / C で見て、必要なときだけ partial_success やデータ不足を確認します。
-          </p>
-          <div class="filter-row">
-            ${filters
-              .map(
-                (filter) => `
-                  <button
-                    class="filter-button ${filter.key === activeFilter ? "active" : ""}"
-                    data-filter="${escapeHtml(filter.key)}"
-                    type="button"
-                  >
-                    ${escapeHtml(filter.label)}
-                  </button>
-                `,
-              )
-              .join("")}
-          </div>
-        </section>
+        ${renderHeroCard(payload, groups)}
 
         ${groupSection(
           "A",
           "A 通常利用可能",
-          "fetch 成功、欠損率が低く、そのまま判断に使える店舗です。",
+          "まず最初に見る店舗です。初期表示は判断理由だけに絞っています。",
           groups.A,
         )}
         ${groupSection(
           "B",
           "B 注意付きで利用可能",
-          "一部機種ページ取得失敗はあるものの、台番判断には使える店舗です。",
+          "一部取得失敗はありますが、候補からは外さず次に確認します。",
           groups.B,
         )}
         ${groupSection(
           "C",
           "C 見送り / データ不足",
-          "欠損率や取得状態の都合で、今日の判断材料としては弱い店舗です。",
+          "最後に小さく確認する枠です。今日の主候補にはしません。",
           groups.C,
+          true,
         )}
-
-        <section class="table-panel">
-          <h2>比較テーブル</h2>
-          <p class="table-copy">カードで判断したあとに、必要なら比較だけ確認します。</p>
-          <details>
-            <summary>比較テーブルを開く</summary>
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>店舗</th>
-                    <th>判定</th>
-                    <th>fetch_status</th>
-                    <th>unit件数</th>
-                    <th>欠損率</th>
-                    <th>注意点</th>
-                  </tr>
-                </thead>
-                <tbody>${visibleStores.map(tableRowTemplate).join("")}</tbody>
-              </table>
-            </div>
-          </details>
-        </section>
 
         <p class="footer">
           source=${escapeHtml(payload.source || "-")} / raw HTML や SQLite DB は公開していません。
         </p>
       </main>
     `;
-
-    root.querySelectorAll("[data-filter]").forEach((button) => {
-      button.addEventListener("click", () => {
-        activeFilter = button.getAttribute("data-filter") || "all";
-        render();
-      });
-    });
   }
 
   render();

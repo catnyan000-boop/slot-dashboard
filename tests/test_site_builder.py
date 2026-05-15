@@ -159,11 +159,16 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
     index_text = (public_dir / "index.html").read_text(encoding="utf-8")
     latest_path = public_dir / "data" / "latest.json"
     latest_text = latest_path.read_text(encoding="utf-8")
+    app_js_text = (public_dir / "assets" / "app.js").read_text(encoding="utf-8")
     payload = json.loads(latest_text)
 
     assert "Slot Analyzer Dashboard" in index_text
     assert "./assets/app.js" in index_text
     assert "window.__SITE_DATA__" not in index_text
+    assert "今日見る店" in app_js_text
+    assert "今日は全店舗を候補として見てよい。" in app_js_text
+    assert "比較テーブル" not in app_js_text
+    assert "詳細を開く" in app_js_text
     assert "data/raw" not in latest_text
     assert ".db" not in latest_text
     assert "raw_path" not in latest_text
