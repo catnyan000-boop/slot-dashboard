@@ -150,6 +150,7 @@ summary {
 }
 
 .meta-row,
+.target-grid,
 .group-grid,
 .detail-grid {
   display: grid;
@@ -178,6 +179,80 @@ summary {
   margin-top: 6px;
   font-size: 1.05rem;
   font-weight: 800;
+}
+
+.target-panel {
+  margin-top: 22px;
+  padding: 20px;
+  background: rgba(255, 252, 247, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+}
+
+.target-panel h2,
+.target-card h3 {
+  margin: 0;
+}
+
+.target-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.target-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 16px;
+}
+
+.target-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.tier-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tier-chip {
+  padding: 12px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+}
+
+.tier-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.tier-value {
+  margin-top: 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.candidate-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.candidate-list li + li {
+  margin-top: 10px;
+}
+
+.candidate-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9rem;
 }
 
 .group-panel {
@@ -404,12 +479,17 @@ summary {
 
   .detail-grid,
   .meta-row,
+  .target-grid,
   .group-grid {
     grid-template-columns: 1fr;
   }
 
   .watch-list {
     columns: 1;
+  }
+
+  .tier-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 """
@@ -475,6 +555,63 @@ function overallActionText(counts, total) {
   return "今日は見送り店舗が多いため慎重に判断。";
 }
 
+function targetTypeLabel(targetType) {
+  if (targetType === "machine_candidate") return "狙い機種";
+  if (targetType === "raise_candidate") return "上げ狙い";
+  if (targetType === "keep_candidate") return "据え置き";
+  if (targetType === "tail_candidate") return "末尾";
+  if (targetType === "cluster_candidate") return "並び";
+  return targetType;
+}
+
+function candidatePrimaryLabel(candidate) {
+  if (candidate.machine_name && candidate.unit_number) {
+    return `${candidate.machine_name} / ${candidate.unit_number}`;
+  }
+  return candidate.machine_name || candidate.unit_number || "-";
+}
+
+function candidateItem(candidate) {
+  const evidence = candidate.evidence || {};
+  return `
+    <li>
+      <strong>${escapeHtml(candidate.store_name)}</strong>
+      <span class="candidate-meta">
+        ${escapeHtml(candidatePrimaryLabel(candidate))} /
+        ${escapeHtml(targetTypeLabel(candidate.target_type))} /
+        score ${escapeHtml(candidate.score)} /
+        confidence ${escapeHtml(candidate.confidence)}
+      </span>
+      <span class="candidate-meta">${escapeHtml(candidate.reason || "")}</span>
+      <span class="candidate-meta">
+        根拠:
+        prev_diff=${escapeHtml(evidence.previous_day_diff ?? "-")} /
+        prev_games=${escapeHtml(evidence.previous_day_games ?? "-")} /
+        sample=${escapeHtml(evidence.sample_count ?? "-")}
+      </span>
+      ${
+        candidate.caution
+          ? `<span class="candidate-meta">注意: ${escapeHtml(candidate.caution)}</span>`
+          : ""
+      }
+    </li>
+  `;
+}
+
+function renderCandidateList(title, copy, candidates, emptyLabel) {
+  return `
+    <div class="target-card">
+      <h3>${escapeHtml(title)}</h3>
+      <p class="target-copy">${escapeHtml(copy)}</p>
+      ${
+        candidates && candidates.length
+          ? `<ul class="candidate-list">${candidates.map(candidateItem).join("")}</ul>`
+          : `<p class="target-copy">${escapeHtml(emptyLabel)}</p>`
+      }
+    </div>
+  `;
+}
+
 function renderHeroCard(payload, groups) {
   const counts = payload.decision_counts || {};
   const total = (payload.stores || []).length;
@@ -531,6 +668,77 @@ function renderHeroCard(payload, groups) {
             ${escapeHtml(`${counts.A || 0} / ${counts.B || 0} / ${counts.C || 0}`)}
           </div>
         </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderTargetsPanel(targets) {
+  if (!targets || !targets.summary || !targets.sections) {
+    return `
+      <section class="target-panel">
+        <h2>今日の狙い候補</h2>
+        <p class="target-copy">analyze-targets 実行後に候補を表示します。</p>
+      </section>
+    `;
+  }
+  const counts = targets.summary.target_counts || {};
+  const machineCandidates = targets.sections.machine_candidates || [];
+  const raiseCandidates = targets.sections.raise_candidates || [];
+  const keepCandidates = targets.sections.keep_candidates || [];
+  const patternCandidates = [
+    ...(targets.sections.tail_candidates || []),
+    ...(targets.sections.cluster_candidates || []),
+  ].slice(0, 12);
+  return `
+    <section class="target-panel">
+      <h2>今日の狙い候補</h2>
+      <p class="target-copy">
+        候補であって断定ではありません。sample_count が少ないものは参考程度として扱います。
+      </p>
+      <div class="tier-row">
+        <div class="tier-chip">
+          <div class="tier-label">S候補</div>
+          <div class="tier-value">${escapeHtml(counts.S || 0)}</div>
+        </div>
+        <div class="tier-chip">
+          <div class="tier-label">A候補</div>
+          <div class="tier-value">${escapeHtml(counts.A || 0)}</div>
+        </div>
+        <div class="tier-chip">
+          <div class="tier-label">B候補</div>
+          <div class="tier-value">${escapeHtml(counts.B || 0)}</div>
+        </div>
+        <div class="tier-chip">
+          <div class="tier-label">見送り</div>
+          <div class="tier-value">${escapeHtml(counts["見送り"] || 0)}</div>
+        </div>
+      </div>
+      <div class="target-grid">
+        ${renderCandidateList(
+          "狙い機種",
+          "店舗と機種の直近傾向から見る候補です。",
+          machineCandidates,
+          "候補なし",
+        )}
+        ${renderCandidateList(
+          "上げ狙い台",
+          "前日凹みと稼働量から見る候補です。",
+          raiseCandidates,
+          "候補なし",
+        )}
+        ${renderCandidateList(
+          "据え置き候補",
+          "前日プラスと同機種傾向から見る候補です。",
+          keepCandidates,
+          "候補なし",
+        )}
+        ${renderCandidateList(
+          "末尾・並び候補",
+          "sample_count が少ない場合は参考程度です。",
+          patternCandidates,
+          "候補なし",
+        )}
       </div>
     </section>
   `;
@@ -619,7 +827,7 @@ function groupSection(grade, title, copy, stores, compact = false) {
   `;
 }
 
-function mountDashboard(payload) {
+function mountDashboard(payload, targets) {
   const root = document.getElementById("app");
   const stores = payload.stores || [];
 
@@ -629,6 +837,7 @@ function mountDashboard(payload) {
     root.innerHTML = `
       <main class="page">
         ${renderHeroCard(payload, groups)}
+        ${renderTargetsPanel(targets)}
 
         ${groupSection(
           "A",
@@ -675,8 +884,20 @@ async function loadPayload() {
   }
 }
 
-loadPayload()
-  .then((payload) => mountDashboard(payload))
+async function loadTargetsPayload() {
+  try {
+    const response = await fetch("./data/targets.json", { cache: "no-store" });
+    if (!response.ok) {
+      return null;
+    }
+    return response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+Promise.all([loadPayload(), loadTargetsPayload()])
+  .then(([payload, targets]) => mountDashboard(payload, targets))
   .catch((error) => {
     const root = document.getElementById("app");
     root.innerHTML = [

@@ -22,6 +22,7 @@ from src.db.database import Database
 from src.normalizers.store_normalizer import StoreNormalizer
 from src.parsers.minrepo_parser import MinrepoParser
 from src.reports.site_builder import build_static_site, load_validation_statuses
+from src.reports.targets_report import write_targets_outputs
 from src.reports.tomorrow_report import generate_tomorrow_report, run_analysis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -1135,6 +1136,44 @@ def cmd_build_site(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_analyze_targets(args: argparse.Namespace) -> int:
+    database = _database()
+    database.initialize(SCHEMA_PATH)
+    database.seed_stores(_store_normalizer().catalog)
+    target_date = date.fromisoformat(args.date) if args.date else date.today() + timedelta(days=1)
+    source = getattr(args, "source", None)
+    status_report = (
+        REPORTS_DIR / "slorepo_coverage_9stores_7days.md"
+        if source == "slorepo"
+        else REPORTS_DIR / "unit_coverage_9stores_7days.md"
+    )
+    status_overrides = load_validation_statuses(status_report)
+    payload, report_path, json_path = write_targets_outputs(
+        database=database,
+        store_normalizer=_store_normalizer(),
+        target_date=target_date,
+        lookback_days=args.days,
+        reports_dir=REPORTS_DIR,
+        public_dir=PUBLIC_DIR,
+        source=source,
+        status_overrides=status_overrides,
+    )
+    counts = payload["summary"]["target_counts"]
+    print(f"report: {report_path}")
+    print(f"json: {json_path}")
+    print(
+        "S/A/B/見送り: "
+        f"{counts['S']} / {counts['A']} / {counts['B']} / {counts['見送り']}"
+    )
+    print(
+        "raise/keep/tail/cluster/machine: "
+        f"{counts['raise_candidate']} / {counts['keep_candidate']} / "
+        f"{counts['tail_candidate']} / {counts['cluster_candidate']} / "
+        f"{counts['machine_candidate']}"
+    )
+    return 0
+
+
 def cmd_db_stats(_: argparse.Namespace) -> int:
     counts = _database().table_counts()
     for key, value in counts.items():
@@ -1557,6 +1596,15 @@ def build_parser() -> argparse.ArgumentParser:
     build_site.add_argument("--days", type=int, default=7)
     build_site.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
     build_site.set_defaults(func=cmd_build_site)
+
+    analyze_targets = subparsers.add_parser(
+        "analyze-targets",
+        help="Extract practical store/machine/unit target candidates",
+    )
+    analyze_targets.add_argument("--date")
+    analyze_targets.add_argument("--days", type=int, default=30)
+    analyze_targets.add_argument("--source", choices=["minrepo", "slorepo", "anaslo"])
+    analyze_targets.set_defaults(func=cmd_analyze_targets)
 
     db_stats = subparsers.add_parser("db-stats", help="Show DB row counts")
     db_stats.set_defaults(func=cmd_db_stats)

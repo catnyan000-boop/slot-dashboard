@@ -141,6 +141,7 @@ summary {
 }
 
 .meta-row,
+.target-grid,
 .group-grid,
 .detail-grid {
   display: grid;
@@ -169,6 +170,80 @@ summary {
   margin-top: 6px;
   font-size: 1.05rem;
   font-weight: 800;
+}
+
+.target-panel {
+  margin-top: 22px;
+  padding: 20px;
+  background: rgba(255, 252, 247, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+}
+
+.target-panel h2,
+.target-card h3 {
+  margin: 0;
+}
+
+.target-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.target-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 16px;
+}
+
+.target-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.tier-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tier-chip {
+  padding: 12px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+}
+
+.tier-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.tier-value {
+  margin-top: 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.candidate-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.candidate-list li + li {
+  margin-top: 10px;
+}
+
+.candidate-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9rem;
 }
 
 .group-panel {
@@ -395,11 +470,16 @@ summary {
 
   .detail-grid,
   .meta-row,
+  .target-grid,
   .group-grid {
     grid-template-columns: 1fr;
   }
 
   .watch-list {
     columns: 1;
+  }
+
+  .tier-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

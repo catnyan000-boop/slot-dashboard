@@ -8,3 +8,4 @@ reports/*.md
 .env
 logs/*.log
 public/data/latest.json
+public/data/targets.json
