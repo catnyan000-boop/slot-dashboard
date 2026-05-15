@@ -352,10 +352,10 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
 
     target_types = {row["target_type"] for row in payload["candidates"]}
     assert "raise_candidate" in target_types
-    assert "keep_candidate" in target_types
     assert "tail_candidate" in target_types
     assert "cluster_candidate" in target_types
     assert "machine_candidate" in target_types
+    assert "keep_candidate" not in target_types
 
     raise_candidate = next(
         row for row in payload["candidates"] if row["target_type"] == "raise_candidate"
@@ -363,12 +363,6 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     assert raise_candidate["priority_group"] == "main"
     assert raise_candidate["unit_number"] == "101"
     assert raise_candidate["evidence"]["previous_day_diff"] == -1200.0
-
-    keep_candidate = next(
-        row for row in payload["candidates"] if row["target_type"] == "keep_candidate"
-    )
-    assert keep_candidate["unit_number"] == "102"
-    assert keep_candidate["evidence"]["previous_day_games"] == 4500.0
 
     tail_candidate = next(
         row for row in payload["candidates"] if row["target_type"] == "tail_candidate"
@@ -437,11 +431,13 @@ def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
     assert "db_path" not in text
     assert "data/raw" not in text
     assert "priority_group" in text
+    assert "keep_candidate" not in text
     assert any(row["target_type"] == "raise_candidate" for row in data["candidates"])
     assert payload["summary"]["target_counts"]["raise_candidate"] >= 1
     report_text = report_path.read_text(encoding="utf-8")
     assert "- main: コスモジャパン大府, マルシン777" in report_text
     assert "priority_group=main" in report_text
+    assert "据え置き候補" not in report_text
 
 
 def test_cmd_analyze_targets_writes_report_and_json(monkeypatch, tmp_path: Path, capsys) -> None:

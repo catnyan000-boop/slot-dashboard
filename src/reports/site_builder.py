@@ -596,7 +596,6 @@ function priorityLabel(priorityGroup) {
 function targetTypeLabel(targetType) {
   if (targetType === "machine_candidate") return "狙い機種";
   if (targetType === "raise_candidate") return "上げ狙い";
-  if (targetType === "keep_candidate") return "据え置き";
   if (targetType === "tail_candidate") return "末尾";
   if (targetType === "cluster_candidate") return "並び";
   return targetType;
@@ -749,7 +748,6 @@ function renderTargetsPanel(targets) {
   const priorityGroups = targets.priority_groups || {};
   const machineCandidates = sortedCandidatesByPriority(targets.sections.machine_candidates || []);
   const raiseCandidates = sortedCandidatesByPriority(targets.sections.raise_candidates || []);
-  const keepCandidates = sortedCandidatesByPriority(targets.sections.keep_candidates || []);
   const patternCandidates = sortedCandidatesByPriority([
     ...(targets.sections.tail_candidates || []),
     ...(targets.sections.cluster_candidates || []),
@@ -794,12 +792,6 @@ function renderTargetsPanel(targets) {
           "上げ狙い台",
           "main 店舗を最優先に確認し、watch は高スコア時のみ残します。",
           raiseCandidates,
-          "候補なし",
-        )}
-        ${renderCandidateList(
-          "据え置き候補",
-          "前日プラスと同機種傾向から見る候補です。",
-          keepCandidates,
           "候補なし",
         )}
         ${renderCandidateList(

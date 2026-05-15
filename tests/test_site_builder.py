@@ -173,6 +173,8 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
     assert "監視枠" in app_js_text
     assert "main → sub → watch の順で並べています。" in app_js_text
     assert "priority " in app_js_text
+    assert "据え置き候補" not in app_js_text
+    assert "keep_candidate" not in app_js_text
     assert "targets.json" in app_js_text
     assert "比較テーブル" not in app_js_text
     assert "詳細を開く" in app_js_text

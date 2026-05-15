@@ -488,18 +488,14 @@ def _build_unit_candidates(
     daily_df: pd.DataFrame,
     machine_df: pd.DataFrame,
     unit_df: pd.DataFrame,
-    store_payloads: list[dict[str, object]],
     quality_map: dict[str, dict[str, object]],
 ) -> tuple[
     list[dict[str, object]],
     list[dict[str, object]],
     list[dict[str, object]],
-    list[dict[str, object]],
 ]:
     previous_day = target_date - timedelta(days=1)
-    store_score_map = {row["store_id"]: row for row in store_payloads}
     raise_candidates: list[dict[str, object]] = []
-    keep_candidates: list[dict[str, object]] = []
     tail_candidates: list[dict[str, object]] = []
     cluster_candidates: list[dict[str, object]] = []
 
@@ -580,55 +576,6 @@ def _build_unit_candidates(
                             f"前日マイナス差枚 {round(_safe_float(prev_row['diff']), 2)}、"
                             f" {round(_safe_float(prev_row['games']), 2)}G。"
                             f" {streak}日連続凹み。"
-                        ),
-                        evidence=base_evidence,
-                        caution=caution,
-                    )
-                )
-
-            store_is_strong = (
-                float(store_score_map[store.store_id]["store_score"]) >= 55.0
-                and recent_store_avg_diff > 0
-            )
-            if (
-                quality_good
-                and _safe_float(prev_row["diff"]) >= 1000
-                and _safe_float(prev_row["games"]) >= 4000
-                and _safe_float(machine_stats["avg_diff"]) > 0
-                and store_is_strong
-            ):
-                score = (
-                    50.0
-                    + min(_safe_float(prev_row["diff"]) / 180.0, 18.0)
-                    + min(_safe_float(prev_row["games"]) / 700.0, 12.0)
-                    + min(_safe_float(machine_stats["avg_diff"]) / 280.0, 12.0)
-                    + min(_safe_float(machine_stats["win_rate"]) * 18.0, 10.0)
-                    + min(max(recent_store_avg_diff, 0.0) / 500.0, 8.0)
-                )
-                score = _apply_priority_score(score, priority_group, quality_good)
-                confidence = _confidence_letter(
-                    score=score,
-                    sample_count=int(machine_stats["sample_count"]),
-                    quality_good=quality_good,
-                    caution_penalty=0,
-                )
-                caution = ""
-                if int(machine_stats["sample_count"]) < 5:
-                    caution = "sample_count少なめのため参考程度"
-                keep_candidates.append(
-                    _candidate_dict(
-                        store_id=store.store_id,
-                        store_name=store.display_name,
-                        priority_group=priority_group,
-                        machine_name=machine_name,
-                        unit_number=str(prev_row["unit_number"]),
-                        target_type="keep_candidate",
-                        score=score,
-                        confidence=confidence,
-                        reason=(
-                            f"前日プラス差枚 {round(_safe_float(prev_row['diff']), 2)}、"
-                            f" {round(_safe_float(prev_row['games']), 2)}G。"
-                            " 同機種と店舗全体が直近プラス。"
                         ),
                         evidence=base_evidence,
                         caution=caution,
@@ -768,7 +715,6 @@ def _build_unit_candidates(
 
     return (
         _trim(raise_candidates, 3),
-        _trim(keep_candidates, 3),
         _trim(tail_candidates, 2),
         _trim(cluster_candidates, 2),
     )
@@ -793,7 +739,6 @@ def _candidate_counts(candidates: list[dict[str, object]]) -> dict[str, int]:
         "B": 0,
         "見送り": 0,
         "raise_candidate": 0,
-        "keep_candidate": 0,
         "tail_candidate": 0,
         "cluster_candidate": 0,
         "machine_candidate": 0,
@@ -834,19 +779,17 @@ def analyze_targets(
         store_payloads=store_scores,
         quality_map=quality_map,
     )
-    raise_candidates, keep_candidates, tail_candidates, cluster_candidates = _build_unit_candidates(
+    raise_candidates, tail_candidates, cluster_candidates = _build_unit_candidates(
         stores=stores,
         target_date=target_date,
         daily_df=daily_df,
         machine_df=machine_df,
         unit_df=unit_df,
-        store_payloads=store_scores,
         quality_map=quality_map,
     )
     all_candidates = _rank_candidates(
         machine_candidates
         + raise_candidates
-        + keep_candidates
         + tail_candidates
         + cluster_candidates
     )
@@ -891,9 +834,6 @@ def analyze_targets(
             ][:12],
             "raise_candidates": [
                 row for row in all_candidates if row["target_type"] == "raise_candidate"
-            ][:20],
-            "keep_candidates": [
-                row for row in all_candidates if row["target_type"] == "keep_candidate"
             ][:20],
             "tail_candidates": [
                 row for row in all_candidates if row["target_type"] == "tail_candidate"
@@ -969,8 +909,8 @@ def write_targets_outputs(
         f"- generated_at: {payload['generated_at']}",
         f"- S/A/B/見送り: {counts['S']} / {counts['A']} / {counts['B']} / {counts['見送り']}",
         (
-            f"- raise/keep/tail/cluster/machine: "
-            f"{counts['raise_candidate']} / {counts['keep_candidate']} / "
+            f"- raise/tail/cluster/machine: "
+            f"{counts['raise_candidate']} / "
             f"{counts['tail_candidate']} / {counts['cluster_candidate']} / "
             f"{counts['machine_candidate']}"
         ),
@@ -1003,7 +943,6 @@ def write_targets_outputs(
     for section_title, key in (
         ("狙い機種", "machine_candidates"),
         ("上げ狙い候補", "raise_candidates"),
-        ("据え置き候補", "keep_candidates"),
         ("末尾候補", "tail_candidates"),
         ("並び候補", "cluster_candidates"),
     ):

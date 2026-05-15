@@ -1166,8 +1166,8 @@ def cmd_analyze_targets(args: argparse.Namespace) -> int:
         f"{counts['S']} / {counts['A']} / {counts['B']} / {counts['見送り']}"
     )
     print(
-        "raise/keep/tail/cluster/machine: "
-        f"{counts['raise_candidate']} / {counts['keep_candidate']} / "
+        "raise/tail/cluster/machine: "
+        f"{counts['raise_candidate']} / "
         f"{counts['tail_candidate']} / {counts['cluster_candidate']} / "
         f"{counts['machine_candidate']}"
     )
