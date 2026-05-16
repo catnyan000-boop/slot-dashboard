@@ -31,14 +31,25 @@
 - Mac ログイン時には dashboard server が自動起動します。
 - dashboard には `analysis_anchor_date` が表示され、`target_date` とズレる場合は注意文が出ます。
 - Mac がスリープ中は `launchd` の定時実行が走らないため、朝更新を期待する日はスリープさせない運用が必要です。
+- `DEPLOY_PAGES=1` で daily update を実行した時だけ、同じ静的成果物を GitHub Pages にも反映できます。
+
+## 5.5 外出先スマホで見る
+
+- GitHub Pages を有効化すると、外出先では `https://<owner>.github.io/<repo>/` 形式の URL から見られます。
+- project Pages の URL は repository owner と repository 名で決まります。custom domain を設定している場合はその URL を使います。
+- 公開されるのは `public/` の静的成果物だけです。raw HTML、SQLite DB、logs、reports、Python ソースは公開しません。
+- 初回だけ GitHub repository settings の Pages で、source を `gh-pages` branch の `/ (root)` に設定します。
+- private repository で Pages を使えるかは GitHub の契約プランに依存します。public repository は GitHub Free で使えますが、private repository は GitHub Pro / Team / Enterprise 系が必要です。
 
 ## 6. 更新されない時の確認方法
 
 - Mac にログインした状態で使っているか確認します。
 - `install_dashboard.command` をもう一度ダブルクリックして、`daily update` と `dashboard server` が入っていることを確認します。
 - ブラウザで `http://localhost:8765` を再読み込みします。
+- GitHub Pages を使う場合は `DEPLOY_PAGES=1 bash scripts/daily_update.sh` または `bash scripts/deploy_pages.sh` を実行したか確認します。
 - Finder で `logs/daily_update.out.log` と `logs/daily_update.err.log` を開き、`02:30`、`04:00`、`05:30` 前後の更新記録を確認します。
 - Finder で `logs/dashboard_server.out.log` と `logs/dashboard_server.err.log` を開き、server の起動エラーが出ていないか確認します。
+- `scripts/deploy_pages.sh` が `forbidden path detected` または `forbidden content detected` で止まった場合は、公開禁止ファイルやローカル path が `public/` に混ざっていないか確認します。
 - `http://localhost:8765` が開かず、`dashboard_server.err.log` に `port 8765 is already in use` と出ている場合は、同じポートを使っている別アプリを止めてから `install_dashboard.command` を再実行します。
 
 ## 7. サーバー停止・削除方法

@@ -14,6 +14,7 @@
 - `06:00` 時点で最新データが取れていなくても、取得できた最新日を隠さず表示します。
 - `daily_update.sh` が途中失敗しても、最後に生成できた dashboard を壊さない方針です。
 - Mac がスリープ中やログアウト中は `launchd` の定時実行は動かないため、朝更新を保証したい日はスリープさせない運用が必要です。
+- `DEPLOY_PAGES=1` を付けた場合だけ、`build-site` 後に `scripts/deploy_pages.sh` を呼び、`public/` の静的成果物だけを GitHub Pages 用 branch に反映します。
 
 ## 2. インストール方法
 
@@ -30,6 +31,7 @@
 
 - 即時実行: `launchctl kickstart -k gui/$(id -u)/com.slot-dashboard.daily`
 - スクリプト直接実行: `bash scripts/daily_update.sh`
+- GitHub Pages まで反映: `DEPLOY_PAGES=1 bash scripts/daily_update.sh`
 - 朝の更新確認時は `logs/daily_update.out.log` に `02:30`、`04:00`、`05:30` 前後の記録があるかを見る。
 
 ## 4.5 90日バックフィル
@@ -40,6 +42,17 @@
 - 実行後は `analyze-targets --days 90 --source slorepo` と `build-site --source slorepo` まで続けて実行します。
 - fetch は店舗ごとの keep-going で、1店舗失敗しても他店舗は継続します。
 - ログは `logs/backfill_90days.out.log` と `logs/backfill_90days.err.log` に出力します。
+
+## 4.7 GitHub Pages 公開
+
+- 採用方式は `gh-pages` branch です。`main` branch には生成物をコミットしません。
+- `bash scripts/deploy_pages.sh` は `public/` の中身だけを一時ディレクトリへコピーし、`gh-pages` branch に force push します。
+- 公開対象は `index.html`、`assets/app.js`、`assets/style.css`、`data/latest.json`、`data/targets.json` を含む `public/` 配下だけです。
+- `data/raw`、`*.db`、`logs`、`reports`、`.env`、Python ソース、raw HTML、cookie 類、ローカル path が `public/` に混ざっていた場合は公開前に停止します。
+- GitHub Pages を最初に有効化する時は、GitHub repository settings で Pages の source を `gh-pages` branch の `/ (root)` に設定します。
+- private repository の GitHub Pages 利用可否は GitHub の契約プランに依存します。GitHub Docs では public repository は GitHub Free で利用可能、private repository は GitHub Pro / Team / Enterprise 系で利用可能です。
+- remote が未設定の場合は `PAGES_REMOTE_URL` を環境変数で渡します。
+- push を伴わず検査だけしたい時は `PAGES_DRY_RUN=1 bash scripts/deploy_pages.sh` を使います。
 
 ## 5. ログ確認方法
 

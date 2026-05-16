@@ -185,5 +185,16 @@ if ! python3 -m src.cli build-site --date "$TOMORROW" --days 7 --source "$SOURCE
 fi
 cat "$TMP_DIR/build_site.log"
 
+if [ "${DEPLOY_PAGES:-0}" = "1" ]; then
+  echo ""
+  echo "== deploy-pages =="
+  if ! bash "$ROOT_DIR/scripts/deploy_pages.sh"; then
+    echo "deploy_pages failed; local dashboard remains available"
+  fi
+else
+  echo ""
+  echo "== deploy-pages skipped (DEPLOY_PAGES=0) =="
+fi
+
 echo ""
 echo "daily update complete"
