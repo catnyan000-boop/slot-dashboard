@@ -263,6 +263,63 @@ summary {
   gap: 12px;
 }
 
+.coverage-panel {
+  margin-top: 16px;
+}
+
+.coverage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.coverage-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.coverage-card.normal {
+  border-color: rgba(22, 95, 85, 0.24);
+}
+
+.coverage-card.caution {
+  border-color: rgba(161, 91, 0, 0.24);
+  background: rgba(255, 247, 230, 0.92);
+}
+
+.coverage-card.warning {
+  border-color: rgba(159, 45, 45, 0.24);
+  background: rgba(255, 235, 232, 0.92);
+}
+
+.coverage-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.coverage-title {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.coverage-days {
+  margin-top: 8px;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.coverage-meta {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .priority-card {
   padding: 16px;
   border-radius: 18px;
@@ -589,7 +646,8 @@ summary {
   }
 
   .group-head,
-  .store-top {
+  .store-top,
+  .coverage-top {
     flex-direction: column;
   }
 
@@ -795,6 +853,72 @@ function renderPriorityStoreList(title, className, stores) {
               .join("")}</ul>`
           : `<p class="target-copy">該当店舗なし</p>`
       }
+    </div>
+  `;
+}
+
+function coverageBadgeKind(state) {
+  if (state === "normal") return "A";
+  if (state === "caution") return "B";
+  return "C";
+}
+
+function formatCoverageRate(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  const number = Number(value);
+  if (Number.isNaN(number)) return "-";
+  return `${(number * 100).toFixed(1)}%`;
+}
+
+function renderCoverageCard(row) {
+  return `
+    <article class="coverage-card ${escapeHtml(row.coverage_state || "caution")}">
+      <div class="coverage-top">
+        <div>
+          <h3 class="coverage-title">${escapeHtml(row.store_name || row.store_id || "-")}</h3>
+          <p class="coverage-days">
+            ${escapeHtml(String(row.available_days ?? 0))}/
+            ${escapeHtml(String(row.requested_days ?? 0))}日
+          </p>
+        </div>
+        <div class="badge-row">
+          ${renderBadge(
+            row.coverage_state_label || "注意",
+            coverageBadgeKind(row.coverage_state),
+          )}
+          ${renderBadge(
+            `failed ${row.failed_machine_pages || 0}`,
+            gradeBadgeKind((row.failed_machine_pages || 0) > 0 ? "B" : "A"),
+          )}
+        </div>
+      </div>
+      <p class="coverage-meta">
+        取得範囲 ${escapeHtml(row.oldest_date || "-")} 〜 ${escapeHtml(row.latest_date || "-")}
+      </p>
+      <p class="coverage-meta">
+        coverage_rate ${escapeHtml(formatCoverageRate(row.coverage_rate))} /
+        daily ${escapeHtml(String(row.daily_count ?? 0))} /
+        machine ${escapeHtml(String(row.machine_count ?? 0))} /
+        unit ${escapeHtml(String(row.unit_count ?? 0))}
+      </p>
+    </article>
+  `;
+}
+
+function renderCoveragePanel(targets) {
+  const rows = (targets && targets.store_coverage) || [];
+  if (!rows.length) return "";
+  return `
+    <div class="coverage-panel">
+      <h3 class="section-title">データ充足状況</h3>
+      <p class="section-copy">
+        requested_days
+        ${escapeHtml(String(targets.requested_days || targets.lookback_days || "-"))}
+        日指定に対して、85日以上は通常、80〜84日は注意、80日未満は不足として見ます。
+      </p>
+      <div class="coverage-grid">
+        ${rows.map((row) => renderCoverageCard(row)).join("")}
+      </div>
     </div>
   `;
 }
@@ -1024,6 +1148,7 @@ function renderTargetsPanel(targets) {
         ${renderPriorityStoreList("今日見るべき店", "main", priorityGroups.main || [])}
         ${renderPriorityStoreList("サブ候補", "sub", priorityGroups.sub || [])}
       </div>
+      ${renderCoveragePanel(targets)}
       <h3 class="section-title">メイン店</h3>
       <p class="section-copy">コスモジャパン大府とマルシン777を深く見ます。</p>
       <div class="target-grid">

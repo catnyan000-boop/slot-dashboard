@@ -172,6 +172,10 @@ def test_latest_json_contains_summary_only_and_quality_flags(tmp_path: Path) -> 
     assert "サブ候補" in app_js_text
     assert "監視枠" not in app_js_text
     assert "データ基準日:" in app_js_text
+    assert "データ充足状況" in app_js_text
+    assert "requested_days" in app_js_text
+    assert "coverage_rate" in app_js_text
+    assert "85日以上は通常、80〜84日は注意、80日未満は不足として見ます。" in app_js_text
     assert "メイン店" in app_js_text
     assert "サブ店" in app_js_text
     assert "詳細と注意点を開く" in app_js_text

@@ -249,6 +249,63 @@ summary {
   gap: 12px;
 }
 
+.coverage-panel {
+  margin-top: 16px;
+}
+
+.coverage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.coverage-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.coverage-card.normal {
+  border-color: rgba(22, 95, 85, 0.24);
+}
+
+.coverage-card.caution {
+  border-color: rgba(161, 91, 0, 0.24);
+  background: rgba(255, 247, 230, 0.92);
+}
+
+.coverage-card.warning {
+  border-color: rgba(159, 45, 45, 0.24);
+  background: rgba(255, 235, 232, 0.92);
+}
+
+.coverage-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.coverage-title {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.coverage-days {
+  margin-top: 8px;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.coverage-meta {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .priority-card {
   padding: 16px;
   border-radius: 18px;
@@ -575,7 +632,8 @@ summary {
   }
 
   .group-head,
-  .store-top {
+  .store-top,
+  .coverage-top {
     flex-direction: column;
   }
 

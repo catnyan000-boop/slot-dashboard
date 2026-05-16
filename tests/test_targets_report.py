@@ -386,6 +386,7 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     assert cluster_candidate["evidence"]["sample_count"] >= 1
 
     assert payload["source"] == "slorepo"
+    assert payload["requested_days"] == 30
     assert payload["analysis_anchor_date"] == "2026-05-15"
     assert payload["analysis_anchor_notice"] == ""
     assert payload["target_store_count"] == 4
@@ -397,6 +398,18 @@ def test_analyze_targets_extracts_candidates_and_respects_source(tmp_path: Path)
     ]
     assert payload["priority_groups"]["main"] == ["コスモジャパン大府", "マルシン777"]
     assert payload["priority_groups"]["sub"] == ["APANCLUB弘法通り", "KEIZギャラリエアピタ"]
+    coverage = {row["store_id"]: row for row in payload["store_coverage"]}
+    assert coverage["cosmo_obu"]["oldest_date"] == "2026-05-10"
+    assert coverage["cosmo_obu"]["latest_date"] == "2026-05-15"
+    assert coverage["cosmo_obu"]["available_days"] == 6
+    assert coverage["cosmo_obu"]["requested_days"] == 30
+    assert coverage["cosmo_obu"]["coverage_rate"] == 0.2
+    assert coverage["cosmo_obu"]["daily_count"] == 6
+    assert coverage["cosmo_obu"]["machine_count"] >= 1
+    assert coverage["cosmo_obu"]["unit_count"] >= 1
+    assert coverage["cosmo_obu"]["failed_machine_pages"] == 1
+    assert coverage["cosmo_obu"]["coverage_state"] == "warning"
+    assert coverage["cosmo_obu"]["coverage_state_label"] == "不足"
     assert payload["summary"]["priority_candidate_counts"]["main"] >= 1
     assert payload["summary"]["highlight_counts"]["top_candidates"] <= 5
     assert payload["summary"]["highlight_counts"]["main_candidates"] >= 1
@@ -467,6 +480,7 @@ def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
     text = json_path.read_text(encoding="utf-8")
     data = json.loads(text)
     assert data["source"] == "slorepo"
+    assert data["requested_days"] == 30
     assert "raw_path" not in text
     assert "db_path" not in text
     assert "data/raw" not in text
@@ -486,6 +500,8 @@ def test_write_targets_outputs_writes_safe_json(tmp_path: Path) -> None:
     assert any(row["target_type"] == "raise_candidate" for row in data["candidates"])
     assert payload["summary"]["target_counts"]["raise_candidate"] >= 1
     report_text = report_path.read_text(encoding="utf-8")
+    assert "## データ充足状況" in report_text
+    assert "コスモジャパン大府 | 6/30日" in report_text
     assert "- main: コスモジャパン大府, マルシン777" in report_text
     assert "- analysis_anchor_date: 2026-05-15" in report_text
     assert "priority_group=main" in report_text

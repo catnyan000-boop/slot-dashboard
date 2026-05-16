@@ -553,6 +553,65 @@ def _build_store_payloads(
     return sorted(store_rows, key=lambda row: float(row["store_score"]), reverse=True), quality_map
 
 
+def _coverage_state(available_days: int, requested_days: int) -> tuple[str, str]:
+    if requested_days <= 0:
+        return "caution", "注意"
+    if available_days >= 85:
+        return "normal", "通常"
+    if available_days >= 80:
+        return "caution", "注意"
+    return "warning", "不足"
+
+
+def _build_store_coverage_payloads(
+    *,
+    stores,
+    daily_df: pd.DataFrame,
+    machine_df: pd.DataFrame,
+    unit_df: pd.DataFrame,
+    requested_days: int,
+    status_overrides: dict[str, dict[str, str]] | None,
+) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    overrides = status_overrides or {}
+    for store in stores:
+        store_daily = daily_df[daily_df["store_id"] == store.store_id].copy()
+        store_machines = machine_df[machine_df["store_id"] == store.store_id].copy()
+        store_units = unit_df[unit_df["store_id"] == store.store_id].copy()
+        unit_dates = sorted(store_units["report_date"].dropna().unique().tolist())
+        available_days = len(unit_dates)
+        oldest_date = unit_dates[0].isoformat() if unit_dates else None
+        latest_date = unit_dates[-1].isoformat() if unit_dates else None
+        override = overrides.get(store.store_id, overrides.get(store.display_name, {}))
+        failed_machine_pages = _safe_int(override.get("failed_machine_pages", 0))
+        coverage_rate = round(
+            available_days / requested_days if requested_days > 0 else 0.0,
+            4,
+        )
+        coverage_state, coverage_state_label = _coverage_state(
+            available_days,
+            requested_days,
+        )
+        rows.append(
+            {
+                "store_id": store.store_id,
+                "store_name": store.display_name,
+                "oldest_date": oldest_date,
+                "latest_date": latest_date,
+                "available_days": available_days,
+                "requested_days": requested_days,
+                "coverage_rate": coverage_rate,
+                "coverage_state": coverage_state,
+                "coverage_state_label": coverage_state_label,
+                "daily_count": int(len(store_daily)),
+                "machine_count": int(len(store_machines)),
+                "unit_count": int(len(store_units)),
+                "failed_machine_pages": failed_machine_pages,
+            }
+        )
+    return rows
+
+
 def _build_machine_payloads(
     *,
     stores,
@@ -1441,6 +1500,14 @@ def analyze_targets(
     main_store_sections = _main_store_sections(all_candidates)
     sub_store_sections = _sub_store_sections(all_candidates)
     coverage_window = _coverage_window_text(unit_df, target_date, lookback_days)
+    store_coverage = _build_store_coverage_payloads(
+        stores=stores,
+        daily_df=daily_df,
+        machine_df=machine_df,
+        unit_df=unit_df,
+        requested_days=lookback_days,
+        status_overrides=status_overrides,
+    )
     priority_groups = {
         key: [
             store.display_name
@@ -1453,6 +1520,7 @@ def analyze_targets(
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "target_date": target_date.isoformat(),
         "source": source or "all",
+        "requested_days": lookback_days,
         "lookback_days": lookback_days,
         "target_store_ids": [store.store_id for store in stores],
         "target_store_count": len(stores),
@@ -1499,6 +1567,7 @@ def analyze_targets(
             },
         },
         "priority_groups": priority_groups,
+        "store_coverage": store_coverage,
         "store_scores": store_scores,
         "machine_scores": machine_scores[:50],
         "candidates": all_candidates,
@@ -1571,6 +1640,7 @@ def write_targets_outputs(
         f"- target_store_count: {payload['target_store_count']}",
         f"- target_store_ids: {', '.join(payload['target_store_ids'])}",
         "- note: 標準対象は main/sub の4店舗です。",
+        f"- requested_days: {payload['requested_days']}",
         f"- coverage_window: {payload['coverage_window']}",
         f"- lookback_days: {payload['lookback_days']}",
         f"- analysis_anchor_date: {payload['analysis_anchor_date']}",
@@ -1585,8 +1655,23 @@ def write_targets_outputs(
         f"- main: {', '.join(payload['priority_groups']['main'])}",
         f"- sub: {', '.join(payload['priority_groups']['sub'])}",
         "",
-        "## 店舗スコア",
+        "## データ充足状況",
     ]
+    for row in payload["store_coverage"]:
+        lines.append(
+            f"- {row['store_name']} | {row['available_days']}/{row['requested_days']}日 | "
+            f"coverage_rate={row['coverage_rate']} | oldest={row['oldest_date']} | "
+            f"latest={row['latest_date']} | daily={row['daily_count']} | "
+            f"machine={row['machine_count']} | unit={row['unit_count']} | "
+            f"failed_machine_pages={row['failed_machine_pages']} | "
+            f"status={row['coverage_state_label']}"
+        )
+    lines.extend(
+        [
+            "",
+        "## 店舗スコア",
+        ]
+    )
     if payload["analysis_anchor_notice"]:
         lines.insert(7, f"- note: {payload['analysis_anchor_notice']}")
     for row in payload["store_scores"]:
