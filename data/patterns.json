@@ -1,0 +1,1983 @@
+{
+  "generated_at": "2026-09-06T03:27:05+09:00",
+  "target_date": "2026-09-05",
+  "source": "slorepo",
+  "requested_days": 139,
+  "coverage_window": "2026-04-19 〜 2026-05-20",
+  "note": "slorepo の台別実績から集計した傾向です。確約ではなく相関の参考で、サンプルが少ない曜日は目安です。データ基準日までの集計です。",
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "days": 32,
+      "weekday_bands": {
+        "月": [
+          {
+            "band": 1250,
+            "avg_diff": 4047.1,
+            "plus_rate": 0.5,
+            "n": 8
+          },
+          {
+            "band": 1310,
+            "avg_diff": 2536.1,
+            "plus_rate": 0.8,
+            "n": 8
+          },
+          {
+            "band": 1230,
+            "avg_diff": 1878.6,
+            "plus_rate": 0.5,
+            "n": 8
+          }
+        ],
+        "火": [
+          {
+            "band": 1260,
+            "avg_diff": 2995.3,
+            "plus_rate": 0.6,
+            "n": 14
+          },
+          {
+            "band": 1350,
+            "avg_diff": 2235.7,
+            "plus_rate": 0.5,
+            "n": 12
+          },
+          {
+            "band": 1270,
+            "avg_diff": 2022.6,
+            "plus_rate": 0.7,
+            "n": 16
+          }
+        ],
+        "水": [
+          {
+            "band": 1180,
+            "avg_diff": 2052.2,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 1310,
+            "avg_diff": 1830.1,
+            "plus_rate": 0.8,
+            "n": 16
+          },
+          {
+            "band": 1380,
+            "avg_diff": 1544.9,
+            "plus_rate": 0.5,
+            "n": 24
+          }
+        ],
+        "木": [
+          {
+            "band": 1380,
+            "avg_diff": 2232.6,
+            "plus_rate": 0.6,
+            "n": 14
+          },
+          {
+            "band": 100,
+            "avg_diff": 1498.5,
+            "plus_rate": 0.4,
+            "n": 8
+          },
+          {
+            "band": 1220,
+            "avg_diff": 1113.1,
+            "plus_rate": 0.4,
+            "n": 11
+          }
+        ],
+        "金": [
+          {
+            "band": 1230,
+            "avg_diff": 4568.9,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 1360,
+            "avg_diff": 4354.8,
+            "plus_rate": 0.7,
+            "n": 16
+          },
+          {
+            "band": 1250,
+            "avg_diff": 2807.6,
+            "plus_rate": 0.6,
+            "n": 8
+          }
+        ],
+        "土": [
+          {
+            "band": 1350,
+            "avg_diff": 4164.1,
+            "plus_rate": 0.7,
+            "n": 17
+          },
+          {
+            "band": 1250,
+            "avg_diff": 2847.2,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 30,
+            "avg_diff": 2497.6,
+            "plus_rate": 0.8,
+            "n": 24
+          }
+        ],
+        "日": [
+          {
+            "band": 1720,
+            "avg_diff": 2300.0,
+            "plus_rate": 0.9,
+            "n": 8
+          },
+          {
+            "band": 80,
+            "avg_diff": 1454.8,
+            "plus_rate": 0.5,
+            "n": 16
+          },
+          {
+            "band": 210,
+            "avg_diff": 1128.6,
+            "plus_rate": 0.5,
+            "n": 11
+          }
+        ]
+      },
+      "weekday_tails": {
+        "月": [
+          {
+            "tail": 7,
+            "avg_diff": 496.6
+          },
+          {
+            "tail": 5,
+            "avg_diff": 475.8
+          }
+        ],
+        "火": [
+          {
+            "tail": 3,
+            "avg_diff": 785.7
+          },
+          {
+            "tail": 1,
+            "avg_diff": 439.4
+          }
+        ],
+        "水": [
+          {
+            "tail": 0,
+            "avg_diff": 399.0
+          },
+          {
+            "tail": 3,
+            "avg_diff": 347.3
+          }
+        ],
+        "木": [
+          {
+            "tail": 0,
+            "avg_diff": 360.3
+          },
+          {
+            "tail": 7,
+            "avg_diff": 347.1
+          }
+        ],
+        "金": [
+          {
+            "tail": 6,
+            "avg_diff": 684.5
+          },
+          {
+            "tail": 0,
+            "avg_diff": 474.9
+          }
+        ],
+        "土": [
+          {
+            "tail": 7,
+            "avg_diff": 952.3
+          },
+          {
+            "tail": 2,
+            "avg_diff": 680.8
+          }
+        ],
+        "日": [
+          {
+            "tail": 3,
+            "avg_diff": 607.1
+          },
+          {
+            "tail": 2,
+            "avg_diff": 361.8
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "7のつく日",
+          "avg_diff": 176.4,
+          "delta": -73.1,
+          "n": 644
+        },
+        {
+          "label": "3のつく日",
+          "avg_diff": 202.8,
+          "delta": -46.6,
+          "n": 698
+        },
+        {
+          "label": "1の日・ゾロ目",
+          "avg_diff": 432.9,
+          "delta": 183.4,
+          "n": 805
+        },
+        {
+          "label": "その他",
+          "avg_diff": 237.7,
+          "delta": -11.7,
+          "n": 5792
+        }
+      ],
+      "base_avg": 249.5,
+      "cycles": [
+        {
+          "band": 1380,
+          "count": 4,
+          "median_gap": 6,
+          "min_gap": 4,
+          "max_gap": 10
+        },
+        {
+          "band": 1350,
+          "count": 4,
+          "median_gap": 7,
+          "min_gap": 4,
+          "max_gap": 10
+        },
+        {
+          "band": 1280,
+          "count": 3,
+          "median_gap": 3,
+          "min_gap": 1,
+          "max_gap": 6
+        }
+      ],
+      "band_heat": [
+        {
+          "band": 1260,
+          "overall_avg": 2665.0,
+          "plus_rate": 0.6,
+          "n": 25,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 1709.4
+            },
+            {
+              "n": 14,
+              "avg": 2995.3
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 1,
+              "avg": null
+            },
+            {
+              "n": 1,
+              "avg": null
+            },
+            {
+              "n": 1,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1310,
+          "overall_avg": 2065.4,
+          "plus_rate": 0.8,
+          "n": 24,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 2536.1
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 16,
+              "avg": 1830.1
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1250,
+          "overall_avg": 2051.8,
+          "plus_rate": 0.5,
+          "n": 36,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 4047.1
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 8,
+              "avg": -113.2
+            },
+            {
+              "n": 8,
+              "avg": 2807.6
+            },
+            {
+              "n": 8,
+              "avg": 2847.2
+            },
+            {
+              "n": 4,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1270,
+          "overall_avg": 1649.2,
+          "plus_rate": 0.7,
+          "n": 24,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 902.5
+            },
+            {
+              "n": 16,
+              "avg": 2022.6
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1350,
+          "overall_avg": 1532.4,
+          "plus_rate": 0.5,
+          "n": 90,
+          "weekday": [
+            {
+              "n": 20,
+              "avg": 793.8
+            },
+            {
+              "n": 12,
+              "avg": 2235.7
+            },
+            {
+              "n": 15,
+              "avg": 1192.0
+            },
+            {
+              "n": 6,
+              "avg": 969.2
+            },
+            {
+              "n": 11,
+              "avg": 914.9
+            },
+            {
+              "n": 17,
+              "avg": 4164.1
+            },
+            {
+              "n": 9,
+              "avg": -1036.9
+            }
+          ]
+        },
+        {
+          "band": 1230,
+          "overall_avg": 1433.6,
+          "plus_rate": 0.5,
+          "n": 46,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 1878.6
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 9,
+              "avg": 1052.9
+            },
+            {
+              "n": 8,
+              "avg": 4568.9
+            },
+            {
+              "n": 8,
+              "avg": 832.9
+            },
+            {
+              "n": 8,
+              "avg": -1267.9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "days": 32,
+      "weekday_bands": {
+        "月": [
+          {
+            "band": 530,
+            "avg_diff": 1293.3,
+            "plus_rate": 0.6,
+            "n": 10
+          },
+          {
+            "band": 450,
+            "avg_diff": 1273.1,
+            "plus_rate": 0.4,
+            "n": 8
+          },
+          {
+            "band": 730,
+            "avg_diff": 1245.5,
+            "plus_rate": 0.7,
+            "n": 19
+          }
+        ],
+        "火": [
+          {
+            "band": 540,
+            "avg_diff": 1125.2,
+            "plus_rate": 0.4,
+            "n": 21
+          },
+          {
+            "band": 450,
+            "avg_diff": 837.1,
+            "plus_rate": 0.4,
+            "n": 17
+          },
+          {
+            "band": 580,
+            "avg_diff": 811.7,
+            "plus_rate": 0.4,
+            "n": 14
+          }
+        ],
+        "水": [
+          {
+            "band": 600,
+            "avg_diff": 2841.7,
+            "plus_rate": 0.6,
+            "n": 10
+          },
+          {
+            "band": 440,
+            "avg_diff": 2689.5,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 450,
+            "avg_diff": 1828.6,
+            "plus_rate": 0.6,
+            "n": 14
+          }
+        ],
+        "木": [
+          {
+            "band": 610,
+            "avg_diff": 1684.3,
+            "plus_rate": 0.7,
+            "n": 9
+          },
+          {
+            "band": 590,
+            "avg_diff": 1627.9,
+            "plus_rate": 0.6,
+            "n": 10
+          },
+          {
+            "band": 420,
+            "avg_diff": 944.4,
+            "plus_rate": 0.5,
+            "n": 10
+          }
+        ],
+        "金": [
+          {
+            "band": 730,
+            "avg_diff": 1004.0,
+            "plus_rate": 0.6,
+            "n": 12
+          },
+          {
+            "band": 630,
+            "avg_diff": 544.0,
+            "plus_rate": 0.5,
+            "n": 12
+          },
+          {
+            "band": 710,
+            "avg_diff": 378.8,
+            "plus_rate": 0.6,
+            "n": 32
+          }
+        ],
+        "土": [
+          {
+            "band": 590,
+            "avg_diff": 2312.9,
+            "plus_rate": 0.6,
+            "n": 12
+          },
+          {
+            "band": 580,
+            "avg_diff": 1149.8,
+            "plus_rate": 0.5,
+            "n": 20
+          },
+          {
+            "band": 390,
+            "avg_diff": 957.4,
+            "plus_rate": 0.5,
+            "n": 11
+          }
+        ],
+        "日": [
+          {
+            "band": 560,
+            "avg_diff": 2851.2,
+            "plus_rate": 0.8,
+            "n": 13
+          },
+          {
+            "band": 430,
+            "avg_diff": 1344.2,
+            "plus_rate": 0.5,
+            "n": 13
+          },
+          {
+            "band": 640,
+            "avg_diff": 1181.8,
+            "plus_rate": 0.4,
+            "n": 12
+          }
+        ]
+      },
+      "weekday_tails": {
+        "月": [
+          {
+            "tail": 7,
+            "avg_diff": 428.6
+          },
+          {
+            "tail": 8,
+            "avg_diff": 297.7
+          }
+        ],
+        "火": [
+          {
+            "tail": 1,
+            "avg_diff": 282.0
+          },
+          {
+            "tail": 5,
+            "avg_diff": 232.7
+          }
+        ],
+        "水": [
+          {
+            "tail": 8,
+            "avg_diff": 994.9
+          },
+          {
+            "tail": 2,
+            "avg_diff": 900.1
+          }
+        ],
+        "木": [
+          {
+            "tail": 2,
+            "avg_diff": 1136.9
+          },
+          {
+            "tail": 6,
+            "avg_diff": 444.4
+          }
+        ],
+        "金": [
+          {
+            "tail": 7,
+            "avg_diff": 820.7
+          },
+          {
+            "tail": 5,
+            "avg_diff": 444.5
+          }
+        ],
+        "土": [
+          {
+            "tail": 1,
+            "avg_diff": 589.3
+          },
+          {
+            "tail": 9,
+            "avg_diff": 511.0
+          }
+        ],
+        "日": [
+          {
+            "tail": 8,
+            "avg_diff": 1225.5
+          },
+          {
+            "tail": 7,
+            "avg_diff": 481.2
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "7のつく日",
+          "avg_diff": 306.7,
+          "delta": 144.6,
+          "n": 399
+        },
+        {
+          "label": "3のつく日",
+          "avg_diff": 280.3,
+          "delta": 118.3,
+          "n": 387
+        },
+        {
+          "label": "1の日・ゾロ目",
+          "avg_diff": 43.4,
+          "delta": -118.6,
+          "n": 339
+        },
+        {
+          "label": "その他",
+          "avg_diff": 139.8,
+          "delta": -22.2,
+          "n": 2846
+        }
+      ],
+      "base_avg": 162.0,
+      "cycles": [
+        {
+          "band": 620,
+          "count": 4,
+          "median_gap": 8,
+          "min_gap": 7,
+          "max_gap": 9
+        },
+        {
+          "band": 610,
+          "count": 4,
+          "median_gap": 3,
+          "min_gap": 1,
+          "max_gap": 13
+        },
+        {
+          "band": 600,
+          "count": 3,
+          "median_gap": 10,
+          "min_gap": 10,
+          "max_gap": 10
+        },
+        {
+          "band": 430,
+          "count": 3,
+          "median_gap": 10,
+          "min_gap": 8,
+          "max_gap": 13
+        },
+        {
+          "band": 450,
+          "count": 3,
+          "median_gap": 7,
+          "min_gap": 2,
+          "max_gap": 12
+        }
+      ],
+      "band_heat": [
+        {
+          "band": 560,
+          "overall_avg": 2020.5,
+          "plus_rate": 0.6,
+          "n": 30,
+          "weekday": [
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 6,
+              "avg": 2369.5
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 13,
+              "avg": 2851.2
+            }
+          ]
+        },
+        {
+          "band": 610,
+          "overall_avg": 1599.5,
+          "plus_rate": 0.5,
+          "n": 28,
+          "weekday": [
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 9,
+              "avg": 1684.3
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 5,
+              "avg": 3235.2
+            }
+          ]
+        },
+        {
+          "band": 440,
+          "overall_avg": 1436.2,
+          "plus_rate": 0.6,
+          "n": 27,
+          "weekday": [
+            {
+              "n": 7,
+              "avg": 1480.9
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 8,
+              "avg": 2689.5
+            },
+            {
+              "n": 6,
+              "avg": -739.7
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 2,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 600,
+          "overall_avg": 1341.4,
+          "plus_rate": 0.6,
+          "n": 47,
+          "weekday": [
+            {
+              "n": 5,
+              "avg": 413.4
+            },
+            {
+              "n": 11,
+              "avg": 691.6
+            },
+            {
+              "n": 10,
+              "avg": 2841.7
+            },
+            {
+              "n": 6,
+              "avg": 842.2
+            },
+            {
+              "n": 6,
+              "avg": 3682.3
+            },
+            {
+              "n": 6,
+              "avg": 1449.7
+            },
+            {
+              "n": 3,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 590,
+          "overall_avg": 946.9,
+          "plus_rate": 0.5,
+          "n": 81,
+          "weekday": [
+            {
+              "n": 20,
+              "avg": 268.6
+            },
+            {
+              "n": 11,
+              "avg": 457.1
+            },
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 10,
+              "avg": 1627.9
+            },
+            {
+              "n": 6,
+              "avg": 1694.7
+            },
+            {
+              "n": 12,
+              "avg": 2312.9
+            },
+            {
+              "n": 18,
+              "avg": 375.7
+            }
+          ]
+        },
+        {
+          "band": 430,
+          "overall_avg": 579.0,
+          "plus_rate": 0.4,
+          "n": 91,
+          "weekday": [
+            {
+              "n": 13,
+              "avg": 49.8
+            },
+            {
+              "n": 13,
+              "avg": -36.3
+            },
+            {
+              "n": 12,
+              "avg": 51.9
+            },
+            {
+              "n": 7,
+              "avg": 2654.3
+            },
+            {
+              "n": 17,
+              "avg": 338.7
+            },
+            {
+              "n": 16,
+              "avg": 630.1
+            },
+            {
+              "n": 13,
+              "avg": 1344.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "days": 30,
+      "weekday_bands": {
+        "月": [
+          {
+            "band": 1120,
+            "avg_diff": 1389.9,
+            "plus_rate": 0.7,
+            "n": 14
+          },
+          {
+            "band": 1070,
+            "avg_diff": 843.0,
+            "plus_rate": 0.4,
+            "n": 25
+          },
+          {
+            "band": 1200,
+            "avg_diff": 595.0,
+            "plus_rate": 0.4,
+            "n": 24
+          }
+        ],
+        "火": [
+          {
+            "band": 1060,
+            "avg_diff": 1683.6,
+            "plus_rate": 0.7,
+            "n": 10
+          },
+          {
+            "band": 1050,
+            "avg_diff": 1588.1,
+            "plus_rate": 0.4,
+            "n": 10
+          },
+          {
+            "band": 1200,
+            "avg_diff": 746.2,
+            "plus_rate": 0.6,
+            "n": 12
+          }
+        ],
+        "水": [
+          {
+            "band": 1020,
+            "avg_diff": 518.3,
+            "plus_rate": 0.3,
+            "n": 10
+          },
+          {
+            "band": 1110,
+            "avg_diff": 268.6,
+            "plus_rate": 0.4,
+            "n": 14
+          },
+          {
+            "band": 1200,
+            "avg_diff": 232.1,
+            "plus_rate": 0.2,
+            "n": 18
+          }
+        ],
+        "木": [
+          {
+            "band": 1120,
+            "avg_diff": 1595.5,
+            "plus_rate": 0.5,
+            "n": 8
+          },
+          {
+            "band": 1000,
+            "avg_diff": 422.4,
+            "plus_rate": 0.5,
+            "n": 14
+          },
+          {
+            "band": 1100,
+            "avg_diff": 307.4,
+            "plus_rate": 0.4,
+            "n": 16
+          }
+        ],
+        "金": [
+          {
+            "band": 1050,
+            "avg_diff": 1438.4,
+            "plus_rate": 0.6,
+            "n": 9
+          },
+          {
+            "band": 1070,
+            "avg_diff": 896.8,
+            "plus_rate": 0.4,
+            "n": 13
+          },
+          {
+            "band": 350,
+            "avg_diff": 689.4,
+            "plus_rate": 0.6,
+            "n": 16
+          }
+        ],
+        "土": [
+          {
+            "band": 1110,
+            "avg_diff": 718.3,
+            "plus_rate": 0.4,
+            "n": 14
+          },
+          {
+            "band": 1200,
+            "avg_diff": 634.4,
+            "plus_rate": 0.6,
+            "n": 18
+          },
+          {
+            "band": 1070,
+            "avg_diff": 335.1,
+            "plus_rate": 0.4,
+            "n": 17
+          }
+        ],
+        "日": [
+          {
+            "band": 1150,
+            "avg_diff": 2482.9,
+            "plus_rate": 0.9,
+            "n": 8
+          },
+          {
+            "band": 1020,
+            "avg_diff": 1281.4,
+            "plus_rate": 0.7,
+            "n": 10
+          },
+          {
+            "band": 1120,
+            "avg_diff": 1206.0,
+            "plus_rate": 0.5,
+            "n": 13
+          }
+        ]
+      },
+      "weekday_tails": {
+        "月": [
+          {
+            "tail": 7,
+            "avg_diff": 532.5
+          },
+          {
+            "tail": 5,
+            "avg_diff": 444.4
+          }
+        ],
+        "火": [
+          {
+            "tail": 5,
+            "avg_diff": 446.8
+          },
+          {
+            "tail": 7,
+            "avg_diff": 310.8
+          }
+        ],
+        "水": [
+          {
+            "tail": 1,
+            "avg_diff": 564.0
+          },
+          {
+            "tail": 5,
+            "avg_diff": 145.9
+          }
+        ],
+        "木": [
+          {
+            "tail": 2,
+            "avg_diff": 492.3
+          },
+          {
+            "tail": 1,
+            "avg_diff": 188.6
+          }
+        ],
+        "金": [
+          {
+            "tail": 3,
+            "avg_diff": 246.3
+          },
+          {
+            "tail": 8,
+            "avg_diff": 224.0
+          }
+        ],
+        "土": [
+          {
+            "tail": 2,
+            "avg_diff": 454.9
+          },
+          {
+            "tail": 5,
+            "avg_diff": 365.1
+          }
+        ],
+        "日": [
+          {
+            "tail": 8,
+            "avg_diff": 374.7
+          },
+          {
+            "tail": 2,
+            "avg_diff": 299.3
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "7のつく日",
+          "avg_diff": -35.2,
+          "delta": -75.7,
+          "n": 263
+        },
+        {
+          "label": "3のつく日",
+          "avg_diff": -29.1,
+          "delta": -69.6,
+          "n": 181
+        },
+        {
+          "label": "1の日・ゾロ目",
+          "avg_diff": 19.1,
+          "delta": -21.4,
+          "n": 269
+        },
+        {
+          "label": "その他",
+          "avg_diff": 60.1,
+          "delta": 19.6,
+          "n": 1957
+        }
+      ],
+      "base_avg": 40.5,
+      "cycles": [
+        {
+          "band": 1120,
+          "count": 5,
+          "median_gap": 1,
+          "min_gap": 1,
+          "max_gap": 2
+        },
+        {
+          "band": 1050,
+          "count": 4,
+          "median_gap": 4,
+          "min_gap": 1,
+          "max_gap": 12
+        },
+        {
+          "band": 1010,
+          "count": 4,
+          "median_gap": 5,
+          "min_gap": 5,
+          "max_gap": 10
+        }
+      ],
+      "band_heat": [
+        {
+          "band": 1060,
+          "overall_avg": 1540.5,
+          "plus_rate": 0.6,
+          "n": 32,
+          "weekday": [
+            {
+              "n": 6,
+              "avg": 2109.5
+            },
+            {
+              "n": 10,
+              "avg": 1683.6
+            },
+            {
+              "n": 6,
+              "avg": 143.3
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 7,
+              "avg": 2738.0
+            },
+            {
+              "n": 0,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1050,
+          "overall_avg": 1482.4,
+          "plus_rate": 0.6,
+          "n": 43,
+          "weekday": [
+            {
+              "n": 6,
+              "avg": 1408.3
+            },
+            {
+              "n": 10,
+              "avg": 1588.1
+            },
+            {
+              "n": 6,
+              "avg": 1430.5
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 9,
+              "avg": 1438.4
+            },
+            {
+              "n": 6,
+              "avg": 2039.5
+            },
+            {
+              "n": 3,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1030,
+          "overall_avg": 810.6,
+          "plus_rate": 0.4,
+          "n": 29,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 499.4
+            },
+            {
+              "n": 8,
+              "avg": 548.5
+            },
+            {
+              "n": 5,
+              "avg": 2202.2
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 5,
+              "avg": -247.0
+            }
+          ]
+        },
+        {
+          "band": 1120,
+          "overall_avg": 533.4,
+          "plus_rate": 0.5,
+          "n": 73,
+          "weekday": [
+            {
+              "n": 14,
+              "avg": 1389.9
+            },
+            {
+              "n": 9,
+              "avg": 496.7
+            },
+            {
+              "n": 11,
+              "avg": -188.2
+            },
+            {
+              "n": 8,
+              "avg": 1595.5
+            },
+            {
+              "n": 8,
+              "avg": -581.4
+            },
+            {
+              "n": 10,
+              "avg": -671.5
+            },
+            {
+              "n": 13,
+              "avg": 1206.0
+            }
+          ]
+        },
+        {
+          "band": 1200,
+          "overall_avg": 397.5,
+          "plus_rate": 0.4,
+          "n": 108,
+          "weekday": [
+            {
+              "n": 24,
+              "avg": 595.0
+            },
+            {
+              "n": 12,
+              "avg": 746.2
+            },
+            {
+              "n": 18,
+              "avg": 232.1
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 18,
+              "avg": -408.0
+            },
+            {
+              "n": 18,
+              "avg": 634.4
+            },
+            {
+              "n": 18,
+              "avg": 635.5
+            }
+          ]
+        },
+        {
+          "band": 1110,
+          "overall_avg": 331.8,
+          "plus_rate": 0.4,
+          "n": 75,
+          "weekday": [
+            {
+              "n": 7,
+              "avg": 2129.3
+            },
+            {
+              "n": 5,
+              "avg": -1877.4
+            },
+            {
+              "n": 14,
+              "avg": 268.6
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 17,
+              "avg": -184.2
+            },
+            {
+              "n": 14,
+              "avg": 718.3
+            },
+            {
+              "n": 16,
+              "avg": 678.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "days": 30,
+      "weekday_bands": {
+        "月": [
+          {
+            "band": 810,
+            "avg_diff": 1809.9,
+            "plus_rate": 0.7,
+            "n": 13
+          },
+          {
+            "band": 860,
+            "avg_diff": 1402.6,
+            "plus_rate": 0.5,
+            "n": 8
+          },
+          {
+            "band": 830,
+            "avg_diff": 486.9,
+            "plus_rate": 0.3,
+            "n": 24
+          }
+        ],
+        "火": [
+          {
+            "band": 800,
+            "avg_diff": 955.4,
+            "plus_rate": 0.7,
+            "n": 13
+          },
+          {
+            "band": 1100,
+            "avg_diff": 602.2,
+            "plus_rate": 0.7,
+            "n": 11
+          },
+          {
+            "band": 1130,
+            "avg_diff": 437.4,
+            "plus_rate": 0.4,
+            "n": 22
+          }
+        ],
+        "水": [
+          {
+            "band": 860,
+            "avg_diff": 1237.9,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 810,
+            "avg_diff": 479.0,
+            "plus_rate": 0.4,
+            "n": 17
+          },
+          {
+            "band": 830,
+            "avg_diff": 449.6,
+            "plus_rate": 0.3,
+            "n": 36
+          }
+        ],
+        "木": [
+          {
+            "band": 870,
+            "avg_diff": 1822.0,
+            "plus_rate": 0.2,
+            "n": 8
+          },
+          {
+            "band": 1230,
+            "avg_diff": 1109.6,
+            "plus_rate": 0.6,
+            "n": 12
+          },
+          {
+            "band": 810,
+            "avg_diff": 1063.8,
+            "plus_rate": 0.7,
+            "n": 12
+          }
+        ],
+        "金": [
+          {
+            "band": 800,
+            "avg_diff": 1015.8,
+            "plus_rate": 0.8,
+            "n": 9
+          },
+          {
+            "band": 1220,
+            "avg_diff": 776.3,
+            "plus_rate": 0.7,
+            "n": 32
+          },
+          {
+            "band": 870,
+            "avg_diff": 623.2,
+            "plus_rate": 0.4,
+            "n": 8
+          }
+        ],
+        "土": [
+          {
+            "band": 800,
+            "avg_diff": 1649.0,
+            "plus_rate": 0.5,
+            "n": 11
+          },
+          {
+            "band": 1020,
+            "avg_diff": 1272.6,
+            "plus_rate": 0.3,
+            "n": 10
+          },
+          {
+            "band": 780,
+            "avg_diff": 987.7,
+            "plus_rate": 0.4,
+            "n": 12
+          }
+        ],
+        "日": [
+          {
+            "band": 1210,
+            "avg_diff": 1477.5,
+            "plus_rate": 0.8,
+            "n": 8
+          },
+          {
+            "band": 780,
+            "avg_diff": 1220.5,
+            "plus_rate": 0.5,
+            "n": 15
+          },
+          {
+            "band": 1230,
+            "avg_diff": 678.5,
+            "plus_rate": 0.7,
+            "n": 15
+          }
+        ]
+      },
+      "weekday_tails": {
+        "月": [
+          {
+            "tail": 0,
+            "avg_diff": 315.2
+          },
+          {
+            "tail": 8,
+            "avg_diff": 201.4
+          }
+        ],
+        "火": [
+          {
+            "tail": 2,
+            "avg_diff": 554.0
+          },
+          {
+            "tail": 1,
+            "avg_diff": 386.4
+          }
+        ],
+        "水": [
+          {
+            "tail": 1,
+            "avg_diff": 266.2
+          },
+          {
+            "tail": 8,
+            "avg_diff": 243.9
+          }
+        ],
+        "木": [
+          {
+            "tail": 3,
+            "avg_diff": 342.7
+          },
+          {
+            "tail": 7,
+            "avg_diff": 305.0
+          }
+        ],
+        "金": [
+          {
+            "tail": 0,
+            "avg_diff": 425.4
+          },
+          {
+            "tail": 1,
+            "avg_diff": 397.7
+          }
+        ],
+        "土": [
+          {
+            "tail": 6,
+            "avg_diff": 305.9
+          },
+          {
+            "tail": 8,
+            "avg_diff": 77.9
+          }
+        ],
+        "日": [
+          {
+            "tail": 2,
+            "avg_diff": 305.8
+          },
+          {
+            "tail": 1,
+            "avg_diff": 273.4
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "7のつく日",
+          "avg_diff": 21.9,
+          "delta": -48.7,
+          "n": 353
+        },
+        {
+          "label": "3のつく日",
+          "avg_diff": -120.3,
+          "delta": -190.9,
+          "n": 329
+        },
+        {
+          "label": "1の日・ゾロ目",
+          "avg_diff": 216.2,
+          "delta": 145.6,
+          "n": 112
+        },
+        {
+          "label": "その他",
+          "avg_diff": 95.7,
+          "delta": 25.1,
+          "n": 2535
+        }
+      ],
+      "base_avg": 70.6,
+      "cycles": [
+        {
+          "band": 810,
+          "count": 6,
+          "median_gap": 5,
+          "min_gap": 3,
+          "max_gap": 8
+        },
+        {
+          "band": 800,
+          "count": 4,
+          "median_gap": 6,
+          "min_gap": 5,
+          "max_gap": 19
+        },
+        {
+          "band": 1010,
+          "count": 3,
+          "median_gap": 5,
+          "min_gap": 2,
+          "max_gap": 8
+        },
+        {
+          "band": 780,
+          "count": 3,
+          "median_gap": 7,
+          "min_gap": 6,
+          "max_gap": 9
+        }
+      ],
+      "band_heat": [
+        {
+          "band": 800,
+          "overall_avg": 1150.9,
+          "plus_rate": 0.6,
+          "n": 51,
+          "weekday": [
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 13,
+              "avg": 955.4
+            },
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 5,
+              "avg": 759.4
+            },
+            {
+              "n": 9,
+              "avg": 1015.8
+            },
+            {
+              "n": 11,
+              "avg": 1649.0
+            },
+            {
+              "n": 5,
+              "avg": 1099.6
+            }
+          ]
+        },
+        {
+          "band": 860,
+          "overall_avg": 1049.6,
+          "plus_rate": 0.5,
+          "n": 24,
+          "weekday": [
+            {
+              "n": 8,
+              "avg": 1402.6
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 8,
+              "avg": 1237.9
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 8,
+              "avg": 508.4
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 810,
+          "overall_avg": 832.2,
+          "plus_rate": 0.5,
+          "n": 78,
+          "weekday": [
+            {
+              "n": 13,
+              "avg": 1809.9
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 17,
+              "avg": 479.0
+            },
+            {
+              "n": 12,
+              "avg": 1063.8
+            },
+            {
+              "n": 15,
+              "avg": 109.5
+            },
+            {
+              "n": 12,
+              "avg": 13.5
+            },
+            {
+              "n": 7,
+              "avg": 2208.7
+            }
+          ]
+        },
+        {
+          "band": 870,
+          "overall_avg": 805.7,
+          "plus_rate": 0.3,
+          "n": 24,
+          "weekday": [
+            {
+              "n": 4,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 8,
+              "avg": 1822.0
+            },
+            {
+              "n": 8,
+              "avg": 623.2
+            },
+            {
+              "n": 0,
+              "avg": null
+            },
+            {
+              "n": 4,
+              "avg": null
+            }
+          ]
+        },
+        {
+          "band": 1150,
+          "overall_avg": 575.7,
+          "plus_rate": 0.5,
+          "n": 26,
+          "weekday": [
+            {
+              "n": 1,
+              "avg": null
+            },
+            {
+              "n": 5,
+              "avg": 1039.0
+            },
+            {
+              "n": 7,
+              "avg": 687.7
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 3,
+              "avg": null
+            },
+            {
+              "n": 2,
+              "avg": null
+            },
+            {
+              "n": 5,
+              "avg": 42.8
+            }
+          ]
+        },
+        {
+          "band": 780,
+          "overall_avg": 452.1,
+          "plus_rate": 0.3,
+          "n": 80,
+          "weekday": [
+            {
+              "n": 15,
+              "avg": 279.7
+            },
+            {
+              "n": 8,
+              "avg": 88.6
+            },
+            {
+              "n": 9,
+              "avg": -1.3
+            },
+            {
+              "n": 12,
+              "avg": 297.8
+            },
+            {
+              "n": 9,
+              "avg": -273.3
+            },
+            {
+              "n": 12,
+              "avg": 987.7
+            },
+            {
+              "n": 15,
+              "avg": 1220.5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

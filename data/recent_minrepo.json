@@ -1,0 +1,120 @@
+{
+  "generated_at": "2026-09-06T03:27:05+09:00",
+  "target_date": "2026-09-06",
+  "reference_source": "minrepo",
+  "base_source": "slorepo",
+  "note": "みんレポの直近実績です。slorepo が未公開の日だけを参考表示しています。90日分析（本命・狙い）には混ぜていません。",
+  "has_recent": true,
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-04",
+      "recent_days": [
+        {
+          "report_date": "2026-09-05",
+          "total_diff": -136511.0,
+          "avg_diff": -189.6,
+          "avg_game": 4299.0,
+          "win_rate": 0.34,
+          "total_units": 720.0,
+          "top_machines": [
+            {
+              "machine_name": "スマスロ デビルメイクライ5 スタイリッシュトライブ",
+              "unit_count": 1.0,
+              "avg_diff": 10465.0,
+              "avg_game": 6416.0
+            },
+            {
+              "machine_name": "スマスロ新鬼武者3",
+              "unit_count": 1.0,
+              "avg_diff": 8953.0,
+              "avg_game": 4897.0
+            },
+            {
+              "machine_name": "Lアズールレーン THE ANIMATION",
+              "unit_count": 5.0,
+              "avg_diff": 2479.0,
+              "avg_game": 4412.0
+            },
+            {
+              "machine_name": "L戦国乙女4 戦乱に閃く炯眼の軍師",
+              "unit_count": 5.0,
+              "avg_diff": 2027.0,
+              "avg_game": 7131.0
+            },
+            {
+              "machine_name": "スマスロ とんでもスキルで異世界放浪メシ",
+              "unit_count": 3.0,
+              "avg_diff": 1798.0,
+              "avg_game": 4096.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-04",
+      "recent_days": [
+        {
+          "report_date": "2026-09-05",
+          "total_diff": -111320.0,
+          "avg_diff": -267.6,
+          "avg_game": 4134.0,
+          "win_rate": 0.33,
+          "total_units": 416.0,
+          "top_machines": [
+            {
+              "machine_name": "バーサスリヴァイズ",
+              "unit_count": 1.0,
+              "avg_diff": 3870.0,
+              "avg_game": 9556.0
+            },
+            {
+              "machine_name": "スマスロバジリスク~甲賀忍法帖~絆2 天膳 BLACK EDITION",
+              "unit_count": 1.0,
+              "avg_diff": 3174.0,
+              "avg_game": 4485.0
+            },
+            {
+              "machine_name": "スマスロモンキーターンV",
+              "unit_count": 9.0,
+              "avg_diff": 2193.0,
+              "avg_game": 5129.0
+            },
+            {
+              "machine_name": "A-SLOT+ ディスクアップ ULTRAREMIX",
+              "unit_count": 1.0,
+              "avg_diff": 2134.0,
+              "avg_game": 6919.0
+            },
+            {
+              "machine_name": "パチスロハイパーラッシュ",
+              "unit_count": 1.0,
+              "avg_diff": 1962.0,
+              "avg_game": 2409.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-04",
+      "recent_days": []
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-04",
+      "recent_days": []
+    }
+  ]
+}

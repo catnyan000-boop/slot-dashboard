@@ -1,0 +1,243 @@
+{
+  "generated_at": "2026-09-06T03:27:07+09:00",
+  "target_date": "2026-09-05",
+  "source": "slorepo",
+  "lookback_days": 7,
+  "target_store_count": 4,
+  "target_store_ids": [
+    "cosmo_obu",
+    "marushin_777",
+    "apan_kobo",
+    "keiz_galerie_apita"
+  ],
+  "coverage_window": "2026-08-29 〜 2026-09-04",
+  "description": "最初に今日の判断を出し、その下に店舗ごとの使い方を並べています。",
+  "filters": [
+    {
+      "key": "all",
+      "label": "対象4店舗"
+    },
+    {
+      "key": "grade_a",
+      "label": "A 通常利用可能"
+    },
+    {
+      "key": "grade_b",
+      "label": "B 注意付き"
+    },
+    {
+      "key": "grade_c",
+      "label": "C 見送り"
+    },
+    {
+      "key": "shortage",
+      "label": "データ不足"
+    }
+  ],
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "display_name": "コスモジャパン大府",
+      "fetch_status": "failed",
+      "parse_status": "failed",
+      "failed_machine_pages": 483,
+      "failed_machine_urls": [],
+      "daily_count": 6,
+      "machine_count": 312,
+      "unit_count": 0,
+      "decision_grade": "C",
+      "decision_state": "データ不足",
+      "decision_reason": "データ不足。今日の判断には使わない",
+      "analysis_availability_text": "不可",
+      "unit_diff_missing_rate": 1.0,
+      "unit_diff_missing_rate_text": "データ不足",
+      "diff_status_text": "データ不足",
+      "unit_results_total": 0,
+      "unit_results_total_text": "0",
+      "diff_null_count": 0,
+      "diff_null_count_text": "0",
+      "pattern_analysis_status": "データ不足",
+      "tail_analysis_status": "データ不足",
+      "cluster_analysis_status": "データ不足",
+      "effective_analyses": [
+        "店舗別",
+        "機種別",
+        "カテゴリ別"
+      ],
+      "effective_analyses_text": "データ不足",
+      "excluded_machines": [],
+      "notes": [
+        "データ不足。今日の判断には使わない",
+        "parse済み unit_results が不足",
+        "unit_results サンプルが 0 のためデータ不足",
+        "欠損率50%以上のため台番・末尾・並び分析は信頼不可",
+        "最新取得に成功 / parse済み unit_results が不足 / unit_results が 0 でデータ不足 / diff欠損率50%以上のため台番・末尾・並び分析は信頼不可"
+      ],
+      "filter_key": "shortage",
+      "severity_key": "shortage"
+    },
+    {
+      "store_id": "marushin_777",
+      "display_name": "マルシン777",
+      "fetch_status": "failed",
+      "parse_status": "failed",
+      "failed_machine_pages": 684,
+      "failed_machine_urls": [],
+      "daily_count": 7,
+      "machine_count": 449,
+      "unit_count": 0,
+      "decision_grade": "C",
+      "decision_state": "データ不足",
+      "decision_reason": "データ不足。今日の判断には使わない",
+      "analysis_availability_text": "不可",
+      "unit_diff_missing_rate": 1.0,
+      "unit_diff_missing_rate_text": "データ不足",
+      "diff_status_text": "データ不足",
+      "unit_results_total": 0,
+      "unit_results_total_text": "0",
+      "diff_null_count": 0,
+      "diff_null_count_text": "0",
+      "pattern_analysis_status": "データ不足",
+      "tail_analysis_status": "データ不足",
+      "cluster_analysis_status": "データ不足",
+      "effective_analyses": [
+        "店舗別",
+        "機種別",
+        "カテゴリ別"
+      ],
+      "effective_analyses_text": "データ不足",
+      "excluded_machines": [],
+      "notes": [
+        "データ不足。今日の判断には使わない",
+        "parse済み unit_results が不足",
+        "unit_results サンプルが 0 のためデータ不足",
+        "欠損率50%以上のため台番・末尾・並び分析は信頼不可",
+        "最新取得に成功 / parse済み unit_results が不足 / unit_results が 0 でデータ不足 / diff欠損率50%以上のため台番・末尾・並び分析は信頼不可"
+      ],
+      "filter_key": "shortage",
+      "severity_key": "shortage"
+    },
+    {
+      "store_id": "apan_kobo",
+      "display_name": "APANCLUB弘法通り",
+      "fetch_status": "failed",
+      "parse_status": "failed",
+      "failed_machine_pages": 532,
+      "failed_machine_urls": [],
+      "daily_count": 6,
+      "machine_count": 132,
+      "unit_count": 0,
+      "decision_grade": "C",
+      "decision_state": "データ不足",
+      "decision_reason": "データ不足。今日の判断には使わない",
+      "analysis_availability_text": "不可",
+      "unit_diff_missing_rate": 1.0,
+      "unit_diff_missing_rate_text": "データ不足",
+      "diff_status_text": "データ不足",
+      "unit_results_total": 0,
+      "unit_results_total_text": "0",
+      "diff_null_count": 0,
+      "diff_null_count_text": "0",
+      "pattern_analysis_status": "データ不足",
+      "tail_analysis_status": "データ不足",
+      "cluster_analysis_status": "データ不足",
+      "effective_analyses": [
+        "店舗別",
+        "機種別",
+        "カテゴリ別"
+      ],
+      "effective_analyses_text": "データ不足",
+      "excluded_machines": [],
+      "notes": [
+        "データ不足。今日の判断には使わない",
+        "parse済み unit_results が不足",
+        "unit_results サンプルが 0 のためデータ不足",
+        "欠損率50%以上のため台番・末尾・並び分析は信頼不可",
+        "最新取得に成功 / parse済み unit_results が不足 / unit_results が 0 でデータ不足 / diff欠損率50%以上のため台番・末尾・並び分析は信頼不可"
+      ],
+      "filter_key": "shortage",
+      "severity_key": "shortage"
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "display_name": "KEIZギャラリエアピタ",
+      "fetch_status": "failed",
+      "parse_status": "failed",
+      "failed_machine_pages": 357,
+      "failed_machine_urls": [],
+      "daily_count": 6,
+      "machine_count": 198,
+      "unit_count": 0,
+      "decision_grade": "C",
+      "decision_state": "データ不足",
+      "decision_reason": "データ不足。今日の判断には使わない",
+      "analysis_availability_text": "不可",
+      "unit_diff_missing_rate": 1.0,
+      "unit_diff_missing_rate_text": "データ不足",
+      "diff_status_text": "データ不足",
+      "unit_results_total": 0,
+      "unit_results_total_text": "0",
+      "diff_null_count": 0,
+      "diff_null_count_text": "0",
+      "pattern_analysis_status": "データ不足",
+      "tail_analysis_status": "データ不足",
+      "cluster_analysis_status": "データ不足",
+      "effective_analyses": [
+        "店舗別",
+        "機種別",
+        "カテゴリ別"
+      ],
+      "effective_analyses_text": "データ不足",
+      "excluded_machines": [],
+      "notes": [
+        "データ不足。今日の判断には使わない",
+        "parse済み unit_results が不足",
+        "unit_results サンプルが 0 のためデータ不足",
+        "欠損率50%以上のため台番・末尾・並び分析は信頼不可",
+        "最新取得に成功 / parse済み unit_results が不足 / unit_results が 0 でデータ不足 / diff欠損率50%以上のため台番・末尾・並び分析は信頼不可"
+      ],
+      "filter_key": "shortage",
+      "severity_key": "shortage"
+    }
+  ],
+  "data_shortage_stores": [
+    "コスモジャパン大府",
+    "マルシン777",
+    "APANCLUB弘法通り",
+    "KEIZギャラリエアピタ"
+  ],
+  "tomorrow_candidates": [
+    "コスモジャパン大府 (score=50.0, 信頼度=D, sample=6)",
+    "KEIZギャラリエアピタ (score=50.0, 信頼度=D, sample=6)",
+    "マルシン777 (score=50.0, 信頼度=D, sample=7)",
+    "APANCLUB弘法通り (score=50.0, 信頼度=D, sample=6)"
+  ],
+  "skip_recommendations": [
+    "コスモジャパン大府 (サンプル不足または傾向不安定)",
+    "KEIZギャラリエアピタ (サンプル不足または傾向不安定)",
+    "マルシン777 (サンプル不足または傾向不安定)",
+    "APANCLUB弘法通り (サンプル不足または傾向不安定)"
+  ],
+  "notes": [
+    "表示 source は slorepo です。",
+    "dashboard の標準表示対象は main/sub の4店舗です。",
+    "machine_results から unit_results を推定で補完していません。",
+    "差枚 '-' は 0 として扱わず、NULL と 0 を区別しています。",
+    "欠損率が高い店舗では台番・末尾・並び分析を有効表示していません。"
+  ],
+  "summary_counts": {
+    "ready": 0,
+    "caution": 0,
+    "unreliable": 0,
+    "shortage": 4
+  },
+  "decision_counts": {
+    "A": 0,
+    "B": 0,
+    "C": 4,
+    "partial_success": 0,
+    "shortage": 4,
+    "analysis_ready": 0
+  },
+  "today_conclusion": "4店舗中0店舗で台番分析可能。4店舗はデータ不足。全体として一部見送り。"
+}
