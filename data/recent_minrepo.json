@@ -1,0 +1,202 @@
+{
+  "generated_at": "2026-09-13T05:08:02+09:00",
+  "target_date": "2026-09-13",
+  "reference_source": "minrepo",
+  "base_source": "slorepo",
+  "note": "みんレポの直近実績です。slorepo が未公開の日だけを参考表示しています。90日分析（本命・狙い）には混ぜていません。",
+  "has_recent": true,
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-11",
+      "recent_days": [
+        {
+          "report_date": "2026-09-12",
+          "total_diff": 440258.0,
+          "avg_diff": 611.0,
+          "avg_game": 6940.0,
+          "win_rate": 0.5,
+          "total_units": 720.0,
+          "top_machines": [
+            {
+              "machine_name": "L戦国乙女4 戦乱に閃く炯眼の軍師",
+              "unit_count": 5.0,
+              "avg_diff": 6465.0,
+              "avg_game": 7671.0
+            },
+            {
+              "machine_name": "パチスロ見える子ちゃん",
+              "unit_count": 2.0,
+              "avg_diff": 3651.0,
+              "avg_game": 6361.0
+            },
+            {
+              "machine_name": "スマート沖スロ ドラゴンハナハナ~閃光~",
+              "unit_count": 28.0,
+              "avg_diff": 2953.0,
+              "avg_game": 9481.0
+            },
+            {
+              "machine_name": "L不二子BT",
+              "unit_count": 1.0,
+              "avg_diff": 2930.0,
+              "avg_game": 5727.0
+            },
+            {
+              "machine_name": "L東京喰種",
+              "unit_count": 28.0,
+              "avg_diff": 2866.0,
+              "avg_game": 8303.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-11",
+      "recent_days": [
+        {
+          "report_date": "2026-09-12",
+          "total_diff": 11320.0,
+          "avg_diff": 27.21,
+          "avg_game": 4114.0,
+          "win_rate": 0.36,
+          "total_units": 416.0,
+          "top_machines": [
+            {
+              "machine_name": "L青春ブタ野郎はバニーガール先輩の夢を見ない",
+              "unit_count": 6.0,
+              "avg_diff": 2867.0,
+              "avg_game": 5308.0
+            },
+            {
+              "machine_name": "ニューパルサーDX3",
+              "unit_count": 1.0,
+              "avg_diff": 2494.0,
+              "avg_game": 5158.0
+            },
+            {
+              "machine_name": "クランキークレスト",
+              "unit_count": 1.0,
+              "avg_diff": 2202.0,
+              "avg_game": 7199.0
+            },
+            {
+              "machine_name": "真打 吉宗",
+              "unit_count": 8.0,
+              "avg_diff": 2153.0,
+              "avg_game": 3620.0
+            },
+            {
+              "machine_name": "ローティス",
+              "unit_count": 1.0,
+              "avg_diff": 1828.0,
+              "avg_game": 1711.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-11",
+      "recent_days": [
+        {
+          "report_date": "2026-09-12",
+          "total_diff": -41590.0,
+          "avg_diff": -197.11,
+          "avg_game": 3796.0,
+          "win_rate": 0.33,
+          "total_units": 211.0,
+          "top_machines": [
+            {
+              "machine_name": "L ToLOVEるダークネス TRANCE ver.8.7",
+              "unit_count": 1.0,
+              "avg_diff": 4883.0,
+              "avg_game": 5409.0
+            },
+            {
+              "machine_name": "Lパチスロ ありふれた職業で世界最強",
+              "unit_count": 1.0,
+              "avg_diff": 2465.0,
+              "avg_game": 2324.0
+            },
+            {
+              "machine_name": "Lパチスロ喰霊-零-Re",
+              "unit_count": 1.0,
+              "avg_diff": 1604.0,
+              "avg_game": 7236.0
+            },
+            {
+              "machine_name": "沖ドキ!ゴージャス 30Φ",
+              "unit_count": 4.0,
+              "avg_diff": 1552.0,
+              "avg_game": 2795.0
+            },
+            {
+              "machine_name": "ゴーゴージャグラー3",
+              "unit_count": 1.0,
+              "avg_diff": 1488.0,
+              "avg_game": 6383.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-11",
+      "recent_days": [
+        {
+          "report_date": "2026-09-12",
+          "total_diff": -43700.0,
+          "avg_diff": -174.1,
+          "avg_game": 2497.0,
+          "win_rate": 0.31,
+          "total_units": 251.0,
+          "top_machines": [
+            {
+              "machine_name": "L戦国乙女5 業火を穿つ宿焔の双刃",
+              "unit_count": 5.0,
+              "avg_diff": 2360.0,
+              "avg_game": 5310.0
+            },
+            {
+              "machine_name": "Lタクトオーパス デスティニー",
+              "unit_count": 1.0,
+              "avg_diff": 1473.0,
+              "avg_game": 9411.0
+            },
+            {
+              "machine_name": "スロット ソードアート・オンラインII",
+              "unit_count": 4.0,
+              "avg_diff": 972.0,
+              "avg_game": 3320.0
+            },
+            {
+              "machine_name": "パチスロ 甲鉄城のカバネリ",
+              "unit_count": 3.0,
+              "avg_diff": 625.0,
+              "avg_game": 2638.0
+            },
+            {
+              "machine_name": "パチスロ ダンジョンに出会いを求めるのは間違っているだろうか2",
+              "unit_count": 1.0,
+              "avg_diff": 602.0,
+              "avg_game": 1805.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
