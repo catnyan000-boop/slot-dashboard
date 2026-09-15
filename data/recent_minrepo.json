@@ -1,0 +1,202 @@
+{
+  "generated_at": "2026-09-16T05:07:31+09:00",
+  "target_date": "2026-09-16",
+  "reference_source": "minrepo",
+  "base_source": "slorepo",
+  "note": "みんレポの直近実績です。slorepo が未公開の日だけを参考表示しています。90日分析（本命・狙い）には混ぜていません。",
+  "has_recent": true,
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-14",
+      "recent_days": [
+        {
+          "report_date": "2026-09-15",
+          "total_diff": -11675.0,
+          "avg_diff": -16.22,
+          "avg_game": 2271.0,
+          "win_rate": 0.32,
+          "total_units": 720.0,
+          "top_machines": [
+            {
+              "machine_name": "スマスロ とある魔術の禁書目録2",
+              "unit_count": 5.0,
+              "avg_diff": 5102.0,
+              "avg_game": 5984.0
+            },
+            {
+              "machine_name": "スマスロ 攻殻機動隊",
+              "unit_count": 6.0,
+              "avg_diff": 2447.0,
+              "avg_game": 1693.0
+            },
+            {
+              "machine_name": "パチスロ見える子ちゃん",
+              "unit_count": 2.0,
+              "avg_diff": 2343.0,
+              "avg_game": 3379.0
+            },
+            {
+              "machine_name": "スマスロ新鬼武者3",
+              "unit_count": 1.0,
+              "avg_diff": 1674.0,
+              "avg_game": 1077.0
+            },
+            {
+              "machine_name": "L不二子BT",
+              "unit_count": 1.0,
+              "avg_diff": 930.0,
+              "avg_game": 4005.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-14",
+      "recent_days": [
+        {
+          "report_date": "2026-09-15",
+          "total_diff": -14599.0,
+          "avg_diff": -35.09,
+          "avg_game": 1972.0,
+          "win_rate": 0.27,
+          "total_units": 416.0,
+          "top_machines": [
+            {
+              "machine_name": "スマスロBIRDIE WING-Golf Girls’ Story-",
+              "unit_count": 1.0,
+              "avg_diff": 4334.0,
+              "avg_game": 1189.0
+            },
+            {
+              "machine_name": "A-SLOT+異世界かるてっとBT",
+              "unit_count": 1.0,
+              "avg_diff": 2426.0,
+              "avg_game": 2964.0
+            },
+            {
+              "machine_name": "Lパチスロ かぐや様は告らせたい",
+              "unit_count": 5.0,
+              "avg_diff": 1832.0,
+              "avg_game": 742.0
+            },
+            {
+              "machine_name": "ゴーゴージャグラー3",
+              "unit_count": 4.0,
+              "avg_diff": 1761.0,
+              "avg_game": 7982.0
+            },
+            {
+              "machine_name": "L南国育ち SPECIAL",
+              "unit_count": 3.0,
+              "avg_diff": 1557.0,
+              "avg_game": 1930.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-14",
+      "recent_days": [
+        {
+          "report_date": "2026-09-15",
+          "total_diff": -37881.0,
+          "avg_diff": -179.53,
+          "avg_game": 2493.0,
+          "win_rate": 0.31,
+          "total_units": 211.0,
+          "top_machines": [
+            {
+              "machine_name": "Lパチスロ喰霊-零-Re",
+              "unit_count": 1.0,
+              "avg_diff": 4186.0,
+              "avg_game": 5325.0
+            },
+            {
+              "machine_name": "スマスロ スーパーブラックジャック",
+              "unit_count": 1.0,
+              "avg_diff": 2325.0,
+              "avg_game": 3084.0
+            },
+            {
+              "machine_name": "L虚構推理",
+              "unit_count": 1.0,
+              "avg_diff": 1581.0,
+              "avg_game": 8319.0
+            },
+            {
+              "machine_name": "Lパチスロうみねこのなく頃に2",
+              "unit_count": 1.0,
+              "avg_diff": 1395.0,
+              "avg_game": 1641.0
+            },
+            {
+              "machine_name": "L東京喰種",
+              "unit_count": 8.0,
+              "avg_diff": 1183.0,
+              "avg_game": 2941.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-14",
+      "recent_days": [
+        {
+          "report_date": "2026-09-15",
+          "total_diff": -14936.0,
+          "avg_diff": -59.51,
+          "avg_game": 1363.0,
+          "win_rate": 0.29,
+          "total_units": 251.0,
+          "top_machines": [
+            {
+              "machine_name": "スロット ソードアート・オンラインII",
+              "unit_count": 4.0,
+              "avg_diff": 2260.0,
+              "avg_game": 3019.0
+            },
+            {
+              "machine_name": "スマスロモンキーターンV",
+              "unit_count": 3.0,
+              "avg_diff": 1442.0,
+              "avg_game": 3129.0
+            },
+            {
+              "machine_name": "パチスロ ダンジョンに出会いを求めるのは間違っているだろうか2",
+              "unit_count": 1.0,
+              "avg_diff": 1257.0,
+              "avg_game": 3047.0
+            },
+            {
+              "machine_name": "沖ドキ!GOLD-30",
+              "unit_count": 11.0,
+              "avg_diff": 952.0,
+              "avg_game": 2174.0
+            },
+            {
+              "machine_name": "スマスロケロット5BT",
+              "unit_count": 2.0,
+              "avg_diff": 353.0,
+              "avg_game": 1515.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
