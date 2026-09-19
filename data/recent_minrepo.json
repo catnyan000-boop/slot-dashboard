@@ -1,0 +1,161 @@
+{
+  "generated_at": "2026-09-20T05:06:42+09:00",
+  "target_date": "2026-09-20",
+  "reference_source": "minrepo",
+  "base_source": "slorepo",
+  "note": "みんレポの直近実績です。slorepo が未公開の日だけを参考表示しています。90日分析（本命・狙い）には混ぜていません。",
+  "has_recent": true,
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-18",
+      "recent_days": [
+        {
+          "report_date": "2026-09-19",
+          "total_diff": -60926.0,
+          "avg_diff": -84.62,
+          "avg_game": 4422.0,
+          "win_rate": 0.33,
+          "total_units": 720.0,
+          "top_machines": [
+            {
+              "machine_name": "パチスロ見える子ちゃん",
+              "unit_count": 2.0,
+              "avg_diff": 3197.0,
+              "avg_game": 5621.0
+            },
+            {
+              "machine_name": "スマスロ新鬼武者3",
+              "unit_count": 1.0,
+              "avg_diff": 2558.0,
+              "avg_game": 6805.0
+            },
+            {
+              "machine_name": "L青春ブタ野郎はバニーガール先輩の夢を見ない",
+              "unit_count": 3.0,
+              "avg_diff": 2340.0,
+              "avg_game": 7696.0
+            },
+            {
+              "machine_name": "パチスロ戦国恋姫",
+              "unit_count": 2.0,
+              "avg_diff": 1697.0,
+              "avg_game": 4579.0
+            },
+            {
+              "machine_name": "Lパチスロ かぐや様は告らせたい",
+              "unit_count": 5.0,
+              "avg_diff": 1093.0,
+              "avg_game": 3884.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-18",
+      "recent_days": [
+        {
+          "report_date": "2026-09-19",
+          "total_diff": -12406.0,
+          "avg_diff": -29.82,
+          "avg_game": 4500.0,
+          "win_rate": 0.38,
+          "total_units": 416.0,
+          "top_machines": [
+            {
+              "machine_name": "スマスロBIRDIE WING-Golf Girls’ Story-",
+              "unit_count": 1.0,
+              "avg_diff": 3448.0,
+              "avg_game": 3247.0
+            },
+            {
+              "machine_name": "パチスロ 新鬼武者2",
+              "unit_count": 1.0,
+              "avg_diff": 2867.0,
+              "avg_game": 5743.0
+            },
+            {
+              "machine_name": "SHAKE BONUS TRIGGER",
+              "unit_count": 1.0,
+              "avg_diff": 2735.0,
+              "avg_game": 6322.0
+            },
+            {
+              "machine_name": "Lタクトオーパス デスティニー",
+              "unit_count": 3.0,
+              "avg_diff": 2699.0,
+              "avg_game": 3109.0
+            },
+            {
+              "machine_name": "スマスロ 沖ドキ!DUO アンコール",
+              "unit_count": 5.0,
+              "avg_diff": 2526.0,
+              "avg_game": 2984.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-18",
+      "recent_days": [
+        {
+          "report_date": "2026-09-19",
+          "total_diff": -34028.0,
+          "avg_diff": -161.27,
+          "avg_game": 3909.0,
+          "win_rate": 0.37,
+          "total_units": 211.0,
+          "top_machines": [
+            {
+              "machine_name": "スマスロ モンスターハンターライズ",
+              "unit_count": 4.0,
+              "avg_diff": 4349.0,
+              "avg_game": 3485.0
+            },
+            {
+              "machine_name": "スマスロ鉄拳6",
+              "unit_count": 1.0,
+              "avg_diff": 3534.0,
+              "avg_game": 4357.0
+            },
+            {
+              "machine_name": "真打 吉宗",
+              "unit_count": 2.0,
+              "avg_diff": 2035.0,
+              "avg_game": 4320.0
+            },
+            {
+              "machine_name": "沖ドキ!ゴージャス 30Φ",
+              "unit_count": 4.0,
+              "avg_diff": 1645.0,
+              "avg_game": 4783.0
+            },
+            {
+              "machine_name": "ファンキージャグラー2KT",
+              "unit_count": 3.0,
+              "avg_diff": 1472.0,
+              "avg_game": 5767.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-18",
+      "recent_days": []
+    }
+  ]
+}
