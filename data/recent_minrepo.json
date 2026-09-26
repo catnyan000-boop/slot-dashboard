@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-09-27T03:15:58+09:00",
+  "target_date": "2026-09-27",
+  "reference_source": "minrepo",
+  "base_source": "slorepo",
+  "note": "みんレポの直近実績です。slorepo が未公開の日だけを参考表示しています。90日分析（本命・狙い）には混ぜていません。",
+  "has_recent": false,
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-25",
+      "recent_days": []
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "base_latest_date": "2026-09-25",
+      "recent_days": []
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-25",
+      "recent_days": []
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "base_latest_date": "2026-09-25",
+      "recent_days": []
+    }
+  ]
+}
