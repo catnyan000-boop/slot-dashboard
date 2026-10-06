@@ -1,0 +1,208 @@
+{
+  "generated_at": "2026-10-07T01:35:30+09:00",
+  "target_date": "2026-10-06",
+  "source": "slorepo",
+  "requested_days": 139,
+  "coverage_window": "2026-05-20 〜 2026-05-20",
+  "note": "slorepo の台別実績から集計した傾向です。確約ではなく相関の参考で、サンプルが少ない曜日は目安です。データ基準日までの集計です。",
+  "stores": [
+    {
+      "store_id": "cosmo_obu",
+      "store_name": "コスモジャパン大府",
+      "priority_group": "main",
+      "days": 1,
+      "weekday_bands": {
+        "水": [
+          {
+            "band": 10,
+            "avg_diff": 864.8,
+            "plus_rate": 0.5,
+            "n": 8
+          },
+          {
+            "band": 1380,
+            "avg_diff": 553.1,
+            "plus_rate": 0.4,
+            "n": 8
+          },
+          {
+            "band": 1360,
+            "avg_diff": 410.2,
+            "plus_rate": 0.2,
+            "n": 8
+          }
+        ]
+      },
+      "weekday_tails": {
+        "水": [
+          {
+            "tail": 5,
+            "avg_diff": 658.0
+          },
+          {
+            "tail": 0,
+            "avg_diff": 194.0
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "その他",
+          "avg_diff": 98.0,
+          "delta": 0.0,
+          "n": 242
+        }
+      ],
+      "base_avg": 98.0,
+      "cycles": [],
+      "band_heat": []
+    },
+    {
+      "store_id": "marushin_777",
+      "store_name": "マルシン777",
+      "priority_group": "main",
+      "days": 1,
+      "weekday_bands": {
+        "水": [
+          {
+            "band": 440,
+            "avg_diff": 2689.5,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 740,
+            "avg_diff": 1108.0,
+            "plus_rate": 0.5,
+            "n": 8
+          },
+          {
+            "band": 760,
+            "avg_diff": 908.1,
+            "plus_rate": 0.8,
+            "n": 8
+          }
+        ]
+      },
+      "weekday_tails": {
+        "水": [
+          {
+            "tail": 8,
+            "avg_diff": 1875.0
+          },
+          {
+            "tail": 2,
+            "avg_diff": 1607.5
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "その他",
+          "avg_diff": 575.1,
+          "delta": 0.0,
+          "n": 144
+        }
+      ],
+      "base_avg": 575.1,
+      "cycles": [],
+      "band_heat": []
+    },
+    {
+      "store_id": "apan_kobo",
+      "store_name": "APANCLUB弘法通り",
+      "priority_group": "sub",
+      "days": 1,
+      "weekday_bands": {
+        "水": [
+          {
+            "band": 1070,
+            "avg_diff": 892.1,
+            "plus_rate": 0.4,
+            "n": 8
+          },
+          {
+            "band": 1180,
+            "avg_diff": -675.2,
+            "plus_rate": 0.1,
+            "n": 8
+          }
+        ]
+      },
+      "weekday_tails": {
+        "水": [
+          {
+            "tail": 1,
+            "avg_diff": 1291.5
+          },
+          {
+            "tail": 5,
+            "avg_diff": 859.3
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "その他",
+          "avg_diff": 111.2,
+          "delta": 0.0,
+          "n": 89
+        }
+      ],
+      "base_avg": 111.2,
+      "cycles": [],
+      "band_heat": []
+    },
+    {
+      "store_id": "keiz_galerie_apita",
+      "store_name": "KEIZギャラリエアピタ",
+      "priority_group": "sub",
+      "days": 1,
+      "weekday_bands": {
+        "水": [
+          {
+            "band": 860,
+            "avg_diff": 1237.9,
+            "plus_rate": 0.6,
+            "n": 8
+          },
+          {
+            "band": 820,
+            "avg_diff": 1121.1,
+            "plus_rate": 0.5,
+            "n": 8
+          },
+          {
+            "band": 830,
+            "avg_diff": 682.5,
+            "plus_rate": 0.2,
+            "n": 8
+          }
+        ]
+      },
+      "weekday_tails": {
+        "水": [
+          {
+            "tail": 0,
+            "avg_diff": 670.8
+          },
+          {
+            "tail": 8,
+            "avg_diff": 667.2
+          }
+        ]
+      },
+      "event_days": [
+        {
+          "label": "その他",
+          "avg_diff": 346.4,
+          "delta": 0.0,
+          "n": 115
+        }
+      ],
+      "base_avg": 346.4,
+      "cycles": [],
+      "band_heat": []
+    }
+  ]
+}
